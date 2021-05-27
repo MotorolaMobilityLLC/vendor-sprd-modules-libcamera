@@ -2230,6 +2230,9 @@ static cmr_u32 convert_scene_flag_for_ae(cmr_u32 scene_flag)
 	case ISP_SPORT:
 		convert_scene_flag = AE_SCENE_SPORT;
 		break;
+	case ISP_BOKEHMODE:
+		convert_scene_flag = AE_SCENE_PORTRAIT;
+		break;
 	case ISP_PORTRAIT:
 		convert_scene_flag = AE_SCENE_PORTRAIT;
 		break;
@@ -2370,6 +2373,7 @@ static cmr_int ispctl_scene_mode(cmr_handle isp_alg_handle, void *param_ptr)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_set_scene set_scene = { 0 };
 	cmr_u32 scene_flag = 0;
+	cmr_u32 eis_enable = 0;
 	cmr_u32 orig_nr_scene_flag;
 
 
@@ -2380,6 +2384,8 @@ static cmr_int ispctl_scene_mode(cmr_handle isp_alg_handle, void *param_ptr)
 
 	orig_nr_scene_flag = cxt->commn_cxt.nr_scene_flag;
 	scene_flag = *(cmr_u32 *) param_ptr;
+	if (scene_flag == ISP_VIDEO_EIS)
+		eis_enable = 1;
 	set_scene.mode = convert_scene_flag_for_ae(scene_flag);
 	cxt->commn_cxt.nr_scene_flag = convert_scene_flag_for_nr(scene_flag);
 	ISP_LOGD("set_scene_mode %d, (nr %d ae %d)", scene_flag, cxt->commn_cxt.nr_scene_flag, set_scene.mode);
@@ -3082,6 +3088,9 @@ static cmr_int ispctl_face_area(cmr_handle isp_alg_handle, void *param_ptr)
 			ae_fd_param.face_area[i].pose = face_area->face_info[i].pose;
 			ae_fd_param.face_area[i].yaw_angle= face_area->face_info[i].yaw_angle;
 			ae_fd_param.face_area[i].roll_angle= face_area->face_info[i].roll_angle;
+			memcpy(&(ae_fd_param.face_area[i].data), &(face_area->face_info[i].data),
+				sizeof(face_area->face_info[i].data));
+			ae_fd_param.face_area[i].fascore = face_area->face_info[i].fascore;
 		}
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FD_PARAM, &ae_fd_param, NULL);
@@ -3133,6 +3142,9 @@ static cmr_int ispctl_face_area(cmr_handle isp_alg_handle, void *param_ptr)
 			af_fd_para.face_info[i].brightness = face_area->face_info[i].brightness;
 			af_fd_para.face_info[i].pose = face_area->face_info[i].pose;
 			af_fd_para.face_info[i].angle = face_area->face_info[i].angle;
+			memcpy(&(af_fd_para.face_info[i].data), &(face_area->face_info[i].data),
+				sizeof(face_area->face_info[i].data));
+			af_fd_para.face_info[i].fascore = face_area->face_info[i].fascore;
 		}
 		if (cxt->ops.af_ops.ioctrl)
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FACE_DETECT, (void *)&af_fd_para, NULL);
@@ -4132,6 +4144,16 @@ static cmr_int ispctl_ae_set_global_zoom_ratio(cmr_handle isp_alg_handle, void *
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
 	return isp_br_ioctrl(cxt->sensor_role, SET_GLOBAL_ZOOM_RATIO, param_ptr, NULL);
+}
+
+static cmr_int ispctl_ae_set_eis_move_info(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cxt->eis_move_info = *(cmr_u8 *)param_ptr;//use ispalg_start_ae_process transfer param to ae lib
+	ISP_LOGD("eis_move_info %d", cxt->eis_move_info);
+
+	return ret;
 }
 
 static cmr_int ispctl_get_gtm_status(cmr_handle isp_alg_handle, void *param_ptr)
@@ -5885,6 +5907,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AE_SET_REF_CAMERA_ID, ispctl_ae_set_ref_camera_id},
 	{ISP_CTRL_AE_SET_VISIBLE_REGION, ispctl_ae_set_visible_region},
 	{ISP_CTRL_AE_SET_GLOBAL_ZOOM_RATIO, ispctl_ae_set_global_zoom_ratio},
+	{ISP_CTRL_AE_SET_EIS_MOVE_INFO, ispctl_ae_set_eis_move_info},
 	{ISP_CTRL_GET_GTM_STATUS, ispctl_get_gtm_status},
 	{ISP_CTRL_SET_GTM_ONFF, ispctl_gtm_switch},
 	{ISP_CTRL_SET_SENSOR_SIZE, ispctl_set_sensor_size},

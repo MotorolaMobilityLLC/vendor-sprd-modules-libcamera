@@ -685,6 +685,7 @@ cmr_int camera_local_set_ref_camera_id(cmr_handle oem_handle,
 cmr_int camera_local_set_visible_region(cmr_handle oem_handle,
                                         struct visible_region_info *info);
 cmr_int camera_local_set_global_zoom_ratio(cmr_handle oem_handle, float *ratio);
+cmr_int camera_set_eis_move_info(cmr_handle oem_handle, cmr_u8 *move_info);
 cmr_int camera_local_cap_state(cmr_handle oem_handle,
                                        bool *flag);
 cmr_int camera_local_dcam_state(cmr_handle oem_handle,
@@ -782,7 +783,8 @@ cmr_int camera_get_remosaic_type(struct sensor_4in1_info *p,
 cmr_int camera_get_is_4in1_sensor(struct sensor_4in1_info *p);
 cmr_int camera_get_4in1_info(cmr_handle handle, struct fin1_info *param);
 cmr_int camera_set_high_res_mode(cmr_handle oem_handle,cmr_uint is_high_res_mode);
-cmr_int camera_get_fb_param(cmr_handle oem_handle, struct isp_fb_param_info *param);
+cmr_int camera_get_fb_prev_param(cmr_handle oem_handle, struct isp_fb_param_info *param);
+cmr_int camera_get_fb_cap_param(cmr_handle oem_handle, struct isp_fb_param_info *param);
 cmr_int camera_get_bv_info(cmr_handle oem_handle, cmr_u32 *bv_info);
 cmr_int camera_get_ct_info(cmr_handle oem_handle, cmr_u32 *ct_info);
 cmr_u32 camera_get_cnr_flag(cmr_handle oem_handle);

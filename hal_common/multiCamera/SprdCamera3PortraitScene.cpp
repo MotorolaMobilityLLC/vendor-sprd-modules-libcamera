@@ -2526,7 +2526,7 @@ int SprdCamera3PortraitScene::configureStreams(
     int mask_w = SAVE_MASK_W;
     int mask_h = SAVE_MASK_H * SAVE_MASK_UNIT;
     struct stream_info_s stream_info;
-    int addStreamNum = 0;
+    uint32_t addStreamNum = 0;
     Mutex::Autolock l(mLock);
     mPbrp->resetVariablesToDefault();
 

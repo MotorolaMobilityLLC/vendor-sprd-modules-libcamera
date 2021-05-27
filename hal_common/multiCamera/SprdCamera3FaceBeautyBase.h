@@ -26,7 +26,7 @@ public:
     }
     virtual void doFaceMakeup2(struct camera_frame_type *frame,
                                faceBeautyLevels levels, FACE_Tag *face_info,
-                               int work_mode) {
+                               int work_mode, struct facebeauty_param_info pFaceMap) {
         int ret = 0;
         int facecount = face_info->face_num;
         beautyLevels.blemishLevel = levels.blemishLevel;
@@ -97,7 +97,7 @@ public:
     }
     virtual void doFaceMakeup2(struct camera_frame_type *frame,
                                face_beauty_levels levels, FACE_Tag *face_info,
-                               int work_mode) {
+                               int work_mode, struct facebeauty_param_info pFaceMap) {
         struct fb_beauty_face_t faceinfo;
 	memset(&faceinfo, 0, sizeof(fb_beauty_face_t));
 

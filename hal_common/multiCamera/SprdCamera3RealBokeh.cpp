@@ -3097,7 +3097,9 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
 void SprdCamera3RealBokeh::bokehFaceMakeup(buffer_handle_t *buffer_handle,
                                            void *input_buf1_addr) {
 
+    int rc = 0;
     struct camera_frame_type cap_3d_frame;
+    struct facebeauty_param_info fb_param_bokeh_cap;
     struct camera_frame_type *frame = NULL;
     int faceInfo[4];
     FACE_Tag newFace;
@@ -3118,8 +3120,16 @@ void SprdCamera3RealBokeh::bokehFaceMakeup(buffer_handle_t *buffer_handle,
     newFace.face[0].rect[1] = faceInfo[1];
     newFace.face[0].rect[2] = faceInfo[2];
     newFace.face[0].rect[3] = faceInfo[3];
+    //for facebeauty param
+    SprdCamera3HWI *hwiMain = mRealBokeh->m_pPhyCamera[CAM_TYPE_MAIN].hwi;
+    rc = hwiMain->camera_ioctrl(CAMERA_IOCTRL_GET_FB_CAP_PARAM, &fb_param_bokeh_cap, NULL);
+    if (rc != 0) {
+        HAL_LOGD("E: fail to get mBlur_cap fb param");
+    } else {
+        HAL_LOGD("succeed to get mBlur_cap fb param");
+    }
     mRealBokeh->doFaceMakeup2(frame, mRealBokeh->mPerfectskinlevel, &newFace,
-                              0); // work mode 1 for preview, 0 for picture
+                              0, fb_param_bokeh_cap); // work mode 1 for preview, 0 for picture
 }
 #endif
 

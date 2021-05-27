@@ -101,6 +101,7 @@ extern "C" {
 #define DUAL_PD 4
 #define ISP_STATS_MAX 8
 #define ISP_STATSDBG_MAX 32
+#define FA_SHAPE_POINTNUM  7
 
 #define SPRD_SENSOR_TYPE_BASE   0x10000
 #define SENSOR_TYPE_SPRD_COLOR_TEMP     (SPRD_SENSOR_TYPE_BASE + 51)
@@ -1349,6 +1350,8 @@ struct face_finder_data {
     int smile_conf;
     int gender_age_race;
     struct fdrect_to_isp fd_ptr;
+    int data[FA_SHAPE_POINTNUM * 2];
+    int fascore;
 };
 
 struct img_face_area {
@@ -1544,6 +1547,7 @@ enum {
     CAMERA_SCENE_MODE_FDR,
     CAMERA_SCENE_MODE_SLOWMOTION,
     CAMERA_SCENE_MODE_VIDEO,
+    CAMERA_SCENE_MODE_VIDEO_EIS,
     CAMERA_SCENE_MODE_MAX
 };
 
@@ -1794,6 +1798,7 @@ enum camera_param_type {
     CAMERA_PARAM_ANDROID_ZSL,
     CAMERA_PARAM_ISP_FLASH,
     CAMERA_PARAM_SPRD_ZSL_ENABLED,
+    CAMERA_PARAM_HIGH_FPS_ENABLED,
     CAMERA_PARAM_ISP_AE_LOCK_UNLOCK,
     CAMERA_PARAM_SLOW_MOTION_FLAG,
     CAMERA_PARAM_SPRD_PIPVIV_ENABLED,
@@ -1935,6 +1940,8 @@ struct camera_face_info {
     cmr_u32 padding;
     cmr_u32 gender_age_race;
     struct fdrect_to_isp fd_cb_ptr;
+    int data[FA_SHAPE_POINTNUM * 2];
+    cmr_u32 fascore;
 };
 
 struct super_cap {
@@ -2303,7 +2310,8 @@ typedef enum {
     CAMERA_TOCTRL_GET_4IN1_INFO,
     CAMERA_IOCTRL_SET_CAP_STATE,
     CAMERA_IOCTRL_SET_DCAM_STATE,
-    CAMERA_IOCTRL_GET_FB_PARAM,
+    CAMERA_IOCTRL_GET_FB_PREV_PARAM,
+    CAMERA_IOCTRL_GET_FB_CAP_PARAM,
     CAMERA_IOCTRL_GET_BV,
     CAMERA_TOCTRL_GET_SN_STREAM_STATUS,
     CAMERA_IOCTRL_GET_CT,
@@ -2326,6 +2334,7 @@ typedef enum {
     CAMERA_IOCTRL_SET_BLUR_CYNR_NO_FACE,
     CAMERA_IOCTRL_SET_PORTRAIT_SCENE_FB,
     CAMERA_IOCTRL_SET_ZSL_CAP_PARAM,
+    CAMERA_IOCTRL_SET_MOVE_INFO,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 

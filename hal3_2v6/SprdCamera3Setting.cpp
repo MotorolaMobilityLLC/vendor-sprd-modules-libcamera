@@ -753,7 +753,8 @@ const int32_t kavailable_request_keys[] = {
     ANDROID_TONEMAP_MODE, ANDROID_COLOR_CORRECTION_GAINS,
     ANDROID_COLOR_CORRECTION_TRANSFORM, ANDROID_SHADING_MODE, ANDROID_EDGE_MODE,
     ANDROID_NOISE_REDUCTION_MODE,
-    ANDROID_SPRD_APP_MODE_ID};
+    ANDROID_SPRD_APP_MODE_ID,
+    ANDROID_CONTROL_SCENE_MODE_HIGH_SPEED_VIDEO};
 
 const int32_t kavailable_manual_request_keys[] = {
     ANDROID_SENSOR_EXPOSURE_TIME,
@@ -845,6 +846,11 @@ const uint8_t kavailable_manual_capabilities[] = {
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_READ_SENSOR_SETTINGS,
 };
 
+const uint8_t kavailable_capabilities_without_high_speed_video[] = {
+    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE,
+    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BURST_CAPTURE,
+    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME
+};
 
 //L5 Pro front picture size from 4M to 16M
 const uint8_t kavailable_capabilities_without_burst[] = {
@@ -1500,8 +1506,13 @@ int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId) {
            availableVstabModes, sizeof(availableVstabModes));
     memcpy(camera3_default_info.common.availEffectModes, avail_effect_mode,
            sizeof(avail_effect_mode));
-    memcpy(camera3_default_info.common.availSceneModes, avail_scene_modes,
-           sizeof(avail_scene_modes));
+    if (cameraId < 2) {
+        memcpy(camera3_default_info.common.availSceneModes, avail_scene_modes,
+               sizeof(avail_scene_modes));
+    } else {
+        memcpy(camera3_default_info.common.availSceneModes, avail_scene_modes,
+               sizeof(avail_scene_modes)-sizeof(uint8_t));
+    }
     memcpy(camera3_default_info.common.availAntibandingModes,
            avail_antibanding_modes, sizeof(avail_antibanding_modes));
     memset(camera3_default_info.common.availableAfModes, 0, 6);
@@ -2677,9 +2688,15 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     {
         // s_setting[cameraId].controlInfo.available_scene_modes[0] =
         // ANDROID_CONTROL_SCENE_MODE_NIGHT;
-        memcpy(s_setting[cameraId].controlInfo.available_scene_modes,
-               camera3_default_info.common.availSceneModes,
-               sizeof(avail_scene_modes));
+        if (cameraId < 2) {
+            memcpy(s_setting[cameraId].controlInfo.available_scene_modes,
+                   camera3_default_info.common.availSceneModes,
+                   sizeof(avail_scene_modes));
+        } else {
+            memcpy(s_setting[cameraId].controlInfo.available_scene_modes,
+                   camera3_default_info.common.availSceneModes,
+                   sizeof(avail_scene_modes)-sizeof(uint8_t));
+        }
 #ifdef CONFIG_CAMERA_HDR_CAPTURE
         uint32_t sizeSceneModes =
             sizeof(avail_scene_modes) / avail_scene_modes[0];
@@ -2819,19 +2836,24 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     }
 #endif
 
-
 #ifdef CONFIG_SUPPROT_FRONT_4IN1_DATA_INTERPOLATION
     if(cameraId == 1) {
        HAL_LOGI("not support burst test");
        memcpy(s_setting[cameraId].requestInfo.available_capabilites,
             kavailable_capabilities_without_burst, sizeof(kavailable_capabilities_without_burst));
-     } else {
+    } else {
         if (phyPtr->mono_sensor == 1) {
             memcpy(s_setting[cameraId].requestInfo.available_capabilites,
-                   kavailable_capabilities, sizeof(kavailable_capabilities));
+                   kavailable_capabilities_without_high_speed_video,
+                   sizeof(kavailable_capabilities_without_high_speed_video));
         } else {
-            memcpy(s_setting[cameraId].requestInfo.available_capabilites,
-                   kavailable_capabilities, (sizeof(kavailable_capabilities) - sizeof(uint8_t)));
+            if (cameraId < 2){
+                memcpy(s_setting[cameraId].requestInfo.available_capabilites,
+                       kavailable_capabilities, (sizeof(kavailable_capabilities) - sizeof(uint8_t)));
+            } else {
+                memcpy(s_setting[cameraId].requestInfo.available_capabilites,
+                       kavailable_capabilities_without_high_speed_video, sizeof(kavailable_capabilities_without_high_speed_video) - sizeof(uint8_t));
+            }
 #ifdef CAMERA_MANULE_SNEOSR
             if (cameraId < 2) {
                 memcpy(s_setting[cameraId].requestInfo.available_capabilites
@@ -2844,11 +2866,17 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     }
 #else
     if (phyPtr->mono_sensor == 1) {
-        memcpy(s_setting[cameraId].requestInfo.available_capabilites,
-               kavailable_capabilities, sizeof(kavailable_capabilities));
+            memcpy(s_setting[cameraId].requestInfo.available_capabilites,
+                   kavailable_capabilities_without_high_speed_video,
+                   sizeof(kavailable_capabilities_without_high_speed_video));
     } else {
-        memcpy(s_setting[cameraId].requestInfo.available_capabilites,
-               kavailable_capabilities, (sizeof(kavailable_capabilities) - sizeof(uint8_t)));
+        if (cameraId < 2) {
+            memcpy(s_setting[cameraId].requestInfo.available_capabilites,
+                   kavailable_capabilities, (sizeof(kavailable_capabilities) - sizeof(uint8_t)));
+        } else {
+            memcpy(s_setting[cameraId].requestInfo.available_capabilites,
+                   kavailable_capabilities_without_high_speed_video, sizeof(kavailable_capabilities_without_high_speed_video) - sizeof(uint8_t));
+       }
 #ifdef CAMERA_MANULE_SNEOSR
         if (cameraId < 2) {
             memcpy(s_setting[cameraId].requestInfo.available_capabilites
@@ -3312,9 +3340,14 @@ int SprdCamera3Setting::initStaticMetadata(
                   ANDROID_CONTROL_MODE_USE_SCENE_MODE};
         staticInfo.update(ANDROID_CONTROL_AVAILABLE_MODES, control_modes,
                   sizeof(control_modes) / sizeof(uint8_t));
-
-        staticInfo.update(ANDROID_CONTROL_AVAILABLE_HIGH_SPEED_VIDEO_CONFIGURATIONS,
-                      kavailable_high_speed_video_configration, ARRAY_SIZE(kavailable_high_speed_video_configration));
+        if (cameraId < 2) {
+            staticInfo.update(ANDROID_CONTROL_AVAILABLE_HIGH_SPEED_VIDEO_CONFIGURATIONS,
+                              kavailable_high_speed_video_configration, ARRAY_SIZE(kavailable_high_speed_video_configration));
+        } else {
+            const int32_t avl_high_speed_video_config[] = {1280, 720, 30, 120, 1, 1280, 720, 120, 120, 1};
+            staticInfo.update(ANDROID_CONTROL_AVAILABLE_HIGH_SPEED_VIDEO_CONFIGURATIONS,
+                              avl_high_speed_video_config, ARRAY_SIZE(avl_high_speed_video_config));
+        }
     }
 
     /*LENS SHADING*/
@@ -4894,7 +4927,6 @@ int SprdCamera3Setting::updateWorkParameters(
 
     tagCnt = frame_settings.entryCount();
     HAL_LOGV("cnt %d", tagCnt);
-
     if (tagCnt == 0) {
         return rc;
     }
@@ -5119,25 +5151,34 @@ int SprdCamera3Setting::updateWorkParameters(
     }
 
     if (frame_settings.exists(ANDROID_SPRD_CALIBRATION_OTP_DATA)) {
-        s_setting[mCameraId].calOtpInfo.dual_otp_flag =
-            frame_settings.find(ANDROID_SPRD_CALIBRATION_OTP_DATA).data.u8[20];
-        s_setting[mCameraId].calOtpInfo.cal_otp_result = 0;
-        s_setting[mCameraId].calOtpInfo.otp_size =
-            frame_settings.find(ANDROID_SPRD_CALIBRATION_OTP_DATA).data.u8[30] +
-            ((frame_settings.find(ANDROID_SPRD_CALIBRATION_OTP_DATA)
-                  .data.u8[31] &
-              0x00ff)
-             << 8);
-        for (int i = 0; i < s_setting[mCameraId].calOtpInfo.otp_size; i++) {
-            s_setting[mCameraId].calOtpInfo.otp_data[i] =
-                frame_settings.find(ANDROID_SPRD_CALIBRATION_OTP_DATA)
-                    .data.u8[i + 32];
+        cmr_u32 ret = 0;
+        ret = memcmp("Otp Init Golden Data",
+            frame_settings.find(ANDROID_SPRD_CALIBRATION_OTP_DATA).data.u8,
+                sizeof("Otp Init Golden Data")-1);
+        if(0 == ret) {
+            sensor_set_manual_cmei(1);
+            s_setting[mCameraId].calOtpInfo.cal_otp_result = 1;
+        } else {
+            s_setting[mCameraId].calOtpInfo.dual_otp_flag =
+                frame_settings.find(ANDROID_SPRD_CALIBRATION_OTP_DATA).data.u8[20];
+            s_setting[mCameraId].calOtpInfo.cal_otp_result = 0;
+            s_setting[mCameraId].calOtpInfo.otp_size =
+                frame_settings.find(ANDROID_SPRD_CALIBRATION_OTP_DATA).data.u8[30] +
+                ((frame_settings.find(ANDROID_SPRD_CALIBRATION_OTP_DATA)
+                      .data.u8[31] &
+                  0x00ff)
+                 << 8);
+            for (int i = 0; i < s_setting[mCameraId].calOtpInfo.otp_size; i++) {
+                s_setting[mCameraId].calOtpInfo.otp_data[i] =
+                    frame_settings.find(ANDROID_SPRD_CALIBRATION_OTP_DATA)
+                        .data.u8[i + 32];
+            }
+            HAL_LOGD(
+                "s_setting[mCameraId].calOtpInfo.dual_otp_flag %d, otp_size %d",
+                s_setting[mCameraId].calOtpInfo.dual_otp_flag,
+                s_setting[mCameraId].calOtpInfo.otp_size);
+            pushAndroidParaTag(ANDROID_SPRD_CALIBRATION_OTP_DATA);
         }
-        HAL_LOGD(
-            "s_setting[mCameraId].calOtpInfo.dual_otp_flag %d, otp_size %d",
-            s_setting[mCameraId].calOtpInfo.dual_otp_flag,
-            s_setting[mCameraId].calOtpInfo.otp_size);
-        pushAndroidParaTag(ANDROID_SPRD_CALIBRATION_OTP_DATA);
     }
 
     if (frame_settings.exists(ANDROID_SPRD_ZSL_ENABLED)) {
