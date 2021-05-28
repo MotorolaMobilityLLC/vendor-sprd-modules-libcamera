@@ -6273,6 +6273,8 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     float valueFloat =  s_setting[mCameraId].lensInfo.focus_distance;
     int sprd_app_id = s_setting[mCameraId].sprddefInfo.sprd_appmode_id;
 #endif
+    SPRD_DEF_Tag *sprddefInfo;
+    sprddefInfo = getSPRDDEFTagPTR();
     maxRegionsAe = s_setting[mCameraId].controlInfo.max_regions[0];
     maxRegionsAwb = s_setting[mCameraId].controlInfo.max_regions[1];
     maxRegionsAf = s_setting[mCameraId].controlInfo.max_regions[2];
@@ -6718,7 +6720,9 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     camMetadata.update(ANDROID_SENSOR_EXPOSURE_TIME,
                        &(s_setting[mCameraId].sensorInfo.exposure_time), 1);
      sensitivityValue = mFrameNumMap[s_setting[mCameraId].syncInfo.frame_number].sensitivity;
-     if (sensitivityValue < ksensitivity_range[0])
+     if (!sensitivityValue && sprddefInfo->long_expo_enable) {
+            sensitivityValue = mFrameNumMap[s_setting[mCameraId].syncInfo.frame_number -1].sensitivity;
+     } else if (sensitivityValue < ksensitivity_range[0])
             sensitivityValue = ksensitivity_range[0];
      else if (sensitivityValue > ksensitivity_range[1])
             sensitivityValue = ksensitivity_range[1];
