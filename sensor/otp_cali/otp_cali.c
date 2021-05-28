@@ -376,6 +376,11 @@ cmr_u16 read_calibration_otp(cmr_u8 dual_flag, cmr_u8 *otp_buf) {
             }
 
             if (OTP_VERSION2  == header_ptr->version) {
+                if (header_ptr->cmei_len >= CMEI_OTP_CMEI_SIZE) {
+                    SENSOR_LOGE("read %s cmei buf (%d)overflow error!", OtpBkDataPath, header_ptr->cmei_len);
+                    fclose(fileHandle);
+                    break;
+                }
                 rcount = fread(cmei_buf, sizeof(char), header_ptr->cmei_len, fileHandle);
                 if (rcount != header_ptr->cmei_len) {
                     SENSOR_LOGE("read %s cmei buf count error!", OtpBkDataPath);
