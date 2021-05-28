@@ -894,6 +894,7 @@ class SprdCamera3Setting {
     static float calculateHyperFocalDistance (int32_t cameraId);
     static cmr_u32 getMinFocusDistance(uint8_t cameraId);
     static int64_t getStartOffsetTime(uint8_t cameraId);
+    static int getMaxDigitalZoom(uint32_t cameraId);
 };
 
 }; // namespace sprdcamera

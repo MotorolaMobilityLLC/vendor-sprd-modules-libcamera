@@ -900,6 +900,7 @@ int SprdCamera3Setting::mLogicalSensorNum = 0;
 int SprdCamera3Setting::mPhysicalSensorNum = 0;
 cmr_u32 SprdCamera3Setting::save_iso_value = 0;
 uint8_t SprdCamera3Setting::camera_identify_state[] = {1, 1, 1, 1, 1, 1};
+static float maxDigitalZoom[CAMERA_ID_COUNT];
 
 enum cmr_flash_lcd_mode {
     FLASH_LCD_MODE_OFF = 0,
@@ -2191,28 +2192,8 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
     int ultrawide_id =
         sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE, SNS_FACE_BACK);
     s_setting[cameraId].sprddefInfo.ultrawide_id = ultrawide_id;
-    // if get scaler capability fail from driver, using default value
-    uint32_t scaler = 0;
-    void *dso = NULL;
-    dso = dlopen(OEM_LIBRARY_PATH, RTLD_NOW);
-    if (NULL == dso) {
-        char const *err_str = dlerror();
-        HAL_LOGE("dlopen error%s ", err_str ? err_str : "unknown");
-    } else {
-        const char *sym = OEM_MODULE_INFO_SYM_AS_STR;
-        oem_module_t *omi = NULL;
-        omi = (oem_module_t *)dlsym(dso, sym);
-        if (omi && omi->ops != NULL) {
-            if (omi->ops->camera_get_scaler)
-               omi->ops->camera_get_scaler(&scaler);
-        }
-        dlclose(dso);
-    }
 
-    if (scaler > 0)
-        s_setting[cameraId].scalerInfo.max_digital_zoom = scaler;
-    else
-        s_setting[cameraId].scalerInfo.max_digital_zoom = MAX_DIGITAL_ZOOM_RATIO;
+    s_setting[cameraId].scalerInfo.max_digital_zoom = maxDigitalZoom[cameraId];
     HAL_LOGD("cameraId = %d, ultrawide_id = %d, max_digital_zoom = %f",
              cameraId, ultrawide_id,
              s_setting[cameraId].scalerInfo.max_digital_zoom);
@@ -2596,6 +2577,35 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
     HAL_LOGI("available_cam_features=%d",
              s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size);
 
+}
+
+int SprdCamera3Setting::getMaxDigitalZoom(uint32_t cameraId)
+{
+    /* if get scaler capability fail from driver, using default value */
+    uint32_t scaler = 0;
+    void *dso = NULL;
+    dso = dlopen(OEM_LIBRARY_PATH, RTLD_NOW);
+    if (NULL == dso) {
+        char const *err_str = dlerror();
+        HAL_LOGE("dlopen error%s ", err_str ? err_str : "unknown");
+    } else {
+        const char *sym = OEM_MODULE_INFO_SYM_AS_STR;
+        oem_module_t *omi = NULL;
+        omi = (oem_module_t *)dlsym(dso, sym);
+        if (omi && omi->ops != NULL) {
+            if (omi->ops->camera_get_scaler)
+               omi->ops->camera_get_scaler(&scaler);
+        }
+        dlclose(dso);
+    }
+
+    if (scaler > 0)
+        maxDigitalZoom[cameraId] = scaler;
+    else
+        maxDigitalZoom[cameraId] = MAX_DIGITAL_ZOOM_RATIO;
+    HAL_LOGD("cameraId = %d,  max_digital_zoom = %f",
+             cameraId, maxDigitalZoom[cameraId]);
+    return 0;
 }
 
 int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
@@ -3193,6 +3203,9 @@ int SprdCamera3Setting::initStaticMetadata(
     /* android.info: hardware level */
     staticInfo.update(ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL,
                       &(s_setting[cameraId].supported_hardware_level), 1);
+
+    /* scaler */
+    getMaxDigitalZoom(cameraId);
 
     /*COLOR*/
     FILL_CAM_INFO(s_setting[cameraId].colorInfo.available_aberration_modes, 1,
