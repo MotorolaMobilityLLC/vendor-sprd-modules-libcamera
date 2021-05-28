@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include "BufferPool.h"
+#include <atomic>
 
 class PoolManager {
 public:
@@ -28,6 +29,7 @@ private:
     bool is_deinited;
     bool is_pool_inited;
     bool is_pool_released;
+    std::atomic_int count;
 };
 
 #endif

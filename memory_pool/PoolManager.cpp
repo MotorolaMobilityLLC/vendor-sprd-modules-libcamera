@@ -17,12 +17,17 @@ static sem_t sem;
 
 PoolManager::PoolManager() {
     is_inited = false;
+    count = 0;
 }
 
 PoolManager::~PoolManager() {
 }
 
 void PoolManager::initialize() {
+    if (count > 0) {
+        count++;
+        goto exit;
+    }
     ALOGI("bufferpool manager initialize E");
     if (is_inited) {
         ALOGV("do not need init");
@@ -35,7 +40,9 @@ void PoolManager::initialize() {
         mMallocBufferPool = new MallocBufferPool();
     }
     mMallocBufferPool->initialize();
-    setPoolOpreation((void*)bufPool_malloc, (void*)bufPool_free);
+    count++;
+exit:
+    return;
 }
 
 void PoolManager::initializePool(size_t size) {
@@ -46,6 +53,8 @@ void PoolManager::initializePool(size_t size) {
     }
     is_pool_inited = true;
     is_pool_released = false;
+
+    setPoolOpreation((void*)bufPool_malloc, (void*)bufPool_free);
 
     struct Command cmd;
     cmd.operation = INIT;
@@ -61,10 +70,15 @@ void PoolManager::releasePool() {
     }
     is_pool_released = true;
     is_pool_inited = false;
+    setPoolOpreation(NULL, NULL);
     mMallocBufferPool->releasePool();
 }
 
 void PoolManager::deinit() {
+    if (count != 1) {
+        count--;
+        goto exit;
+    }
     if (is_deinited == true) {
         ALOGV("do not need deinit");
         return;
@@ -81,6 +95,9 @@ void PoolManager::deinit() {
         mMallocBufferPool->deinit();
         mMallocBufferPool.clear();
     }
+    count--;
+exit:
+    return;
 }
 
 void PoolManager::setPoolOpreation(void *pMalloc,void *pFree) {
