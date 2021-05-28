@@ -5091,8 +5091,8 @@ bool SprdCamera3OEMIf::returnPreviewFrame(struct camera_frame_type *frame) {
 
     SPRD_DEF_Tag *sprddefInfo;
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
-    if (sprddefInfo->high_resolution_mode == 1 &&
-        mTakePictureMode == SNAPSHOT_NO_ZSL_MODE)
+    if ((sprddefInfo->high_resolution_mode == 1 && mTakePictureMode == SNAPSHOT_NO_ZSL_MODE) ||
+        sprddefInfo->long_expo_enable == 1)
         sprddefInfo->return_previewframe_after_nozsl_cap = 1;
     SprdCamera3RegularChannel *regular_channel =
         reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
