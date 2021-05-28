@@ -474,6 +474,7 @@ static cmr_int ov5675_drv_identify(cmr_handle handle, cmr_uint param) {
         ver_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, ov5675_VER_ADDR);
         SENSOR_LOGI("Identify: PID = %x, VER = %x", pid_value, ver_value);
         if (ov5675_VER_VALUE == ver_value) {
+            sensor_rid_save_sensor_name(1, "1_ov5675_arb");
             SENSOR_LOGI("this is ov5675 sensor");
             ov5675_drv_init_fps_info(handle);
             ret_value = SENSOR_SUCCESS;
