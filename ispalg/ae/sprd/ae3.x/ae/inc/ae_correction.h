@@ -43,6 +43,15 @@ enum ae_sync_type {
 	AE_SYNC_1,/*for brigness sync: for zoom*/
 };
 
+enum {
+	AEC_SINGLE = 0,
+	AEC_DUAL,
+	AEC_BLUR,
+	AEC_TRIBLE_W_T_UW,
+	AEC_TRIBLE_W_T_UW_SYNC,
+	AEC_CAMERA_MAX,
+};
+
 struct tar_lum_range{//added by feifan.wang
 	cmr_u32 target_lum_range_in_bak;
 	cmr_u32 target_lum_range_out_bak;
