@@ -132,6 +132,7 @@ struct ae_adv_param {
 	struct ae_compensation_param comp_param;
 
 	cmr_u8 af_status;			/*AF trigger info */
+	cmr_u8 af_start_flag;
 	cmr_u8 log_level;
 	cmr_u8 is_snapshot;
 	cmr_u8 prof_mode;		/*in professional mode*/
