@@ -36,7 +36,7 @@
  * please modify this function acording your spec
  *============================================================================*/
 
-static double imx586_longExp_mode[] = {0.5, 1, 2, 3, 4, 5, 6, 7, 8};
+static double imx586_longExp_mode[] = {0.5, 1, 2, 3, 4, 5, 6, 7, 8, 10, 13, 15, 20, 25, 30};
 static cmr_u32 imx586_longExp_valid_frame_num = 2;
 static cmr_u32 imx586_longExp_need_switch_setting = 0;
 static cmr_u32 imx586_longExp_setting[] = {0, 0, 1, 0};
@@ -839,11 +839,11 @@ static cmr_int imx586_drv_write_exposure(cmr_handle handle, cmr_uint param) {
             hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0202, (longexp_value >> 8) & 0xff);
             hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0203, longexp_value & 0xff);
             hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3100, 0x03);//*8
-        } else if (exp_time == 6000000000 || exp_time == 7000000000 || exp_time == 8000000000) {
-            longexp_value = exp_time / 16 / PREVIEW_LINE_TIME;
+        } else if (exp_time >= 6000000000 && exp_time <= 30000000000) {
+            longexp_value = exp_time / 128 / PREVIEW_LINE_TIME;
             hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0202, (longexp_value >> 8) & 0xff);
             hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0203, longexp_value & 0xff);
-            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3100, 0x04);//*16
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3100, 0x07);//*128
         } else {
             SENSOR_LOGE("longExp exp_time=%llu beyond the restrict", exp_time);
         }

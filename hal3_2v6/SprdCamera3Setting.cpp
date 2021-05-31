@@ -104,7 +104,7 @@ typedef struct {
     uint8_t availDistortionCorrectionModes[1];
     uint8_t availLogoWatermark;
     uint8_t availTimeWatermark;
-    double availExposureLongTime[12];
+    double availExposureLongTime[64];
     int32_t availExposureLongTimeSize;
 } camera3_common_t;
 

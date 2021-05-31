@@ -280,7 +280,7 @@ typedef struct {
     int32_t white_level;
     int32_t sensitivity_range[2];
     uint8_t timestamp_source;
-    double exposupre_long_time[12];
+    double exposupre_long_time[64];
     int32_t exposupre_long_time_size;
 } SENSOR_INFO_Tag;
 
