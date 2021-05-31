@@ -4995,7 +4995,7 @@ int SprdCamera3Setting::updateWorkParameters(
             found < sizeof(topAppList)/sizeof(TopAppS); found++) {
             if(!strncmp(topAppList[found].PackageName,
                        s_setting[mCameraId].sprddefInfo.mTopID,
-                       strlen(s_setting[mCameraId].sprddefInfo.mTopID))) {
+                       strlen(topAppList[found].PackageName))) {
                 HAL_LOGD("mTopID %d", topAppList[found].id);
                 s_setting[mCameraId].sprddefInfo.top_app_id = topAppList[found].id;
                 break;

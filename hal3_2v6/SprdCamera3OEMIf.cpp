@@ -9330,8 +9330,8 @@ int SprdCamera3OEMIf::Callback_ZslFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
     SPRD_DEF_Tag *sprddefInfo;
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
 
-    if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
-        sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO||(getMultiCameraMode() == MODE_BOKEH && mCameraId == mMasterId)
+    if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW || (mTopAppId & mWhitelists) ||
+        (sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO) ||(getMultiCameraMode() == MODE_BOKEH && mCameraId == mMasterId)
          || getMultiCameraMode() == MODE_BLUR) {
         freeCameraMemForGpu(phy_addr, vir_addr, fd, sum);
         return 0;
