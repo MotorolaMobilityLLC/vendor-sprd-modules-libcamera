@@ -2640,10 +2640,12 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
             }
             return rc;
         }
-        mPortrait->mBokehAlgo->getPortraitMask(input_buf2_addr,
-                    (void *)mPortrait->mScaleInfo.addr_vir.addr_y,
-                    output_buf_addr, input_buf1_addr,
-                    mPortrait->mVcmStepsFixed, mPortrait->bokehMask, mPortrait->lptMask);
+        if (mPortrait->mPortraitFlag) {
+            mPortrait->mBokehAlgo->getPortraitMask(input_buf2_addr,
+                        (void *)mPortrait->mScaleInfo.addr_vir.addr_y,
+                        output_buf_addr, input_buf1_addr,
+                        mPortrait->mVcmStepsFixed, mPortrait->bokehMask, mPortrait->lptMask);
+        }
         if (output_buf != NULL) {
             mPortrait->unmap(output_buf);
         }
@@ -2663,10 +2665,12 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
             }
             return rc;
         }
-        mPortrait->mBokehAlgo->getPortraitMask(input_buf2_addr,
-                    (void *)mPortrait->mScaleInfo.addr_vir.addr_y,
-                    output_buf_addr, input_buf1_addr,
-                    mPortrait->mVcmStepsFixed, mPortrait->bokehMask, mPortrait->lptMask);
+        if (mPortrait->mPortraitFlag) {
+            mPortrait->mBokehAlgo->getPortraitMask(input_buf2_addr,
+                        (void *)mPortrait->mScaleInfo.addr_vir.addr_y,
+                        output_buf_addr, input_buf1_addr,
+                        mPortrait->mVcmStepsFixed, mPortrait->bokehMask, mPortrait->lptMask);
+        }
     }
 
     /*do cynr*/
