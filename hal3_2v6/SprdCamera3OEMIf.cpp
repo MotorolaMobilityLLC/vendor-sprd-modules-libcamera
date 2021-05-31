@@ -12181,6 +12181,10 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
                     HAL_LOGD("af finsh done");
                     break;
                 }
+                if (mZslCaptureExitLoop == true){
+                    HAL_LOGD("close camera");
+                    break;
+                }
             }
         }
     }
@@ -12209,6 +12213,10 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
                 }
                 if (mAf_stop_time > mAf_start_time ) {
                     HAL_LOGD("af finsh done");
+                    break;
+                }
+                if (mZslCaptureExitLoop == true){
+                    HAL_LOGD("close camera");
                     break;
                 }
             }
