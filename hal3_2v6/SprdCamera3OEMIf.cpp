@@ -2622,8 +2622,7 @@ void SprdCamera3OEMIf::setAwbState(enum awbTransitionCause cause) {
     mSetting->getCONTROLTag(&controlInfo);
     state = controlInfo.awb_state;
     newState = controlInfo.awb_state;
-    HAL_LOGD("minnie awb cause=%d, state=%d",
-             cause, state);
+    HAL_LOGD("awb cause=%d, state=%d", cause, state);
 
     // awb state is always INACTIVE when awb mode is not AUTO
     if (ANDROID_CONTROL_AWB_MODE_AUTO != controlInfo.awb_mode) {

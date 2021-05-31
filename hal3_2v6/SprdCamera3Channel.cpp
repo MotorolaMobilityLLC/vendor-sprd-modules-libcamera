@@ -812,6 +812,7 @@ SprdCamera3MetadataChannel::SprdCamera3MetadataChannel(
         ReSetFirstMeta = true;
         memset(&syncAeParams, 0, sizeof(struct ae_params));
         memset(&syncAfParams, 0, sizeof(struct af_params));
+        sem_init(&mResultSem, 0, 1);
 
 //        mIspParamsList.clear();
     }
@@ -1192,8 +1193,8 @@ int SprdCamera3MetadataChannel::channelCbRoutine(
         std::unique_lock <std::mutex> lck(mResultLock);
         if(pushResult()) {
             HAL_LOGD("mResultSignal push");
-            //mResultSignal.signal();
-            mResultSignal.notify_one();
+            //mResultSignal.notify_one();
+            sem_post(&mResultSem);
         }
     }
 
@@ -1206,10 +1207,18 @@ camera_metadata_t *SprdCamera3MetadataChannel::getMetadata(cmr_s32 frame_num) {
         std::unique_lock <std::mutex> lck(mResultLock);
         //Mutex::Autolock lr(mResultLock);
         HAL_LOGD("E");
-        if (mResultSignal.wait_for(lck, std::chrono:: milliseconds (120)) ==
-          std::cv_status::timeout) {
-            HAL_LOGE("timeout wait for mResultSignal");
-        };
+        long msecs = TIMEOUT_FOR_CALLBACK;
+        clock_gettime(CLOCK_REALTIME, &time);
+        long secs = msecs/1000;
+        msecs = msecs%1000;
+        long add = 0;
+        msecs = msecs*1000*1000 + time.tv_nsec;
+        add = msecs / (1000*1000*1000);
+        time.tv_sec += (add + secs);
+        time.tv_nsec = msecs%(1000*1000*1000);
+        if (sem_timedwait(&mResultSem, &time) == TIMED_OUT) {
+            HAL_LOGD("timeout wait for mResultSignal");
+        }
         HAL_LOGV("report frame_num %d mSyncResult size %d", frame_num, mSyncResult.size());
     }
 
@@ -1721,7 +1730,8 @@ int SprdCamera3MetadataChannel::stop(uint32_t frame_number) {
     while(!FrameVec.empty()) {
         std::unique_lock <std::mutex> lck(mResultLock);
         HAL_LOGD("flush mResultSignal push");
-        mResultSignal.notify_one();
+        //mResultSignal.notify_one();
+        sem_post(&mResultSem);
         if(i-- <= 0)
             break;
     }
@@ -1741,5 +1751,6 @@ void SprdCamera3MetadataChannel::clear(){
             free_camera_metadata(it->result);
         it = mSyncResult.erase(it);
     }
+    sem_destroy(&mResultSem);
 }
 }; // namespace sprdcamera
