@@ -72,7 +72,7 @@ extern std::string backtrace_string(const uintptr_t* frames, size_t frame_count)
 extern "C" bool android_mallopt(int opcode, void* arg, size_t arg_size);
 #endif
 
-#ifdef DDEBUG_MALLOC_ON
+#ifdef DEBUG_MALLOC_ON
 extern "C" void get_malloc_leak_info(uint8_t** info, size_t* overall_size, size_t* info_size,
                                        size_t* total_memory, size_t* backtrace_size);
 extern "C" void free_malloc_leak_info(uint8_t* info);
@@ -2595,7 +2595,7 @@ void SprdCamera3HWI::dumpMemoryAddresses(size_t limit){
 }
 #endif
 
-#ifdef CONFIG_DEBUG_MALLOC
+#ifdef DEBUG_MALLOC_ON
 void SprdCamera3HWI::dumpMemoryAddresses(size_t limit) {
     HAL_LOGD("%s: limit = %d", __FUNCTION__,limit);
 
