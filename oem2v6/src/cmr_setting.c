@@ -451,6 +451,9 @@ static cmr_uint camera_param_to_isp(cmr_uint cmd,
     case COM_ISP_SET_EV:
         isp_param->ae_compensation_param = parm->ae_compensation_param;
         break;
+    case COM_ISP_SET_EXPOSURE_TIME:
+        isp_param->cmd_value = out_param*1000;
+        break;
     default:
         isp_param->cmd_value = out_param;
         break;
@@ -472,10 +475,10 @@ static cmr_int setting_isp_ctrl(struct setting_component *cpt, cmr_uint isp_cmd,
 
     if (init_in->setting_isp_ioctl) {
         isp_param.camera_id = parm->camera_id;
-        if(COM_ISP_SET_EXPOSURE_TIME == isp_cmd) {
+        /*if(COM_ISP_SET_EXPOSURE_TIME == isp_cmd) {
             parm->cmd_type_value = parm->cmd_type_value * 1000;
-        }
-	  CMR_LOGD("cmd_type_value=%"PRIu64"",parm->cmd_type_value);
+        }*/
+        CMR_LOGD("cmd_type_value=%"PRIu64"",parm->cmd_type_value);
         camera_param_to_isp(isp_cmd, parm, &isp_param);
         if (isp_cmd == COM_ISP_SET_AE_MODE) {
             hal_param = get_hal_param(cpt, parm->camera_id);
