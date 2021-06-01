@@ -2604,6 +2604,8 @@ int SprdCamera3Setting::getMaxDigitalZoom(uint32_t cameraId)
         maxDigitalZoom[cameraId] = scaler;
     else
         maxDigitalZoom[cameraId] = MAX_DIGITAL_ZOOM_RATIO;
+
+    s_setting[cameraId].scalerInfo.max_digital_zoom = maxDigitalZoom[cameraId];
     HAL_LOGD("cameraId = %d,  max_digital_zoom = %f",
              cameraId, maxDigitalZoom[cameraId]);
     return 0;
