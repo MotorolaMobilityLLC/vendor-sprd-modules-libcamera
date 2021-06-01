@@ -791,7 +791,7 @@ static cmr_int ispalg_set_rgb_gain(cmr_handle isp_fw_handle, void *param)
 	ISP_LOGV("global_gain : %d, r %d g %d b %d\n", gain_info.global_gain,
 		gain_info.r_gain, gain_info.g_gain, gain_info.b_gain);
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &block_info, NULL);
-	if (cxt->remosaic_type) {
+	if (cxt->remosaic_type || cxt->prop_ctrl.is_raw_capture == 1) {
 		block_info.scene_id = PM_SCENE_CAP;
 
 		ISP_LOGV("global_gain : %d, r %d g %d b %d\n", gain_info.global_gain,
