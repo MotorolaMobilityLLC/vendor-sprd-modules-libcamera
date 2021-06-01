@@ -3696,27 +3696,34 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 	float ev_result[2] = {0, 0};
 	ev_result[0] = -cxt->hdr_calc_result.ev[0];
 	ev_result[1] = cxt->hdr_calc_result.ev[1];
-	ISP_LOGD("auto_hdr (cap) ev[0] %f ev[1] %f", ev_result[0], ev_result[1]);
 #endif
 
 	cxt->hdr_frame_cnt++;
 	hdr_callback_flag = MAX((cmr_s8) cxt->hdr_cb_cnt, (cmr_s8) cxt->capture_skip_num);
 	if (cxt->hdr_frame_cnt == hdr_callback_flag) {
 #ifdef CONFIG_SUPPROT_AUTO_HDR
+		if((ISP_ALG_DUAL_C_C == cxt->is_multi_mode) && (CAM_SENSOR_MASTER != cxt->sensor_role)){
+			if (cxt->isp_ops.ae_bokeh_hdr_cb) {
+				(*cxt->isp_ops.ae_bokeh_hdr_cb) (cxt->isp_ops.isp_handler, NULL);
+			}
+			ISP_LOGD("[HDR]is_multi_mode=%d",cxt->is_multi_mode);
+			return;
+		}
 		ae_get_hdr_exp_gain_infor(cxt,&cxt->hdr_exp_gain);
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_START, (void *)ev_result);
+		ISP_LOGD("auto_hdr (cap) ev[0] %f ev[1] %f", ev_result[0], ev_result[1]);
 		memcpy(&cxt->hdr_callback_backup,&cxt->hdr_callback,sizeof(sprd_hdr_detect_out_t));
 		ISP_LOGD("hdr_callback_backup : %d, %"PRIu64"",cxt->hdr_callback_backup.tuning_param_index,cxt->hdr_callback_backup.clock);
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_TUNING_PARAM_INDEX, &cxt->hdr_callback_backup);
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_EXP_GAIN, &cxt->hdr_exp_gain);
-		if (cxt->is_multi_mode && cxt->isp_ops.ae_bokeh_hdr_cb) {
-			(*cxt->isp_ops.ae_bokeh_hdr_cb) (cxt->isp_ops.isp_handler, (void *)ev_result);
-		}
+
 #else
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_START, NULL);
 #endif
 		ISP_LOGD("_isp_hdr_callback do-capture!\r\n");
 	}
+	if((ISP_ALG_DUAL_C_C == cxt->is_multi_mode) && (CAM_SENSOR_MASTER != cxt->sensor_role))
+		return;
 
 	skip_num = cxt->capture_skip_num;
 	ISP_LOGV("skip_num %d", skip_num);
@@ -5442,10 +5449,7 @@ static cmr_s32 ae_get_lowlight_flag_by_bv(struct ae_ctrl_cxt *cxt, cmr_u32 * is_
 
 static cmr_s32 ae_set_hdr_start(struct ae_ctrl_cxt *cxt, void *param)
 {
-	if((ISP_ALG_DUAL_C_C == cxt->is_multi_mode) && (CAM_SENSOR_MASTER != cxt->sensor_role)){
-		ISP_LOGD("[HDR]is_multi_mode=%d",cxt->is_multi_mode);
-	}
-	else if (param) {
+	 if (param) {
 		struct ae_hdr_param *hdr_param = (struct ae_hdr_param *)param;
 		cxt->hdr_enable = hdr_param->hdr_enable;
 		cxt->hdr_cb_cnt = hdr_param->ev_effect_valid_num;
@@ -5463,12 +5467,13 @@ static cmr_s32 ae_set_hdr_start(struct ae_ctrl_cxt *cxt, void *param)
 			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO;
 			cxt->cur_status.adv_param.is_snapshot = 0;
 		}
-		ISP_LOGD("AE_SET_HDR: hdr_enable %d, hdr_cb_cnt %d, expl %d, gain %d, lock_ae_state %d, is_snapshot: %d\n",
+		ISP_LOGD("AE_SET_HDR: hdr_enable %d, hdr_cb_cnt %d, expl %d, gain %d, lock_ae_state %d, is_snapshot: %d cam_id %d\n",
 			cxt->hdr_enable,
 			cxt->hdr_cb_cnt,
 			cxt->hdr_exp_line,
 			cxt->hdr_gain,
-			cxt->cur_status.adv_param.lock, cxt->cur_status.adv_param.is_snapshot);
+			cxt->cur_status.adv_param.lock, cxt->cur_status.adv_param.is_snapshot,
+			cxt->camera_id);
 	}
 
 	return AE_SUCCESS;
