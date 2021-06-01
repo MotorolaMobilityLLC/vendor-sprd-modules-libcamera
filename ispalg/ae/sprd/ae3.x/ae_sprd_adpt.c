@@ -8074,10 +8074,12 @@ static cmr_s32 ae_if_cts_params(struct ae_ctrl_cxt *cxt)
 				ae_set_force_pause(cxt, 0, 5);
 				cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = (cmr_u64)cxt->ae_q_pars[temp_index].ae_up_params.sensitivity * 128 / 50;
 			} else if ((0 == cxt->ae_q_pars[temp_index].ae_up_params.sensitivity) && cxt->ae_q_pars[temp_index].ae_up_params.exp_time) {
+				cxt->manual_exp_time = cxt->ae_q_pars[temp_index].ae_up_params.exp_time;
 				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO_SHUTTER_PRI;
 				ae_set_force_pause(cxt, 0, 4);
 				cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->ae_q_pars[temp_index].ae_up_params.exp_time;
 			} else if (cxt->ae_q_pars[temp_index].ae_up_params.exp_time && cxt->ae_q_pars[temp_index].ae_up_params.sensitivity) {
+				cxt->manual_exp_time = cxt->ae_q_pars[temp_index].ae_up_params.exp_time;
 				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
 				ae_set_force_pause(cxt, 1, 3);
 				cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->ae_q_pars[temp_index].ae_up_params.exp_time;
