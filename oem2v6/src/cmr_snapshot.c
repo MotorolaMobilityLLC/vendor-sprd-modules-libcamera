@@ -213,6 +213,7 @@ enum ips_req_status {
 };
 
 static cmr_u32 dump_all;
+static int s_dbg_ver;
 
 struct snap_request {
 	cmr_u32 used;
@@ -638,14 +639,16 @@ static cmr_int snp_ips_req_proc(struct snp_context *cxt, struct frm_info *frame)
 	if (snp_pm->snap_cnt < snp_pm->total_num)
 		goto post;
 
+	if (!s_dbg_ver)
+		goto save_exif;
+
 	/* save isp debug info  */
 	camera_local_get_isp_info(cxt->oem_handle,
 			&dbg_info, &dbg_info_size, frame->frame_real_id);
 	if (dbg_info && dbg_info_size) {
-		if (snp_req->isp_debug_info) {
+		if (snp_req->isp_debug_info)
 			free(snp_req->isp_debug_info);
-			snp_req->isp_debug_info = NULL;
-		}
+
 		snp_req->isp_debug_info_size = 0;
 		snp_req->isp_debug_info = malloc(dbg_info_size);
 		if (snp_req->isp_debug_info) {
@@ -656,13 +659,17 @@ static cmr_int snp_ips_req_proc(struct snp_context *cxt, struct frm_info *frame)
 		}
 	}
 
+save_exif:
 	/* save JPEG EXIF info and pass jpeg param to ips */
 	cmr_bzero(&setting_param, sizeof(struct setting_cmd_parameter));
 	setting_param.camera_id = cxt->camera_id;
 	ret = cmr_setting_ioctl(cam_cxt->setting_cxt.setting_handle,
-                            SETTING_GET_EXIF_INFO, &setting_param);
+				SETTING_GET_EXIF_INFO, &setting_param);
 	exif_src = setting_param.exif_all_info_ptr;
 	cmr_exifinfo_save(exif_src, &ips_param.exif_data);
+
+	ips_param.isp_debug_info = snp_req->isp_debug_info;
+	ips_param.isp_debug_info_size = snp_req->isp_debug_info_size;
 
 	memcpy(&ips_param.mean, &cxt->chn_param.jpeg_in[0].mean, sizeof(struct cmr_op_mean));
 	update_jpeg_param(snp_pm, &ips_param.mean);
@@ -685,13 +692,6 @@ post:
 		yuv_frm.rect.width = cxt->size_mfnr_aux.width;
 		yuv_frm.rect.height = cxt->size_mfnr_aux.height;
 	}
-    frm_param = (struct swa_frame_param *)yuv_frm.reserved;
-    frm_param->af_ctrl_roi.start_x = cam_cxt->af_roi.sx;
-    frm_param->af_ctrl_roi.start_y = cam_cxt->af_roi.sy;
-    frm_param->af_ctrl_roi.width = cam_cxt->af_roi.ex - cam_cxt->af_roi.sx;
-    frm_param->af_ctrl_roi.height = cam_cxt->af_roi.ey - cam_cxt->af_roi.sy;
-    CMR_LOGD("af_roi: x=%d, y=%d, w=%d, h=%d", frm_param->af_ctrl_roi.start_x, frm_param->af_ctrl_roi.start_y,
-        frm_param->af_ctrl_roi.width, frm_param->af_ctrl_roi.height);
 	cmr_ips_post(cxt->ips_handle, ips_req, &yuv_frm);
 
 	CMR_LOGD("req id %d post frame_id %d, fd 0x%x ghand %p done\n",
@@ -788,6 +788,7 @@ static cmr_int snp_ips_req_thumb(struct snp_context *cxt, void *data)
 		ips_req->request_id, snp_pm->request_id, frame->fd,
 		frame->sec, frame->usec, frame->monoboottime);
 
+	frm_param = (struct swa_frame_param *)frame->zsl_private;
 	offset1 = snp_pm->jpeg_setting.thum_size.width * snp_pm->jpeg_setting.thum_size.height;
 	buf_size = snp_pm->jpeg_setting.thum_size.width * snp_pm->jpeg_setting.thum_size.height * 3 / 2;
 	new_buf.fd = base_buf.fd = 0;
@@ -809,6 +810,8 @@ static cmr_int snp_ips_req_thumb(struct snp_context *cxt, void *data)
 	thumb_frm.addr_phy.addr_y = 0;
 	thumb_frm.addr_phy.addr_u = offset1;
 	mean.is_sync = 1;
+	if (snp_pm->is_mfsr && frm_param)
+		src.rect = frm_param->mfsr_param.frame_crop;
 	ret = cxt->ops.start_scale(cxt->oem_handle, cxt, &src, &thumb_frm, &mean);
 	if (ret) {
 		CMR_LOGE("fail to scaler\n");
@@ -833,7 +836,6 @@ static cmr_int snp_ips_req_thumb(struct snp_context *cxt, void *data)
 		}
 	}
 
-	frm_param = (struct swa_frame_param *)frame->zsl_private;
 	if (frm_param && frm_param->filter_param.filter_type) {
 		struct snap_request snap_thumb_req;
 		struct ips_request_t *new_req = NULL;
@@ -1077,18 +1079,9 @@ static cmr_int snp_ips_req_callback(cmr_handle client_handle,
 		hal_data.frame.monoboottime = frm->monoboottime;
 		encInfo = &hal_data.frame.jpeg_param;
 		encInfo->outPtr = (void *)frm->addr_vir.addr_y;
-		encInfo->size = frm->buf_size + cur_req->isp_debug_info_size;
-		CMR_LOGD("req id %d, jpeg time %04d.%06d s, monotime 0x%llx\n",
-			req->request_id, frm->sec, frm->usec, frm->monoboottime);
-
-		if (cur_req->isp_debug_info && cur_req->isp_debug_info_size) {
-			memcpy((void *)((cmr_uint)encInfo->outPtr + frm->buf_size),
-				cur_req->isp_debug_info,
-				cur_req->isp_debug_info_size);
-			free(cur_req->isp_debug_info);
-			cur_req->isp_debug_info = NULL;
-			cur_req->isp_debug_info_size = 0;
-		}
+		encInfo->size = frm->buf_size;
+		CMR_LOGD("req id %d, jpeg datap %p, size %d, time %04d.%06d s, monotime 0x%llx\n",
+			req->request_id, encInfo->outPtr, encInfo->size, frm->sec, frm->usec, frm->monoboottime);
 
 		timeout = 0;
 		while (cur_req->status != SNAP_REQ_NEXT_READY && timeout < 5000) {
@@ -1179,7 +1172,7 @@ static cmr_int snp_ips_req_callback(cmr_handle client_handle,
 static cmr_int snp_ips_req_preproc(struct snp_context *cxt)
 {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
-	int iret, i, is_mfnr = 0;
+	int iret, i, is_mfnr = 0, is_mfsr = 0;
 	struct camera_context *cam_ctx = cxt->oem_handle;
 	struct ips_request_t *new_req = NULL;
 	struct swa_init_data init_param;
@@ -1202,14 +1195,20 @@ static cmr_int snp_ips_req_preproc(struct snp_context *cxt)
 			(cxt->req_param.is_3dnr == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW)) {
 		new_req->proc_steps[i++].type = IPS_TYPE_MFNR;
 		is_mfnr = 1;
+	} else if (cxt->req_param.is_mfsr) {
+		new_req->proc_steps[i++].type = IPS_TYPE_MFSR;
+		is_mfsr = 1;
 	}
 
 	if (cxt->req_param.nr_flag) {
 		CMR_LOGD("nr_type %d\n", cxt->req_param.nr_flag);
 		new_req->proc_steps[i++].type = IPS_TYPE_CNR;
 	}
+	if (is_mfsr) {
+		new_req->proc_steps[i++].type = IPS_TYPE_SHARP;
+	}
 	if (cxt->req_param.dre_flag) {
-		new_req->proc_steps[i++].type = IPS_TYPE_DRE;
+		new_req->proc_steps[i++].type = IPS_TYPE_DREPRO;
 	}
 	if (cxt->req_param.fb_on) {
 		new_req->proc_steps[i++].type = IPS_TYPE_FB;
@@ -1331,6 +1330,10 @@ static cmr_int snp_ips_stop_proc(struct snp_context *cxt)
 		cxt->snap_req[i].ips_req = NULL;
 		cxt->snap_req[i].recall = 0;
 		cxt->snap_req[i].used = 0;
+		if (cxt->snap_req[i].isp_debug_info)
+			free(cxt->snap_req[i].isp_debug_info);
+		cxt->snap_req[i].isp_debug_info = NULL;
+		cxt->snap_req[i].isp_debug_info_size = 0;
 		CMR_LOGD("detory end\n");
 	}
 	cxt->cur_req = NULL;
@@ -1417,6 +1420,10 @@ cmr_int snp_main_thread_proc(struct cmr_msg *message, void *p_data) {
 			cxt->snap_req[i].ips_req = NULL;
 			cxt->snap_req[i].recall = 0;
 			cxt->snap_req[i].used = 0;
+			if (cxt->snap_req[i].isp_debug_info)
+				free(cxt->snap_req[i].isp_debug_info);
+			cxt->snap_req[i].isp_debug_info = NULL;
+			cxt->snap_req[i].isp_debug_info_size = 0;
 			CMR_LOGD("detory end\n");
 		}
 	}
@@ -6158,6 +6165,8 @@ cmr_int cmr_snapshot_prepare(
 
 	property_get("debug.camera.save.snpfile", value, "0");
 	dump_all = atoi(value);
+	property_get("ro.debuggable", value, "0");
+	s_dbg_ver = !!atoi(value);
 
 	if (!cxt || !param) {
 		CMR_LOGE("fail to get valid ptr\n");

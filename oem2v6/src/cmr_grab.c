@@ -807,6 +807,33 @@ exit:
     return ret;
 }
 
+cmr_int cmr_grab_cfg_ch_crop(cmr_handle grab_handle,
+	cmr_u32 ch_id, struct img_rect *crop) {
+	cmr_int ret = 0;
+	struct cmr_grab *p_grab = (struct cmr_grab *)grab_handle;
+	struct sprd_img_parm parm;
+
+	if (p_grab == NULL || crop == NULL) {
+		CMR_LOGE("fail to get valid in ptr %p %p", p_grab, crop);
+		return CMR_CAMERA_FAIL;
+	}
+
+	parm.channel_id = ch_id;
+	parm.crop_rect.x = crop->start_x;
+	parm.crop_rect.y = crop->start_y;
+	parm.crop_rect.w = crop->width;
+	parm.crop_rect.h = crop->height;
+	ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_CROP, &parm);
+	if (ret) {
+		CMR_LOGE("SPRD_IMG_IO_SET_CROP failed, ret = %ld", ret);
+		return ret;
+	}
+	CMR_LOGD("ch_id %d, crop_rect: %d %d %d %d\n", ch_id,
+			parm.crop_rect.x, parm.crop_rect.y,
+			parm.crop_rect.w, parm.crop_rect.h);
+	return ret;
+}
+
 cmr_int cmr_grab_3dnr_cfg(cmr_handle grab_handle, cmr_u32 channel_id,
                           cmr_u32 need_3dnr) {
     cmr_int ret = 0;

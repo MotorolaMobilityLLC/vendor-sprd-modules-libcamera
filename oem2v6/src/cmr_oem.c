@@ -101,6 +101,10 @@ static multiCameraMode is_multi_camera_mode_oem;
 static uint8_t is_dual_video_mode = 0;
 static uint8_t master_id_oem = 0;
 
+static uint32_t s_mfsr_force_off;
+static float s_mfsr_ratiol = 1.99999999;
+static float s_mfsr_ratioh = 15.99999999;
+
 static void camera_send_channel_data(cmr_handle oem_handle,
                                      cmr_handle receiver_handle, cmr_uint evt,
                                      void *data);
@@ -2052,6 +2056,66 @@ static cmr_int camera_ips_get_params(struct camera_context *cxt,
 	CMR_LOGD("nr_type %d  param %p, nr_bypass %d %d %d\n", nr_type, frm_param,
 		frm_param->cnr2_info.bypass, frm_param->ynrs_info.bypass, frm_param->cnr3_info.bypass);
 
+	/* get mfsr param */
+	if (cxt->snp_cxt.is_mfsr) {
+		struct img_rect frame_crop, crop_x, crop1;
+		float x, y, w, h, ratio;
+
+		ret = camera_isp_ioctl(cxt, COM_ISP_GET_MFSR_PARAM, &isp_param);
+		if (ret) {
+			CMR_LOGE("fail to get mfsr param\n");
+		} else {
+			frm_param->mfsr_param.data = isp_param.isp_blk_param.param_ptr;
+			frm_param->mfsr_param.data_size = isp_param.isp_blk_param.param_size;
+		}
+		frm_param->mfsr_param.frame_size = cxt->snp_cxt.request_size;
+
+		crop_x = cxt->snp_cxt.zoom_param.zoom_info.crop_region;
+		crop1 = cxt->snp_cxt.zoom_param_1x.zoom_info.crop_region;
+		ratio = 1.0 * frm_param->mfsr_param.frame_size.width / crop1.width;
+		x = (crop_x.start_x - crop1.start_x) * 1.0 * ratio;
+		w = crop_x.width * ratio;
+
+		ratio = 1.0 * frm_param->mfsr_param.frame_size.height / crop1.height;
+		y = (crop_x.start_y - crop1.start_y) * 1.0 * ratio;
+		h = crop_x.height * ratio;
+
+		frame_crop.start_x = ((cmr_u32)(x + 0.5) & ~1);
+		frame_crop.start_y = ((cmr_u32)(y + 0.5) & ~1);
+		frame_crop.width = ((cmr_u32)(w + 0.5) & ~1);
+		frame_crop.height = ((cmr_u32)(h + 0.5) & ~1);
+
+		frm_param->mfsr_param.frame_crop = frame_crop;
+		CMR_LOGD("frame size %d %d, crop (%d %d %d %d) 1x crop(%d %d %d %d), cur crop(%d %d %d %d) ratio %f\n",
+			frm_param->mfsr_param.frame_size.width, frm_param->mfsr_param.frame_size.height,
+			frm_param->mfsr_param.frame_crop.start_x, frm_param->mfsr_param.frame_crop.start_y,
+			frm_param->mfsr_param.frame_crop.width, frm_param->mfsr_param.frame_crop.height,
+			crop1.start_x, crop1.start_y, crop1.width, crop1.height,
+			crop_x.start_x, crop_x.start_y, crop_x.width, crop_x.height, ratio);
+
+		while ((frame_crop.width * 2) > frm_param->mfsr_param.frame_size.width) {
+			frame_crop.width -= 2;
+		}
+		while ((frame_crop.width * 10) < frm_param->mfsr_param.frame_size.width) {
+			frame_crop.width += 2;
+		}
+
+		while ((frame_crop.height * 2) > frm_param->mfsr_param.frame_size.height) {
+			frame_crop.height -= 2;
+		}
+		while ((frame_crop.height * 10) < frm_param->mfsr_param.frame_size.height) {
+			frame_crop.height += 2;
+		}
+
+		frm_param->mfsr_param.frame_crop = frame_crop;
+		CMR_LOGD("frame size %d %d, crop (%d %d %d %d) 1x crop(%d %d %d %d), cur crop(%d %d %d %d) ratio %f\n",
+			frm_param->mfsr_param.frame_size.width, frm_param->mfsr_param.frame_size.height,
+			frm_param->mfsr_param.frame_crop.start_x, frm_param->mfsr_param.frame_crop.start_y,
+			frm_param->mfsr_param.frame_crop.width, frm_param->mfsr_param.frame_crop.height,
+			crop1.start_x, crop1.start_y, crop1.width, crop1.height,
+			crop_x.start_x, crop_x.start_y, crop_x.width, crop_x.height, ratio);
+	}
+
 	/* get dre param */
 	if (cxt->dre_flag) {
 		ret = camera_isp_ioctl(cxt, COM_ISP_GET_DRE_PRO_PARAM, &isp_param);
@@ -2097,6 +2161,10 @@ static cmr_int camera_ips_get_params(struct camera_context *cxt,
 			}
 		}
 	}
+	frm_param->af_ctrl_roi.start_x = cxt->af_roi.sx;
+	frm_param->af_ctrl_roi.start_y = cxt->af_roi.sy;
+	frm_param->af_ctrl_roi.width = cxt->af_roi.ex - cxt->af_roi.sx;
+	frm_param->af_ctrl_roi.height = cxt->af_roi.ey - cxt->af_roi.sy;
 
 	if (cxt->snp_cxt.fb_on == 0) {
 		frm_param->fb_info.bypass = 1;
@@ -2180,8 +2248,8 @@ static cmr_int camera_ips_proc(struct camera_context *cxt, struct frm_info *frm)
 		cxt->snp_cxt.snap_cnt = 0;
 		CMR_LOGI("zsl_ips_en, total %d is enough, stop cap\n", cxt->snp_cxt.total_num);
 
-		threednr_flag = camera_get_3dnr_flag(cxt);
-		if (camera_get_hdr_flag(cxt)) {
+		threednr_flag = cxt->snp_cxt.sprd_3dnr_type;
+		if (cxt->snp_cxt.is_hdr) {
 			isp_param.cmd_value = 0;
 			ret = camera_isp_ioctl(cxt, COM_ISP_SET_HDR, (void *)&isp_param);
 			if (ret)
@@ -2190,7 +2258,7 @@ static cmr_int camera_ips_proc(struct camera_context *cxt, struct frm_info *frm)
 				CMR_LOGD("ips enable set hdr ev stop\n");
 			memset(&setting_param, 0, sizeof(struct setting_cmd_parameter));
 			ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                                SETTING_CLEAR_HDR, &setting_param);
+						SETTING_CLEAR_HDR, &setting_param);
 			if (ret)
 				CMR_LOGD("failt to clear HDR setting\n");
 		} else if (threednr_flag == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
@@ -2199,7 +2267,35 @@ static cmr_int camera_ips_proc(struct camera_context *cxt, struct frm_info *frm)
 			ret = camera_3dnr_set_ev((cmr_handle)cxt, 0);
 			if (ret)
 				CMR_LOGE("fail to set 3dnr ev stop\n");
+		} else if (cxt->snp_cxt.is_mfsr) {
+			cmr_u32 isp_scene = ISP_AUTO;
+			struct img_rect crop_x;
+			struct cmr_zoom zoom_factor;
+			float aspect_ratio = 1.0 * cxt->snp_cxt.request_size.width / cxt->snp_cxt.request_size.height;
+
+			ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_SCENE_MODE, &isp_scene);
+			if (ret)
+				CMR_LOGE("fail to isp set auto scene\n");
+
+			cmr_preview_get_zoom_factor(cxt->prev_cxt.preview_handle,
+						cxt->camera_id, &zoom_factor);
+			crop_x.start_x = 0;
+			crop_x.start_y = 0;
+			crop_x.width = cxt->sn_cxt.cur_sn_size.width;
+			crop_x.height = cxt->sn_cxt.cur_sn_size.height;
+			ret = camera_get_trim_rect2(&crop_x, zoom_factor.zoom_setting.zoom_info.capture_aspect_ratio,
+						aspect_ratio, crop_x.width, crop_x.height, 0);
+			if (ret)
+				CMR_LOGE("fail to get trim rect2\n");
+
+			CMR_LOGD("restore crop for %f (%d %d %d %d)\n",
+				zoom_factor.zoom_setting.zoom_info.capture_aspect_ratio,
+				crop_x.start_x, crop_x.start_y, crop_x.width, crop_x.height);
+			ret = cmr_grab_cfg_ch_crop(cxt->grab_cxt.grab_handle, cxt->snp_cxt.channel_id, &crop_x);
+			if (ret)
+				CMR_LOGE("fail to cmr_grab_cfg_ch_crop\n");
 		}
+
 		if (cxt->skipframe) {
 			camera_snapshot_set_ev(cxt, 0, SNAPSHOT_NULL);
 			cxt->skipframe = 0;
@@ -4395,7 +4491,7 @@ cmr_u32 camera_get_hdr_flag(struct camera_context *cxt) {
     // sem_wait(&cxt->hdr_flag_sm);
     hdr_flag = cxt->snp_cxt.is_hdr;
     // sem_post(&cxt->hdr_flag_sm);
-    CMR_LOGD("%d", hdr_flag);
+    CMR_LOGV("%d", hdr_flag);
     return hdr_flag;
 }
 
@@ -11407,6 +11503,12 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         CMR_LOGD("set app mode id = %d", param_ptr->cmd_value);
         break;
 
+    case COM_ISP_GET_MFSR_PARAM:
+        isp_cmd = ISP_CTRL_GET_MFSR_PARAM;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&param_ptr->isp_blk_param;
+        break;
+
     case COM_ISP_GET_CNR3_PARAM:
         isp_cmd = ISP_CTRL_GET_CNR3_PARAM;
         ptr_flag = 1;
@@ -12523,9 +12625,8 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     struct jpeg_context *jpeg_cxt = &cxt->jpeg_cxt;
     struct setting_context *setting_cxt = &cxt->setting_cxt;
     struct setting_cmd_parameter setting_param;
-    cmr_int i;
     struct common_isp_cmd_param isp_cmd_parm;
-    cmr_u32 gtm_on = 0;
+    cmr_u32 gtm_on = 0, app_mode = CAMERA_MODE_AUTO_PHOTO;
     cmr_u32 is_need_flash = 0;
 
     out_ptr->snap_cnt = 0;
@@ -12541,7 +12642,15 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     out_ptr->is_pipviv_mode = cxt->is_pipviv_mode;
     out_ptr->is_3dcalibration_mode = cxt->is_3dcalibration_mode;
     out_ptr->is_ultrawide = cxt->is_ultra_wide;
+
     setting_param.camera_id = cxt->camera_id;
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_APPMODE,
+                            &setting_param);
+    if (ret)
+        CMR_LOGE("failed to get app mode %ld", ret);
+    else
+        app_mode = (cmr_u32)setting_param.cmd_type_value;
+    CMR_LOGD("app_mode = %d", app_mode);
 
     ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                             CAMERA_PARAM_SPRD_SUPER_MACROPHOTO_PARAM, &setting_param);
@@ -12620,6 +12729,45 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
         camera_set_3dnr_flag(cxt, 0);
         out_ptr->is_3dnr = 0;
     }
+
+	out_ptr->is_mfsr = 0;
+	cxt->snp_cxt.is_mfsr = 0;
+	if ((s_mfsr_force_off == 0) && !is_need_flash &&
+		(out_ptr->is_fdr == 0) && (out_ptr->is_hdr == 0) && (out_ptr->is_3dnr == 0)) {
+		struct cmr_zoom zoom_factor;
+		float zoom_ratio;
+
+		cmr_preview_get_zoom_factor(cxt->prev_cxt.preview_handle,
+				cxt->camera_id, &zoom_factor);
+		out_ptr->zoom_param = zoom_factor.zoom_setting;
+		zoom_ratio = zoom_factor.zoom_setting.zoom_info.capture_aspect_ratio;
+
+		if (1) { /* TODO - delete it later. For DEBUG/TEST only */
+			char value[PROPERTY_VALUE_MAX];
+			static int cap_count, force_zoom = 0;
+			property_get("debug.camera.mfsr.force.zoom", value, "0");
+			force_zoom = atoi(value);
+			if (force_zoom && (zoom_ratio < s_mfsr_ratiol)) {
+				if ((cap_count % 3) == 0) {
+					out_ptr->zoom_param.zoom_info.zoom_ratio = zoom_ratio * 2.22222;
+					out_ptr->zoom_param.zoom_info.capture_aspect_ratio = zoom_ratio * 2.22222;
+					out_ptr->zoom_param.zoom_info.prev_aspect_ratio = zoom_ratio * 2.22222;
+					CMR_LOGD("zoom_ratio %f, new %f\n", zoom_ratio, out_ptr->zoom_param.zoom_info.capture_aspect_ratio);
+					zoom_ratio = out_ptr->zoom_param.zoom_info.capture_aspect_ratio;
+				}
+				cap_count++;
+			}
+		}
+
+		cxt->snp_cxt.zoom_param = out_ptr->zoom_param;
+
+		if ((zoom_ratio > s_mfsr_ratiol) && (zoom_ratio < s_mfsr_ratioh)) {
+			out_ptr->is_mfsr = 1;
+			cxt->snp_cxt.is_mfsr = 1;
+		}
+		CMR_LOGD("set ratio range (%f ~ %f), cur_ratio %f, is_mfsr %d",
+				s_mfsr_ratiol, s_mfsr_ratioh, zoom_ratio, out_ptr->is_mfsr);
+	}
 
     ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                             SETTING_GET_SHOT_NUMBER, &setting_param);
@@ -12700,46 +12848,22 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
         CMR_LOGD("gtm on %d\n", cxt->gtm_flag);
     }
 
+    out_ptr->dre_flag = 0;
+    cxt->dre_flag = 0;
+    cxt->predre_flag = 0;
 #ifdef CONFIG_CAMERA_DRE_PRO
-    setting_param.camera_id = cxt->camera_id;
-    ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_APPMODE,
-                            &setting_param);
-    if (ret) {
-        CMR_LOGE("failed to get app mode %ld", ret);
-    }
-    CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
-
     ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_DRE_PRO_PARAM, &isp_cmd_parm);
     if (ret) {
-        CMR_LOGE("there is no dre parameters for camera id =%d",
-                 cxt->camera_id);
-    }
-
-    if ((setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO ||
-         setting_param.cmd_type_value == CAMERA_MODE_BACK_ULTRA_WIDE ||
-         setting_param.cmd_type_value == CAMERA_MODE_3DNR_PHOTO) &&
-        ret == CMR_CAMERA_SUCCESS && !cxt->snp_cxt.is_fdr && camera_get_hdr_flag(cxt) == 0) {
+        CMR_LOGI("there is no dre parameters for camera id =%d", cxt->camera_id);
+    } else if ((app_mode == CAMERA_MODE_AUTO_PHOTO ||
+         app_mode == CAMERA_MODE_NIGHT_PHOTO ||
+         app_mode == CAMERA_MODE_BACK_ULTRA_WIDE ||
+         app_mode == CAMERA_MODE_3DNR_PHOTO) &&
+         !cxt->snp_cxt.is_mfsr && !cxt->snp_cxt.is_fdr && !cxt->snp_cxt.is_hdr) {
         // dre available
         out_ptr->dre_flag = 1;
         cxt->dre_flag = 1;
         cxt->predre_flag = isp_cmd_parm.dre_param.predre_param.enable;
-    } else {
-        out_ptr->dre_flag = 0;
-        cxt->dre_flag = 0;
-    }
-#else
-    out_ptr->dre_flag = 0;
-    cxt->dre_flag = 0;
-#endif
-
-#ifdef CONFIG_CAMERA_DRE_PRO
-    setting_param.camera_id = cxt->camera_id;
-    ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_APPMODE,
-                            &setting_param);
-    if (setting_param.cmd_type_value == CAMERA_MODE_NIGHT_PHOTO ||
-        setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO) {
-        out_ptr->dre_flag = 1;
-        cxt->dre_flag = 1;
     }
 #endif
 
@@ -12774,6 +12898,10 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     out_ptr->jpeg_setting = jpeg_cxt->param;
     out_ptr->req_size = cxt->snp_cxt.request_size;
     out_ptr->channel_id = cxt->snp_cxt.channel_id;
+
+    if (is_need_flash || out_ptr->is_hdr || out_ptr->is_fdr ||
+            out_ptr->is_3dnr || out_ptr->is_mfsr)
+        cxt->gtm_flag = 0;
 
     if (out_ptr->filter_type == 0) {
         struct isp_beauty_levels levels, *fb_level;
@@ -13485,8 +13613,8 @@ static void show_snap_param(struct snapshot_param *p)
 		    p->ee_flag,
 		    p->dre_flag);
 
-	CMR_LOGI("req size %d %d, zoom info %d %d.  %f %f %f %f\n",
-		p->req_size.width, p->req_size.height,
+	CMR_LOGI("req size %d %d, mfsr %d, zoom info %d %d.  %f %f %f %f\n",
+		p->req_size.width, p->req_size.height, p->is_mfsr,
 		p->zoom_param.mode, p->zoom_param.zoom_level,
 		p->zoom_param.zoom_info.zoom_ratio,
 		p->zoom_param.zoom_info.prev_aspect_ratio,
@@ -13558,6 +13686,7 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     struct setting_cmd_parameter setting_param;
     struct common_isp_cmd_param isp_param;
     struct snapshot_param snp_param;
+    cmr_u32 app_mode = CAMERA_MODE_AUTO_PHOTO;
     char value[PROPERTY_VALUE_MAX] = {0};
 
     cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
@@ -13573,14 +13702,16 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                             SETTING_GET_ZSL_IPS_ENABLE, &setting_param);
     cxt->zsl_ips_en = (cmr_u32)setting_param.cmd_type_value;
-    CMR_LOGD("zsl_ips_en %d\n", cxt->zsl_ips_en);
 
     ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_APPMODE,
                             &setting_param);
     if (ret) {
         CMR_LOGE("failed to get app mode %ld", ret);
+    } else {
+        app_mode = setting_param.cmd_type_value;
     }
-    CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
+    CMR_LOGD("zsl_ips_en %d app_mode = %d", cxt->zsl_ips_en, app_mode);
+
     cxt->night_flag = 0;
     if (setting_param.cmd_type_value == CAMERA_MODE_3DNR_PHOTO) {
         cxt->night_flag = 1;
@@ -13593,17 +13724,8 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     }
     property_get("persist.vendor.cam.ai.scence.enable", value, "0");
     if (atoi(value)) {
-        cmr_bzero(&setting_param, sizeof(setting_param));
-        setting_param.camera_id = cxt->camera_id;
-        ret = cmr_setting_ioctl(setting_cxt->setting_handle,
-                                SETTING_GET_APPMODE, &setting_param);
-        if (ret) {
-            CMR_LOGE("failed to get app mode %ld", ret);
-            goto exit;
-        }
-        CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
-        if ((setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO ||
-           setting_param.cmd_type_value == CAMERA_MODE_3DNR_PHOTO) &&
+        if ((app_mode == CAMERA_MODE_AUTO_PHOTO ||
+             app_mode == CAMERA_MODE_3DNR_PHOTO) &&
             (setting_param.camera_id == 0 ||
              cxt->is_multi_mode == MODE_MULTI_CAMERA ||
              cxt->is_multi_mode == MODE_FOV_FUSION)) {
@@ -13628,15 +13750,11 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
         CMR_LOGE("failed to start prev %ld", ret);
     }
 
-    cmr_bzero(&setting_param, sizeof(setting_param));
-    setting_param.camera_id = cxt->camera_id;
-    ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_APPMODE,
-                            &setting_param);
-    if (!ret && (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO ||
-            setting_param.cmd_type_value == CAMERA_MODE_BACK_ULTRA_WIDE))
-         isp_param.cmd_value = 1;
+    if (app_mode == CAMERA_MODE_AUTO_PHOTO ||
+            app_mode == CAMERA_MODE_BACK_ULTRA_WIDE)
+        isp_param.cmd_value = 1;
     else
-	 isp_param.cmd_value = 0;
+        isp_param.cmd_value = 0;
     ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_GTM_ONFF, (void *)&isp_param);
 
     cxt->camera_mode = mode;
@@ -13653,6 +13771,28 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     if (snp_param.is_fdr)
         cmr_preview_realloc_buffer_for_fdr(cxt->prev_cxt.preview_handle,
                 cxt->camera_id, (cxt->swa_cxt_fdr.version == FDR_VERSION_1) ? 1 : 0);
+
+    /* init debug ctrl */
+    s_mfsr_force_off = 1;
+#ifdef CONFIG_CAMERA_MFSR_CAPTURE
+    if (cxt->zsl_ips_en && (app_mode == CAMERA_MODE_AUTO_PHOTO)) {
+        ret = camera_isp_ioctl(cxt, COM_ISP_GET_MFSR_PARAM, &isp_param);
+        if (ret || isp_param.isp_blk_param.param_ptr == NULL) {
+            CMR_LOGE("fail to get mfsr param\n");
+            s_mfsr_force_off = 1;
+        }
+        property_get("debug.camera.mfsr.force_off", value, "2");
+        if (atoi(value) < 2)
+            s_mfsr_force_off = atoi(value);
+        property_get("debug.camera.mfsr.ratio.low", value, "0");
+        if (atoi(value) != 0)
+            s_mfsr_ratiol = (atoi(value)) / 10.0 - 0.00000001;
+        property_get("debug.camera.mfsr.ratio.high", value, "0");
+        if (atoi(value) != 0)
+            s_mfsr_ratioh = (atoi(value)) / 10.0 + 0.00000001;
+        CMR_LOGD("s_mfsr_force_off %d, ratio (%f ~ %f)\n", s_mfsr_force_off, s_mfsr_ratiol, s_mfsr_ratioh);
+    }
+#endif
 
 #ifdef CONFIG_FACE_BEAUTY
     if (cxt->video_face_beauty_en) {
@@ -13992,12 +14132,54 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
                 snp_param.is_3dnr == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {
             snp_param.total_num = 5;
             cxt->snp_cxt.total_num = 5;
+        } else if (snp_param.is_mfsr) {
+            cmr_u32 isp_scene = ISP_ZOOM;
+            snp_param.total_num = 5;
+            cxt->snp_cxt.total_num = 5;
+            ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_SCENE_MODE, &isp_scene);
+            if (ret)
+                CMR_LOGE("fail to isp set zoom scene\n");
         }
         snp_param.request_id = req->request_id;
         snp_param.zsl_snap_time = req->zsl_snap_time;
-        CMR_LOGD("ips request id %d, hdr %d, 3dnr %d, frame_num %d\n",
-            req->request_id, snp_param.is_hdr, snp_param.is_3dnr, snp_param.total_num);
+        CMR_LOGD("ips request id %d, hdr %d, 3dnr %d, mfsr %d, frame_num %d\n",
+            req->request_id, snp_param.is_hdr, snp_param.is_3dnr,
+            snp_param.is_mfsr, snp_param.total_num);
     }
+
+	if (cxt->snp_cxt.is_mfsr) {
+		struct img_rect crop_x, crop_1;
+		float zoom_ratio, aspect_ratio;
+		cxt->snp_cxt.zoom_param_1x = cxt->snp_cxt.zoom_param;
+		cxt->snp_cxt.zoom_param_1x.zoom_info.capture_aspect_ratio = 1.0;
+		crop_1.start_x = 0;
+		crop_1.start_y = 0;
+		crop_1.width = cxt->sn_cxt.cur_sn_size.width;
+		crop_1.height = cxt->sn_cxt.cur_sn_size.height;
+		crop_x = crop_1;
+
+		aspect_ratio = 1.0 * snp_param.req_size.width / snp_param.req_size.height;
+		zoom_ratio = 1.0;
+		ret = camera_get_trim_rect2(&crop_1, zoom_ratio, aspect_ratio, crop_1.width, crop_1.height, 0);
+		if (ret)
+			CMR_LOGE("fail to get trim rect2\n");
+
+		zoom_ratio = cxt->snp_cxt.zoom_param.zoom_info.capture_aspect_ratio;
+		ret = camera_get_trim_rect2(&crop_x, zoom_ratio, aspect_ratio, crop_x.width, crop_x.height, 0);
+		if (ret)
+			CMR_LOGE("fail to get trim rect2\n");
+
+		cxt->snp_cxt.zoom_param.zoom_info.crop_region = crop_x;
+		cxt->snp_cxt.zoom_param_1x.zoom_info.crop_region = crop_1;
+		CMR_LOGD("crop for 1.0 (%d %d %d %d), for %f (%d %d %d %d)\n",
+			crop_1.start_x, crop_1.start_y, crop_1.width, crop_1.height, zoom_ratio,
+			crop_x.start_x, crop_x.start_y, crop_x.width, crop_x.height);
+
+		ret = cmr_grab_cfg_ch_crop(cxt->grab_cxt.grab_handle, cxt->snp_cxt.channel_id, &crop_1);
+		if (ret)
+			CMR_LOGE("fail to cmr_grab_cfg_ch_crop\n");
+	}
+
     show_snap_param(&snp_param);
 
     ret = cmr_snapshot_post_proc(cxt->snp_cxt.snapshot_handle, &snp_param);
@@ -16296,6 +16478,10 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         } else {
             return ret;
         }
+    } else if (cxt->snp_cxt.is_mfsr) {
+        capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
+        capture_param.cap_cnt = cxt->snp_cxt.total_num;
+        capture_param.cap_scene = CAPTURE_COMMON;
     } else if (cxt->skipframe == 1) {
         // need get 1 frame start from next sof interrupt
         capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;

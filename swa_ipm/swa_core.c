@@ -21,7 +21,6 @@
 #include "sprd_img_warp.h"
 #include "mfnr_adapt_interface.h"
 #include "sprd_yuv_denoise_adapter.h"
-//#include "sprd_dre_adapter.h"
 #include "sprd_dre_adapter_pro.h"
 #include "sprd_facebeauty_adapter.h"
 #include "imagefilter_interface.h"
@@ -613,6 +612,307 @@ int swa_mfnr_close(void * ipmpro_hanlde,
 
 
 
+#ifdef CONFIG_CAMERA_MFSR_CAPTURE
+
+struct mfsr_context_t {
+	uint32_t frame_num;
+	uint32_t frame_cnt;
+	uint32_t pic_w;
+	uint32_t pic_h;
+	mfsr_exif_t exif_info;
+	void * mfsr_handle;
+};
+
+int swa_mfsr_get_handle_size()
+{
+	return sizeof(struct mfsr_context_t);
+}
+
+int swa_mfsr_open(void *ipmpro_hanlde,
+			void * open_param, enum swa_log_level log_level)
+{
+	int ret = 0;
+	struct mfsr_context_t *cxt = (struct mfsr_context_t *)ipmpro_hanlde;
+	struct swa_init_data *init_param = (struct swa_init_data *)open_param;
+	MFSR_CMD_OPEN_PARAM_T cmd_param;
+	mfsr_open_param mfsr_param;
+	MFSR_CMD_GET_VERSION_PARAM_T cmd_ver;
+	mfsr_lib_version lib_version;
+
+	if (!cxt || !init_param) {
+		SWA_LOGE("fail to get input ptr %p %p\n", cxt, init_param);
+		return -1;
+	}
+
+	cmd_ver.lib_version = &lib_version;
+	ret = sprd_mfsr_adapter_ctrl(MFSR_CMD_GET_VERSION, &cmd_ver);
+	if (ret) {
+		SWA_LOGE("fail to get mfsr version\n");
+		return -1;
+	}
+	SWA_LOGD("mfsr version %d.%d.%d.%d, build date %s, time %s rev %s\n",
+		lib_version.major, lib_version.minor, lib_version.micro, lib_version.nano,
+		lib_version.built_date, lib_version.built_time, lib_version.built_rev);
+
+	cxt->pic_w = init_param->frame_size.width;
+	cxt->pic_h = init_param->frame_size.height;
+	cxt->frame_num = init_param->frm_total_num;
+
+	memset(&mfsr_param, 0, sizeof(mfsr_open_param));
+	mfsr_param.max_width = init_param->frame_size.width;
+	mfsr_param.max_height = init_param->frame_size.height;
+	mfsr_param.tuning_param = init_param->pri_data;
+	mfsr_param.tuning_param_size = init_param->pri_data_size;
+	mfsr_param.sr_mode = 0;
+	cmd_param.ctx = &cxt->mfsr_handle;
+	cmd_param.param = &mfsr_param;
+
+	ret = sprd_mfsr_adapter_ctrl(MFSR_CMD_OPEN, &cmd_param);
+	if (ret || (*cmd_param.ctx) == NULL) {
+		SWA_LOGE("fail to init mfsr\n");
+		return -1;
+	}
+	SWA_LOGD("done. handle %p\n", cxt->mfsr_handle);
+
+	return 0;
+}
+
+int swa_mfsr_process(void * ipmpro_hanlde,
+			struct swa_frames_inout *in,
+			struct swa_frames_inout *out,
+			void * param)
+{
+	int ret = 0;
+	struct mfsr_context_t *cxt = NULL;
+	struct swa_frame_param *frm_param;
+	struct swa_frame *frm_in, *frm_out, *frm_detail;
+	MFSR_CMD_PROCESS_PARAM_T cmd_param;
+	mfsr_process_param proc_param;
+	sprd_camalg_image_t image_in;
+	sprd_camalg_image_t image_out, image_detail;
+	MFSR_CMD_GET_EXIF_PARAM_T cmd_exif;
+
+	if (ipmpro_hanlde == NULL || in == NULL || out == NULL) {
+		SWA_LOGE("fail to get input %p %p %p\n", ipmpro_hanlde, in, out);
+		return -1;
+	}
+
+	cxt = (struct mfsr_context_t *)ipmpro_hanlde;
+	frm_param = (struct swa_frame_param *)param;
+
+	frm_in = &in->frms[0];
+	frm_out = &out->frms[0];
+	frm_detail = &out->frms[1];
+
+	proc_param.gain = 1.0 * frm_param->common_param.again;
+	proc_param.exposure_time = 1.0 * frm_param->common_param.exp_time;
+	proc_param.crop_area.x = frm_param->mfsr_param.frame_crop.start_x;
+	proc_param.crop_area.y = frm_param->mfsr_param.frame_crop.start_y;
+	proc_param.crop_area.w = frm_param->mfsr_param.frame_crop.width;
+	proc_param.crop_area.h = frm_param->mfsr_param.frame_crop.height;
+
+	memset(&image_in, 0, sizeof(sprd_camalg_image_t));
+	image_in.format = SPRD_CAMALG_IMG_NV21;
+	image_in.ion_fd = frm_in->fd;
+	image_in.addr[0] = (void *)frm_in->addr_vir[0];
+	image_in.addr[1] = (void *)frm_in->addr_vir[1];
+	image_in.width = frm_in->size.width;
+	image_in.height = frm_in->size.height;
+	image_in.stride = frm_in->size.width;
+	image_in.size = image_in.width * image_in.height * 3 / 2;
+
+	memcpy(&image_out, &image_in, sizeof(sprd_camalg_image_t));
+	image_out.ion_fd = frm_out->fd;
+	image_out.addr[0] = (void *)frm_out->addr_vir[0];
+	image_out.addr[1] = (void *)frm_out->addr_vir[1];
+
+	memcpy(&image_detail, &image_in, sizeof(sprd_camalg_image_t));
+	image_detail.ion_fd = frm_detail->fd;
+	image_detail.addr[0] = (void *)frm_detail->addr_vir[0];
+	image_detail.addr[1] = (void *)frm_detail->addr_vir[1];
+
+	cmd_param.ctx = &cxt->mfsr_handle;
+	cmd_param.image_input = &image_in;
+	cmd_param.image_output = &image_out;
+	cmd_param.detail_mask = &image_detail;
+	cmd_param.denoise_mask = NULL;
+	cmd_param.process_param = &proc_param;
+
+	SWA_LOGD("in fd 0x%x, addr %p, %p, out fd 0x%x, addr %p %p, detail fd 0x%x, addr %p %p\n",
+		image_in.ion_fd, image_in.addr[0], image_in.addr[1],
+		image_out.ion_fd, image_out.addr[0], image_out.addr[1],
+		image_detail.ion_fd, image_detail.addr[0], image_detail.addr[1]);
+	SWA_LOGD("param gain %f, exp time %f, size %d %d, crop %d %d %d %d\n",
+		proc_param.gain, proc_param.exposure_time, image_in.width, image_in.height,
+		proc_param.crop_area.x, proc_param.crop_area.y,
+		proc_param.crop_area.w, proc_param.crop_area.h);
+
+	ret = sprd_mfsr_adapter_ctrl(MFSR_CMD_PROCESS, &cmd_param);
+	if (ret )
+		SWA_LOGE("Fail to call mfsr process capture, ret =%d", ret);
+
+	cxt->frame_cnt++;
+	if (cxt->frame_cnt < cxt->frame_num)
+		goto exit;
+
+	cmd_exif.ctx = &cxt->mfsr_handle;
+	cmd_exif.exif_info = &cxt->exif_info;
+
+	ret = sprd_mfsr_adapter_ctrl(MFSR_CMD_GET_EXIF, &cmd_exif);
+	if (ret )
+		SWA_LOGE("Fail to call mfsr get exif, ret =%d",ret);
+
+	SWA_LOGD("exif %d, %d %d, (%d %d) (%d %d), gain %f ex time %f, ratio %f %f\n",
+		cxt->exif_info.version,
+		cxt->exif_info.merge_num, cxt->exif_info.sharpen_field,
+		cxt->exif_info.im_input_w, cxt->exif_info.im_input_h,
+		cxt->exif_info.im_output_w, cxt->exif_info.im_output_h,
+		cxt->exif_info.gain, cxt->exif_info.exposure_time,
+		cxt->exif_info.scale, cxt->exif_info.sharpen_level);
+	frm_param->mfsr_param.out_exif_ptr = &cxt->exif_info;
+	frm_param->mfsr_param.out_exif_size = sizeof(mfsr_exif_t);
+
+exit:
+	SWA_LOGD("frame no.%d done\n", cxt->frame_cnt);
+	return ret;
+}
+
+
+int swa_mfsr_close(void * ipmpro_hanlde,
+			void * close_param)
+{
+	int ret = 0;
+	struct mfsr_context_t *cxt = (struct mfsr_context_t *)ipmpro_hanlde;
+	MFSR_CMD_CLOSE_PARAM_T cmd_param;
+
+	if (ipmpro_hanlde == NULL)
+		return -1;
+
+	SWA_LOGD("mfsr handle %p\n", cxt->mfsr_handle);
+	if (cxt->mfsr_handle == NULL)
+		return ret;
+
+	cmd_param.ctx = &cxt->mfsr_handle;
+	ret = sprd_mfsr_adapter_ctrl(MFSR_CMD_CLOSE, &cmd_param);
+	SWA_LOGD("Done. ret %d, handle %p\n", ret, cxt->mfsr_handle);
+	cxt->mfsr_handle = NULL;
+	return ret;
+}
+
+
+
+struct sharp_context_t {
+	void * sharp_handle;
+};
+
+int swa_sharp_get_handle_size()
+{
+	return sizeof(struct sharp_context_t);
+}
+
+int swa_sharp_process(void * ipmpro_hanlde,
+			struct swa_frames_inout *in,
+			struct swa_frames_inout *out,
+			void * param)
+{
+	int ret = 0;
+	struct sharp_context_t *cxt = NULL;
+	struct swa_frame_param *frm_param;
+	struct swa_frame *frm_in, *frm_detail;
+	MFSR_CMD_OPEN_PARAM_T open_param;
+	mfsr_open_param mfsr_param;
+	MFSR_CMD_CLOSE_PARAM_T close_param;
+	MFSR_CMD_POSTPROCESS_PARAM_T cmd_param;
+	mfsr_process_param proc_param;
+	sprd_camalg_image_t image_in;
+	sprd_camalg_image_t image_detail;
+
+	if (ipmpro_hanlde == NULL || in == NULL) {
+		SWA_LOGE("fail to get input %p %p\n", ipmpro_hanlde, in);
+		return -1;
+	}
+
+	cxt = (struct sharp_context_t *)ipmpro_hanlde;
+	frm_param = (struct swa_frame_param *)param;
+
+	memset(&mfsr_param, 0, sizeof(mfsr_open_param));
+	mfsr_param.max_width = frm_param->mfsr_param.frame_size.width;
+	mfsr_param.max_height = frm_param->mfsr_param.frame_size.height;
+	mfsr_param.tuning_param = frm_param->mfsr_param.data;
+	mfsr_param.tuning_param_size = frm_param->mfsr_param.data_size;
+	mfsr_param.sr_mode = 0;
+	open_param.ctx = &cxt->sharp_handle;
+	open_param.param = &mfsr_param;
+	SWA_LOGD("size %d %d, tuning pm %p, %d\n", mfsr_param.max_width,
+		mfsr_param.max_height, mfsr_param.tuning_param, mfsr_param.tuning_param_size);
+
+	ret = sprd_mfsr_adapter_ctrl(MFSR_CMD_POST_OPEN, &open_param);
+	if (ret || (*open_param.ctx) == NULL) {
+		SWA_LOGE("fail to init mfsr post\n");
+		return -1;
+	}
+	SWA_LOGD("sharp_handle %p\n", cxt->sharp_handle);
+
+	frm_in = &in->frms[0];
+	frm_detail = &in->frms[1];
+
+	proc_param.gain = 1.0 * frm_param->common_param.again;
+	proc_param.exposure_time = 1.0 * frm_param->common_param.exp_time;
+	proc_param.crop_area.x = 0;
+	proc_param.crop_area.y = 0;
+	proc_param.crop_area.w = frm_in->size.width;
+	proc_param.crop_area.h = frm_in->size.height;
+
+	proc_param.gain = 1.0 * frm_param->common_param.again;
+	proc_param.exposure_time = 1.0 * frm_param->common_param.exp_time;
+	proc_param.crop_area.x = frm_param->mfsr_param.frame_crop.start_x;
+	proc_param.crop_area.y = frm_param->mfsr_param.frame_crop.start_y;
+	proc_param.crop_area.w = frm_param->mfsr_param.frame_crop.width;
+	proc_param.crop_area.h = frm_param->mfsr_param.frame_crop.height;
+
+	memset(&image_in, 0, sizeof(sprd_camalg_image_t));
+	image_in.format = SPRD_CAMALG_IMG_NV21;
+	image_in.ion_fd = frm_in->fd;
+	image_in.addr[0] = (void *)frm_in->addr_vir[0];
+	image_in.addr[1] = (void *)frm_in->addr_vir[1];
+	image_in.width = frm_in->size.width;
+	image_in.height = frm_in->size.height;
+	image_in.stride = frm_in->size.width;
+	image_in.size = image_in.width * image_in.height * 3 / 2;
+
+	memcpy(&image_detail, &image_in, sizeof(sprd_camalg_image_t));
+	image_detail.ion_fd = frm_detail->fd;
+	image_detail.addr[0] = (void *)frm_detail->addr_vir[0];
+	image_detail.addr[1] = (void *)frm_detail->addr_vir[1];
+
+	cmd_param.ctx = &cxt->sharp_handle;
+	cmd_param.image = &image_in;
+	cmd_param.detail_mask = &image_detail;
+	cmd_param.denoise_mask = NULL;
+	cmd_param.process_param = &proc_param;
+
+	SWA_LOGD("in fd 0x%x, addr %p, %p, detail fd 0x%x, addr %p %p\n",
+		image_in.ion_fd, image_in.addr[0], image_in.addr[1],
+		image_detail.ion_fd, image_detail.addr[0], image_detail.addr[1]);
+
+	SWA_LOGD("param gain %f, exp time %f, size %d %d, crop %d %d %d %d\n",
+		proc_param.gain, proc_param.exposure_time, image_in.width, image_in.height,
+		proc_param.crop_area.x, proc_param.crop_area.y,
+		proc_param.crop_area.w, proc_param.crop_area.h);
+
+	ret = sprd_mfsr_adapter_ctrl(MFSR_CMD_POST_PROCESS, &cmd_param);
+	if (ret )
+		SWA_LOGE("Fail to call mfsr post process, ret =%d",ret);
+
+	close_param.ctx = &cxt->sharp_handle;
+	ret = sprd_mfsr_adapter_ctrl(MFSR_CMD_POST_CLOSE, &close_param);
+	SWA_LOGD("Close done. ret %d, handle %p\n", ret, cxt->sharp_handle);
+	cxt->sharp_handle = NULL;
+
+	return ret;
+}
+#endif
+
 
 #ifdef CONFIG_CAMERA_CNR
 
@@ -770,12 +1070,12 @@ struct dre_context_t {
 	void * dre_handle;
 };
 
-int swa_dre_get_handle_size()
+int swa_drepro_get_handle_size()
 {
 	return sizeof(struct dre_context_t);
 }
 
-int swa_dre_open(void *ipmpro_hanlde,
+int swa_drepro_open(void *ipmpro_hanlde,
 			void * open_param, enum swa_log_level log_level)
 {
 	int ret = 0;
@@ -800,7 +1100,7 @@ int swa_dre_open(void *ipmpro_hanlde,
 	return ret;
 }
 
-int swa_dre_process(void * ipmpro_hanlde,
+int swa_drepro_process(void * ipmpro_hanlde,
 			struct swa_frames_inout *in,
 			struct swa_frames_inout *out,
 			void * param)
@@ -842,7 +1142,7 @@ int swa_dre_process(void * ipmpro_hanlde,
 	return ret;
 }
 
-int swa_dre_close(void * ipmpro_hanlde,
+int swa_drepro_close(void * ipmpro_hanlde,
 			void * close_param)
 {
 	int ret = 0;

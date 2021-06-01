@@ -37,6 +37,19 @@ struct swa_hdr_param {
 
 
 
+/*========= for MFSR   =========*/
+struct swa_mfsr_info {
+	void *data;
+	uint32_t data_size;
+	struct img_size frame_size;
+	struct img_rect frame_crop;
+	void *out_exif_ptr;
+	uint32_t out_exif_size;
+};
+/*========= for MFSR end  =========*/
+
+
+
 /*========= for ultra-wide WARP  ========*/
 struct isp_warp_info {
 	void *otp_data;
@@ -354,6 +367,7 @@ struct swa_init_data {
 	struct img_size sensor_size;
 	struct img_size frame_size;
 	struct img_rect frame_crop;
+	uint32_t pri_data_size;
 	uint32_t sn_fmt;
 	uint32_t pic_fmt;
 	uint32_t frm_total_num;
@@ -384,6 +398,7 @@ struct swa_common_info {
 struct swa_frame_param {
 	struct swa_common_info common_param;
 	struct swa_hdr_param hdr_param;
+	struct swa_mfsr_info mfsr_param;
 	struct isp_warp_info warp_info;
 	struct swa_filter_info filter_param;
 	struct swa_watermark_info wm_param;

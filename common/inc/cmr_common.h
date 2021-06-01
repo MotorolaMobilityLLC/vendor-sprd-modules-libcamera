@@ -503,6 +503,7 @@ enum common_isp_cmd_type {
     COM_ISP_SET_AE_TARGET_REGION,
     COM_ISP_GET_AE_FPS_RANGE,
     COM_ISP_SET_SENSOR_SIZE,
+    COM_ISP_GET_MFSR_PARAM,
     COM_ISP_GET_CNR3_PARAM,
     COM_ISP_GET_FB_PREV_PARAM,
     COM_ISP_GET_FB_CAP_PARAM,
@@ -1222,6 +1223,7 @@ struct common_isp_cmd_param {
         struct leds_ctrl leds_ctrl;
         struct cmr_ae_compensation_param ae_compensation_param;
         struct isp_ev_control ev_setting;
+        struct isp_blkpm_t isp_blk_param;
         cmr_u32 cnr2cnr3_ynr_en;
         struct isp_sw_cnr2_info cnr2_param;
         struct isp_ynrs_info ynr_param;

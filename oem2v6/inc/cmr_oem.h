@@ -237,6 +237,7 @@ struct snapshot_context {
     cmr_u32 is_fdr;
     cmr_u32 is_3dnr;
     cmr_u32 sprd_3dnr_type;
+    cmr_u32 is_mfsr;
     cmr_u32 total_num;
     cmr_u32 snap_cnt;
     cmr_u32 snp_mode;
@@ -262,6 +263,8 @@ struct snapshot_context {
     struct frm_info cur_chn_data;
     struct touch_coordinate touch_xy;
     struct isp_blkpm_t fdr_tuning_param;
+    struct cmr_zoom_param zoom_param;
+    struct cmr_zoom_param zoom_param_1x;
     void *fdr_ae_info;
     void *ae_common_info;
     void *snp_aux_param;

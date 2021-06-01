@@ -199,6 +199,7 @@ struct snapshot_param {
     cmr_u32 is_hdr;
     cmr_u32 is_fdr;
     cmr_u32 is_3dnr;
+    cmr_u32 is_mfsr;
     cmr_u32 is_video_snapshot;
     cmr_u32 is_zsl_snapshot;
     cmr_u32 snap_cnt;

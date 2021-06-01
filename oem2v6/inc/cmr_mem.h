@@ -61,6 +61,7 @@ struct cmr_buf {
 struct cmr_queue {
 	cmr_u32 type;
 	cmr_u32 max;
+	cmr_u32 limit_size;
 	cmr_u32 cnt;
 	cmr_u32 free_cnt;
 	cmr_u32 total_size;
