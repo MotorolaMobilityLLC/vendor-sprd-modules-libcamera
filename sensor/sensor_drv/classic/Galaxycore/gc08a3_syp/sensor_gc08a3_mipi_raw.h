@@ -80,7 +80,7 @@
 #define SNAPSHOT_LINE_TIME		  13000
 
 /* frame length*/
-#define PREVIEW_FRAME_LENGTH		2552
+#define PREVIEW_FRAME_LENGTH		2548
 #define SNAPSHOT_FRAME_LENGTH		2548
 
 /* please ref your spec */
