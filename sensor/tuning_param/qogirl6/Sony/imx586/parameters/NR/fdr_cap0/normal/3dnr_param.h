@@ -1,4 +1,4 @@
-/*versionid=0x000B0009*/
+/*versionid=0x000C000F*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
 /*sharkl5_sensor_3dnr_level*/
@@ -97,7 +97,7 @@
 	{
 		/*r_circle_cap*/
 		{
-			0x022D,0x027D,0x02CD/*0-2*/
+			0x0557,0x061A,0x06DD/*0-2*/
 		},
 		/*r_circle_cap_factor*/
 		{
@@ -250,7 +250,7 @@
 	{
 		/*r_circle_cap*/
 		{
-			0x022D,0x027D,0x02CD/*0-2*/
+			0x0557,0x061A,0x06DD/*0-2*/
 		},
 		/*r_circle_cap_factor*/
 		{
@@ -403,7 +403,7 @@
 	{
 		/*r_circle_cap*/
 		{
-			0x022D,0x027D,0x02CD/*0-2*/
+			0x0557,0x061A,0x06DD/*0-2*/
 		},
 		/*r_circle_cap_factor*/
 		{
@@ -556,7 +556,7 @@
 	{
 		/*r_circle_cap*/
 		{
-			0x022D,0x027D,0x02CD/*0-2*/
+			0x02BC,0x0320,0x0384/*0-2*/
 		},
 		/*r_circle_cap_factor*/
 		{
