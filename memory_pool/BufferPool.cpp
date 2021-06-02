@@ -89,7 +89,7 @@ void MallocBufferPool::releasePool() {
         //add time limit?
         time++;
         usleep(1000);
-        if (time >= 10) {
+        if (time >= 30) {
             ALOGW("exist used memory! check it's deinit");
             return;
         }
