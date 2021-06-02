@@ -53,7 +53,6 @@ typedef void (*channel_cb_routine)(cam_result_data_info_t *result_info,
 #define REGULAR_STREAM_TYPE_BASE CAMERA_STREAM_TYPE_PREVIEW
 #define REPROCESS_STREAM_TYPE_BASE CAMERA_STREAM_TYPE_ZSL_PREVIEW
 #define PIC_STREAM_TYPE_BASE CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT
-#define TIMEOUT_FOR_CALLBACK 120
 
 class SprdCamera3OEMIf;
 class SprdCamera3Channel {
@@ -225,9 +224,7 @@ class SprdCamera3MetadataChannel : public SprdCamera3Channel {
     af_params_t syncAfParams;
    private:
     std::mutex mResultLock;
-    //std::condition_variable mResultSignal;
-    sem_t mResultSem;
-    struct timespec time;
+    std::condition_variable mResultSignal;
     //Mutex mResultLock;
     Mutex mLock;
     //Condition mResultSignal;
