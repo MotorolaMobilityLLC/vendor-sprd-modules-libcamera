@@ -242,12 +242,12 @@ static cmr_int imx616_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
 
-        usleep(10 * 1000);
+        usleep(1 * 1000);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, iovdd_val);
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, avdd_val);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, dvdd_val);
 
-        usleep(10 * 1000);
+        usleep(1 * 1000);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
@@ -902,13 +902,13 @@ static cmr_int imx616_drv_stream_off(cmr_handle handle, cmr_uint param) {
     ret = hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
     if (value != 0x0000) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0000);
-        if (!sns_drv_cxt->is_sensor_close) {
+        //if (!sns_drv_cxt->is_sensor_close) {
             sleep_time = (sns_drv_cxt->sensor_ev_info.preview_framelength *
                           sns_drv_cxt->line_time_def / 1000000) +
                          10;
             usleep(sleep_time * 1000);
             SENSOR_LOGI("stream_off delay_ms %d", sleep_time);
-        }
+        //}
     }
     /*TODO*/
 
@@ -929,6 +929,8 @@ imx616_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
 
     ret = sensor_ic_drv_create(init_param, sns_ic_drv_handle);
     sns_drv_cxt = *sns_ic_drv_handle;
+    
+    sns_drv_cxt->line_time_def = PREVIEW_LINE_TIME;
 
     sns_drv_cxt->sensor_ev_info.preview_shutter =
         PREVIEW_FRAME_LENGTH - FRAME_OFFSET;
