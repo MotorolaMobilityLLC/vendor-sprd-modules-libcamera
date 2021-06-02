@@ -1997,10 +1997,16 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 		current_smart_msg = msg_get(&cxt->smart_queue, frame_id);
 		current_ai_msg = msg_get(&cxt->ai_queue, frame_id);
 		current_ae_msg = msg_get(&cxt->ae_queue, frame_id);
-		current_fdr_msg = &fdr_msg;
-		current_fdr_msg->msg_log = cxt->fdr_cxt.log_fdr;
-		current_fdr_msg->msg_size = cxt->fdr_cxt.log_fdr_size;
-		current_fdr_msg->frame_id = frame_id;
+
+		if (cxt->app_mode == CAMERA_MODE_FDR) {
+			current_fdr_msg = &fdr_msg;
+			current_fdr_msg->msg_log = cxt->fdr_cxt.log_fdr;
+			current_fdr_msg->msg_size = cxt->fdr_cxt.log_fdr_size;
+			current_fdr_msg->frame_id = frame_id;
+			ISP_LOGD("fdr_msg  %p,%d, %d", current_fdr_msg->msg_log, current_fdr_msg->msg_size,current_fdr_msg->frame_id);
+		} else {
+			current_fdr_msg = NULL;
+		}
 
 		ISP_LOGD("frame_id_sof  %d,  input frame id %d", cxt->frame_id_sof, frame_id);
 		ISP_LOGV("af_msg  %p, %d, %d", current_af_msg->msg_log, current_af_msg->msg_size, current_af_msg->frame_id);
@@ -2010,7 +2016,6 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 		ISP_LOGV("smart_msg  %p, %d, %d", current_smart_msg->msg_log, current_smart_msg->msg_size, current_smart_msg->frame_id);
 		ISP_LOGV("ai_msg   %p,%d, %d", current_ai_msg->msg_log, current_ai_msg->msg_size,current_ai_msg->frame_id);
 		ISP_LOGV("ae_msg  %p,%d, %d", current_ae_msg->msg_log, current_ae_msg->msg_size,current_ae_msg->frame_id);
-		ISP_LOGD("fdr_msg  %p,%d, %d", current_fdr_msg->msg_log, current_fdr_msg->msg_size,current_fdr_msg->frame_id);
 
 		total_size = sizeof(struct sprd_isp_debug_info) + sizeof(isp_log_info_t)
 		    + calc_log_size(current_af_msg->msg_log, current_af_msg->msg_size, AF_START, AF_END)
@@ -2020,8 +2025,9 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 		    + calc_log_size(current_smart_msg->msg_log, current_smart_msg->msg_size, SMART_START, SMART_END)
 		    + calc_log_size(current_ai_msg->msg_log, current_ai_msg->msg_size, AI_START, AI_END)
 		    + calc_log_size(current_ae_msg->msg_log, current_ae_msg->msg_size, AE_START, AE_END)
-		    + calc_log_size(current_fdr_msg->msg_log, current_fdr_msg->msg_size, FDR_START, FDR_END)
 		    + sizeof(cmr_u32);
+		if(cxt->app_mode == CAMERA_MODE_FDR)
+		    total_size = total_size + calc_log_size(current_fdr_msg->msg_log, current_fdr_msg->msg_size, FDR_START, FDR_END);
 		ISP_LOGV("total_size  %d", total_size);
 
 		if (cxt->otp_data != NULL) {
@@ -2064,7 +2070,8 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 		COPY_LOG(lsc, LSC);
 		COPY_LOG(smart, SMART);
 		COPY_LOG(ai, AI);
-		COPY_LOG(fdr, FDR);
+		if(cxt->app_mode == CAMERA_MODE_FDR)
+			COPY_LOG(fdr, FDR);
 
 		pthread_mutex_unlock(&cxt->debuginfo_queue_lock);
 
