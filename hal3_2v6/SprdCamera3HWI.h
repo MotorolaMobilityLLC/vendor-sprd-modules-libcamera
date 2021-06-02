@@ -53,6 +53,7 @@ class SprdCamera3Setting;
 #define MAX_MULTI_CAMERA_FAKE_ID 50
 
 #define MAX_BUFFERS_IN_SHOT2SHOT 15    /*for shot2shot*/
+#define SLEEP_TIME 1000
 
 class SprdCamera3HWI {
   public:

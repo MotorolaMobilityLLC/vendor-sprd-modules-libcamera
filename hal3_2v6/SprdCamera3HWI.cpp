@@ -1503,13 +1503,20 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     switch (captureIntent) {
     case ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW:
         if ((sprddefInfo->high_resolution_mode == 1 && mHighResNonzsl == 1) || (sprddefInfo->long_expo_enable && mSuperExposeNonzsl == 1)) {
-            int i = 2000, tmp;
+            int i, tmp;
+            SENSOR_INFO_Tag sensor_InfoInfo;
+            mSetting->getSENSORINFOTag(&sensor_InfoInfo);
+            if (sensor_InfoInfo.exposupre_long_time_size) {
+                i = sensor_InfoInfo.exposupre_long_time[sensor_InfoInfo.exposupre_long_time_size - 1] * SLEEP_TIME;
+                HAL_LOGV("max_exposure_time=%f, i=%d", sensor_InfoInfo.exposupre_long_time[sensor_InfoInfo.exposupre_long_time_size - 1], i);
+            } else
+                i = 200;
             //long exposure, preview need wait nonzsl capture finish(sensor stream off)
             while (i--) {
                camera_ioctrl(CAMERA_TOCTRL_GET_SN_STREAM_STATUS, &tmp, NULL);
                if (tmp == 0)
                    break;
-               usleep(5000);
+               usleep(SLEEP_TIME);
             }
             mHighResNonzsl = 0; // once per non-zsl capture
             mSuperExposeNonzsl = 0;// once per non-zsl capture
