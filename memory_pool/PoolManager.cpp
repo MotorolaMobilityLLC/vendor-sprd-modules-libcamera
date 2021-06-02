@@ -70,8 +70,8 @@ void PoolManager::releasePool() {
     }
     is_pool_released = true;
     is_pool_inited = false;
-    setPoolOpreation(NULL, NULL);
     mMallocBufferPool->releasePool();
+    setPoolOpreation(NULL, NULL);
 }
 
 void PoolManager::deinit() {
