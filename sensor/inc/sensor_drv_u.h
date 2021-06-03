@@ -347,10 +347,11 @@ typedef struct sensor_otp_data {
 
 struct sensor_zoom_param_input {
     int PhyCameras;
+    int camera_id;
     float MaxDigitalZoom;
     float ZoomRatioSection[6];
     float BinningRatio;
-    int camera_id;
+    uint8_t PhyCamEnable[CAM_TYPE_OPTIMUTI];
 };
 
 struct sensor_zoom_otp_data {
