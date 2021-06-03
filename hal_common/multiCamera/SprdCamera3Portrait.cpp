@@ -2642,10 +2642,20 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
         }
         prepareParamForAlgo();
         if (mPortrait->mPortraitFlag) {
-            mPortrait->mBokehAlgo->getPortraitMask(input_buf2_addr,
-                        (void *)mPortrait->mScaleInfo.addr_vir.addr_y,
-                        output_buf_addr, input_buf1_addr,
-                        mPortrait->mVcmStepsFixed, mPortrait->bokehMask, mPortrait->lptMask);
+            //check lpt status and trans diff lptmask
+            if (lightPortraitType) {
+                mPortrait->mBokehAlgo->getPortraitMask(input_buf2_addr,
+                (void *)mPortrait->mScaleInfo.addr_vir.addr_y,
+                output_buf_addr, input_buf1_addr,
+                mPortrait->mVcmStepsFixed, mPortrait->bokehMask, mPortrait->lptMask);
+                HAL_LOGD(" getPortraitMask works");
+            } else {
+                mPortrait->mBokehAlgo->getPortraitMask(input_buf2_addr,
+                (void *)mPortrait->mScaleInfo.addr_vir.addr_y,
+                output_buf_addr, input_buf1_addr,
+                mPortrait->mVcmStepsFixed, mPortrait->bokehMask, NULL);
+                HAL_LOGD(" getPortraitMask null");
+            }
         }
         if (output_buf != NULL) {
             mPortrait->unmap(output_buf);
@@ -2668,10 +2678,20 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
         }
         prepareParamForAlgo();
         if (mPortrait->mPortraitFlag) {
-            mPortrait->mBokehAlgo->getPortraitMask(input_buf2_addr,
-                        (void *)mPortrait->mScaleInfo.addr_vir.addr_y,
-                        output_buf_addr, input_buf1_addr,
-                        mPortrait->mVcmStepsFixed, mPortrait->bokehMask, mPortrait->lptMask);
+            //check lpt status and trans diff lptmask
+            if (lightPortraitType) {
+                mPortrait->mBokehAlgo->getPortraitMask(input_buf2_addr,
+                (void *)mPortrait->mScaleInfo.addr_vir.addr_y,
+                output_buf_addr, input_buf1_addr,
+                mPortrait->mVcmStepsFixed, mPortrait->bokehMask, mPortrait->lptMask);
+                HAL_LOGD(" getPortraitMask works");
+            } else {
+                mPortrait->mBokehAlgo->getPortraitMask(input_buf2_addr,
+                (void *)mPortrait->mScaleInfo.addr_vir.addr_y,
+                output_buf_addr, input_buf1_addr,
+                mPortrait->mVcmStepsFixed, mPortrait->bokehMask, NULL);
+                HAL_LOGD(" getPortraitMask null");
+            }
         }
     }
 
