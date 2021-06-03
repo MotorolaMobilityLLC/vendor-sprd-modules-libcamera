@@ -300,6 +300,7 @@ static SENSOR_STATIC_INFO_T s_s5k3l6_static_info[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
      .static_info = {.f_num = 180,
                      .focal_length = 354,
+                     .min_focal_distance = 80,
                      .max_fps = 30,
                      .max_adgain = 8,
                      .long_expose_supported = 1,

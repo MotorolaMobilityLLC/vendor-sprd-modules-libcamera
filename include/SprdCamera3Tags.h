@@ -1,7 +1,6 @@
 #ifndef ANDROiD_SERVERS_CAMERA_CAMERA2TAG_H
 #define ANDROiD_SERVERS_CAMERA_CAMERA2TAG_H
 namespace android {
-
 typedef enum sprd_camera_ext_tags {
     /*sprd add flag start*/
     ANDROID_SPRD_BRIGHTNESS = VENDOR_SECTION_START,

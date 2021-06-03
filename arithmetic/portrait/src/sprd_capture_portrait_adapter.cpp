@@ -88,7 +88,7 @@ int sprd_portrait_capture_init_adpt(void **handle, PortraitCap_Init_Params *para
 	portrait_modelcfg_param modelParam;
 	modelParam.model_cfg=1;
 	params->config_param=(void *)&modelParam;
-	params->memOps=NULL;
+	//params->memOps=NULL;
 	return sprd_portrait_capture_init(handle, params);
 }
 

@@ -237,6 +237,7 @@ struct snapshot_context {
     cmr_u32 is_fdr;
     cmr_u32 is_3dnr;
     cmr_u32 sprd_3dnr_type;
+    cmr_u32 is_mfsr;
     cmr_u32 total_num;
     cmr_u32 snap_cnt;
     cmr_u32 snp_mode;
@@ -262,6 +263,8 @@ struct snapshot_context {
     struct frm_info cur_chn_data;
     struct touch_coordinate touch_xy;
     struct isp_blkpm_t fdr_tuning_param;
+    struct cmr_zoom_param zoom_param;
+    struct cmr_zoom_param zoom_param_1x;
     void *fdr_ae_info;
     void *ae_common_info;
     void *snp_aux_param;
@@ -511,6 +514,9 @@ struct camera_context {
     cmr_uint flash_mode;
     cmr_uint need_sr;
     cmr_uint long_expo_cap;
+    enum top_app_id app_id;
+    /*af roi for mfnr select frame*/
+    struct isp_afctrl_roi af_roi;
 };
 
 struct prev_ai_scene_info {
@@ -699,6 +705,8 @@ cmr_int camera_stream_ctrl(cmr_handle cmr_handle, cmr_u32 on_off);
 cmr_int cmr_get_isp_af_fullscan(cmr_handle oem_handle,
                                 struct isp_af_fullscan_info *af_fullscan_info);
 cmr_int cmr_set_af_pos(cmr_handle oem_handle, cmr_u32 af_pos);
+cmr_int cmr_set_af_bypass(cmr_handle oem_handle, cmr_u32 value);
+
 cmr_int cmr_set_3a_bypass(cmr_handle oem_handle, cmr_u32 value);
 cmr_int cmr_get_ae_fps(cmr_handle oem_handle, cmr_u32 *ae_fps);
 cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
@@ -771,6 +779,8 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
                                 struct common_isp_cmd_param *param_ptr);
 cmr_int cmr_get_reboke_data(cmr_handle oem_handle,
                             struct af_relbokeh_oem_data *golden_distance);
+void* heap_malloc(size_t size, char* type);
+void heap_free(void* addr);
 cmr_int camera_get_fdr_tuning_flag(cmr_handle oem_handle,
                                       cmr_int * tuning_flag);
 cmr_int camera_local_get_tuning_param(cmr_handle oem_handle,

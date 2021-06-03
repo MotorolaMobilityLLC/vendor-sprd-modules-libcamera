@@ -485,7 +485,7 @@ extern "C" {
 	struct cts_af_params {
 		float focus_distance;
 		cmr_s32 frame_num;
-		cmr_u32 min_real_focus_distance;
+		float min_real_focus_distance;
 		cmr_u32 reserved[10];
 	};
 

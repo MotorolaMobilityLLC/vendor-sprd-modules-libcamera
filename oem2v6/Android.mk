@@ -55,7 +55,8 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../arithmetic/libdre/inc \
     $(LOCAL_PATH)/../arithmetic/libcnr/inc \
     $(LOCAL_PATH)/../arithmetic/libdrepro/inc \
-    $(LOCAL_PATH)/../kernel_module/interface
+    $(LOCAL_PATH)/../kernel_module/interface \
+    $(LOCAL_PATH)/../memory_pool
 
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../$(ISPALG_DIR)/common/inc \
@@ -92,7 +93,7 @@ LOCAL_SRC_FILES += \
 LOCAL_SRC_FILES += ../arithmetic/sprd_yuvprocess/src/cmr_yuvprocess.c
 
 LOCAL_SHARED_LIBRARIES += libcamperf
-LOCAL_SHARED_LIBRARIES += libutils libcutils libcamsensor libcamcommon libhardware libxml2
+LOCAL_SHARED_LIBRARIES += libutils libcutils libcamsensor libcamcommon libhardware libxml2 libmempool
 LOCAL_SHARED_LIBRARIES += libcamdrv
 LOCAL_SHARED_LIBRARIES += liblog
 LOCAL_SHARED_LIBRARIES += libcppdrv
@@ -173,9 +174,17 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
 LOCAL_SRC_FILES += src/cmr_hdr.c
-ifeq ($(strip $(TARGET_BOARD_SPRD_HDR_VERSION)),2)
+LOCAL_SRC_FILES += src/cmr_hdr3.c
+endif
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
+ifneq ($(strip $(TARGET_BOARD_SPRD_HDR_VERSION)),1)
 LOCAL_SHARED_LIBRARIES += libsprdhdradapter
-else
+endif
+endif
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
+ifeq ($(strip $(TARGET_BOARD_SPRD_HDR_VERSION)),1)
 LOCAL_SHARED_LIBRARIES += libsprd_easy_hdr
 endif
 endif

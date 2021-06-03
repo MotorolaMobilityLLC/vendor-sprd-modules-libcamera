@@ -4,7 +4,7 @@
 /*n6pro_sensor_cnr_h_level*/
 {
 	/*level_enable*/
-	0x00,
+	0x01,
 	/*reserved0*/
 	{
 		0x00,0x00,0x00/*0-2*/
@@ -40,7 +40,7 @@
 			/*imgCenterY*/
 			0x0001,
 			/*baseRadius*/
-			0x0005,
+			0x0006,
 			/*baseRadius_factor*/
 			0x0001,
 			/*minRatio*/
@@ -119,11 +119,11 @@
 				0x00,0x00,0x00/*0-2*/
 			},
 			/*imgCenterX*/
-			0x0001,
+			0x03E8,
 			/*imgCenterY*/
-			0x0001,
+			0x02EE,
 			/*baseRadius*/
-			0x0002,
+			0x0003,
 			/*baseRadius_factor*/
 			0x0001,
 			/*minRatio*/
@@ -202,9 +202,9 @@
 				0x00,0x00,0x00/*0-2*/
 			},
 			/*imgCenterX*/
-			0x0001,
+			0x01F4,
 			/*imgCenterY*/
-			0x0001,
+			0x0177,
 			/*baseRadius*/
 			0x0001,
 			/*baseRadius_factor*/
@@ -285,9 +285,9 @@
 				0x00,0x00,0x00/*0-2*/
 			},
 			/*imgCenterX*/
-			0x0001,
+			0x00FA,
 			/*imgCenterY*/
-			0x0001,
+			0x00BB,
 			/*baseRadius*/
 			0x0000,
 			/*baseRadius_factor*/
@@ -368,9 +368,9 @@
 				0x00,0x00,0x00/*0-2*/
 			},
 			/*imgCenterX*/
-			0x0001,
+			0x007D,
 			/*imgCenterY*/
-			0x0001,
+			0x005D,
 			/*baseRadius*/
 			0x0000,
 			/*baseRadius_factor*/
@@ -433,7 +433,7 @@
 	},
 	/*reserved1*/
 	{
-		0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000/*0-9*/
+		0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x003E,0x002E,0x0000,0x0000/*0-9*/
 	}
 }
 ,

@@ -2310,6 +2310,24 @@ static cmr_u32 convert_scene_flag_for_nr(cmr_u32 scene_flag)
 	case ISP_INTERVAL:
 		convert_scene_flag = ISP_SCENEMODE_INTERVAL;
 		break;
+	case ISP_FACEBOOK:
+		convert_scene_flag = ISP_SCENEMODE_FACEBOOK;
+		break;
+	case ISP_MESSENGER:
+		convert_scene_flag = ISP_SCENEMODE_MESSENGER;
+		break;
+	case ISP_QQ:
+		convert_scene_flag = ISP_SCENEMODE_QQ;
+		break;
+	case ISP_SNAPCHAT:
+		convert_scene_flag = ISP_SCENEMODE_SNAPCHAT;
+		break;
+	case ISP_WHATAPPS:
+		convert_scene_flag = ISP_SCENEMODE_WHATAPPS;
+		break;
+	case ISP_WECHAT:
+		convert_scene_flag = ISP_SCENEMODE_WECHAT;
+		break;
 
 	default:
 		convert_scene_flag = ISP_SCENEMODE_AUTO;
@@ -5426,7 +5444,7 @@ static cmr_int ispctl_update_fdr(cmr_handle isp_alg_handle, void *param_ptr)
 	isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AWB_GAIN, &cfg, NULL);
 
 	if (fdr_version == 1)
-		goto exit;
+		goto cfg_h;
 
 	/* update NLM for FDR_H accoring to algo output */
 	in = (struct isp_nlm_factor *)param_ptr;
@@ -5443,6 +5461,7 @@ static cmr_int ispctl_update_fdr(cmr_handle isp_alg_handle, void *param_ptr)
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_FDR_PARAM, &input, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to set smart"));
 
+cfg_h:
 	message.msg_type = ISP_EVT_CFG;
 	message.sub_msg_type = PARAM_CFG_FDRH;
 	message.sync_flag = CMR_MSG_SYNC_PROCESSED;

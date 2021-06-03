@@ -27,8 +27,10 @@ struct afl_ctrl_init_in {
 	isp_afl_cb afl_set_cb;
 	cmr_handle caller_handle;
 	cmr_s8 version;
-	cmr_s32 pm_param_num;
+	cmr_s32 pm_param_size;
 	void *afl_tune_param;
+	cmr_s32 reg_param_size;
+	void *afl_reg_param;
 };
 
 enum afl_io_ctrl_cmd {

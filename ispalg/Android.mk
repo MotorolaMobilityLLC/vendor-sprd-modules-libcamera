@@ -98,6 +98,7 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../common/inc \
 	$(LOCAL_PATH)/../arithmetic/inc \
 	$(LOCAL_PATH)/../arithmetic/sprd_fdr/inc \
+	$(LOCAL_PATH)/../arithmetic/sprd_easy_hdr/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/ai/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/ai/sprd/inc
 
@@ -126,8 +127,9 @@ LOCAL_SHARED_LIBRARIES += libcamsensor
 
 LOCAL_SHARED_LIBRARIES += libdeflicker
 
-LOCAL_SHARED_LIBRARIES += libae libae3.x libflash libhdr
+LOCAL_SHARED_LIBRARIES += libae libae3.x libflash
 LOCAL_SHARED_LIBRARIES += libawb libawb1 libawb3.2
+LOCAL_SHARED_LIBRARIES += libsprdhdradapter
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.9)
 LOCAL_SHARED_LIBRARIES += libalsc3.2

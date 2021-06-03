@@ -44,6 +44,9 @@ struct swa_fdr_init_param {
 
 	void * caller_hanlde;
 	ipmpro_callback cb;
+
+	void* (*heap_mem_malloc)(size_t size, char* type);
+	void (*heap_mem_free)(void* addr);
 };
 
 

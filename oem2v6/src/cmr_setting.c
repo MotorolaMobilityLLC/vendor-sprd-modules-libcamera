@@ -451,6 +451,9 @@ static cmr_uint camera_param_to_isp(cmr_uint cmd,
     case COM_ISP_SET_EV:
         isp_param->ae_compensation_param = parm->ae_compensation_param;
         break;
+    case COM_ISP_SET_EXPOSURE_TIME:
+        isp_param->cmd_value = out_param*1000;
+        break;
     default:
         isp_param->cmd_value = out_param;
         break;
@@ -472,10 +475,10 @@ static cmr_int setting_isp_ctrl(struct setting_component *cpt, cmr_uint isp_cmd,
 
     if (init_in->setting_isp_ioctl) {
         isp_param.camera_id = parm->camera_id;
-        if(COM_ISP_SET_EXPOSURE_TIME == isp_cmd) {
+        /*if(COM_ISP_SET_EXPOSURE_TIME == isp_cmd) {
             parm->cmd_type_value = parm->cmd_type_value * 1000;
-        }
-	  CMR_LOGD("cmd_type_value=%"PRIu64"",parm->cmd_type_value);
+        }*/
+        CMR_LOGD("cmd_type_value=%"PRIu64"",parm->cmd_type_value);
         camera_param_to_isp(isp_cmd, parm, &isp_param);
         if (isp_cmd == COM_ISP_SET_AE_MODE) {
             hal_param = get_hal_param(cpt, parm->camera_id);
@@ -914,17 +917,6 @@ static cmr_int setting_get_HW_flash_status(struct setting_component *cpt,
     return ret;
 }
 
-static cmr_int setting_is_need_flash(struct setting_component *cpt,
-                                     struct setting_cmd_parameter *parm);
-static cmr_int setting_get_flash_status(struct setting_component *cpt,
-                                        struct setting_cmd_parameter *parm) {
-    cmr_int ret = 0;
-
-    parm->cmd_type_value = setting_is_need_flash(cpt, parm);
-    CMR_LOGD("flash_status %ld", parm->cmd_type_value);
-    return ret;
-}
-
 static cmr_int setting_set_flash_mode(struct setting_component *cpt,
                                       struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
@@ -1111,10 +1103,16 @@ static cmr_int setting_set_scene_mode(struct setting_component *cpt,
                                       struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+    char hdr_version[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.hdr.version", hdr_version, "2");
 
     CMR_LOGD("set scene mode %ld", parm->cmd_type_value);
     if (CAMERA_SCENE_MODE_HDR == parm->cmd_type_value) {
-        hal_param->is_hdr = 1;
+       if (!strcmp(hdr_version, "2")) {
+            hal_param->is_hdr = 2;
+        } else if (!strcmp(hdr_version, "3")){
+            hal_param->is_hdr = 3;
+        }
     } else {
         hal_param->is_hdr = 0;
     }
@@ -2988,7 +2986,6 @@ static cmr_int setting_get_hdr(struct setting_component *cpt,
                                struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
-
     parm->cmd_type_value = hal_param->is_hdr;
     CMR_LOGD("get hdr %ld", parm->cmd_type_value);
 
@@ -3182,6 +3179,15 @@ static cmr_int setting_is_need_flash(struct setting_component *cpt,
     }
 
     return is_need;
+}
+
+static cmr_int setting_get_is_need_flash(struct setting_component *cpt,
+                                        struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+
+    parm->cmd_type_value = setting_is_need_flash(cpt, parm);
+    CMR_LOGD("flash_status %ld", parm->cmd_type_value);
+    return ret;
 }
 
 static cmr_int
@@ -4278,8 +4284,8 @@ static setting_ioctl_fun_ptr setting_list[SETTING_TYPE_MAX] = {
     [SETTING_GET_DV_MODE] = setting_get_dv_mode,
     [SETTING_SET_PRE_LOWFLASH] =
                              setting_set_pre_lowflash,
-    [SETTING_GET_FLASH_STATUS] =
-                             setting_get_flash_status,
+    [SETTING_GET_IS_NEED_FLASH] =
+                             setting_get_is_need_flash,
     [SETTING_SET_HIGHFLASH_AE_MEASURE] =
                              setting_set_highflash_ae_measure,
     [SETTING_GET_HW_FLASH_STATUS] =

@@ -22,7 +22,7 @@
 #include "ae_ctrl.h"
 #include "isp_bridge.h"
 #include "fdr_interface.h"
-#include "hdr/inc/sprd_hdr_api.h"
+#include "sprd_hdr_adapter.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -265,6 +265,7 @@ extern "C" {
 		cmr_u32 flash_effect;
 		struct ae_exposure_param flash_backup;
 		struct flash_cali_data flash_cali[32][32];
+		struct flash_correct_info flash_cali_data;	//flash calibration data of NV
 		cmr_u8 flash_debug_buf[256 * 1024];
 		cmr_u32 flash_buf_len;
 		cmr_u8 flash_cap_proc;
@@ -350,6 +351,18 @@ extern "C" {
 		cmr_s8 ev_adjust_cnt;
 		cmr_s8 ev_adj_ev_effect_valid_num;
 		cmr_s8 ev_adj_snp_type;
+
+		//exp_gain_cap control
+		cmr_s8 exp_gain_cap_enable;
+		cmr_u16 base_exp_line;
+		cmr_s16 base_gain;
+		cmr_s8 exp_gain_cap_frame_cnt;
+		cmr_s8 exp_gain_cap_flag;
+		cmr_s8 exp_gain_cap_adjust_cnt;
+		cmr_s8 exp_gain_cap_cb_num;
+		cmr_u32 set_exp_time;
+		cmr_u32 set_gain;
+		//cmr_s8 ev_adj_snp_type;
 		/*
 		 * FDR control
 		 */
@@ -481,16 +494,52 @@ extern "C" {
 		struct ae_trim touch_hold_roi;	/*touch ROI*/
 		/*touch flash hold */
 		cmr_u8 touchev_Flag;
-		struct ae_thd_param mfnr_hdr_thrd;
-
 		void *hdr_tuning_param;
 		cmr_s32 hdr_tuning_size;
-		hdr_callback_t hdr_callback;
-		hdr_callback_t hdr_callback_backup;
-
+		struct ae_thd_param mfnr_hdr_thrd;
+		sprd_hdr_detect_out_t hdr_callback;
+		sprd_hdr_detect_out_t hdr_callback_backup;
+		sprd_hdr_status_t hdr_status;
 		cmr_u32 end_id;
-
 	};
+
+
+/*#define PRE_NUM	8
+#define MAIN_NUM	8	
+#define ACCU_NUM (8+1)*4
+#define FLASH_NUM 15
+#define AEM_NUM	1024	//32*32
+*/
+
+struct flash_cali_stat {
+	uint8 flag;
+    uint8 enable;
+    uint8 result;
+    char error_info[128];
+};
+
+/*varify check
+	0:	success
+	1:	calibrationing
+	2	exp&gain value is min(0.001&128)
+	3: 	brightness large diff of the four corners
+	4: 	brightness large diff of the corners & center
+	5: 	color large diff of the four corners
+	6: 	color large diff of the corners & center
+	7:	Too far away, too little reflected light
+*/
+enum flash_cali_err_info {
+	FLASH_CALI_SUCCESS = 0,
+	FLASH_CALI_DOING,
+	FLASH_CALI_EXPGAIN_MIN,
+	FLASH_CALI_BRI_FOUR_COR,
+	FLASH_CALI_BRI_COR2CTR,
+	FLASH_CALI_CLR_FOUR_COR,
+	FLASH_CALI_CLR_COR2CTR,
+	/*FLASH_CALI_HVBRIGHTNESS,*/
+	FLASH_CALI_LONG_DISTANCE,
+};
+
 #ifdef __cplusplus
 }
 #endif

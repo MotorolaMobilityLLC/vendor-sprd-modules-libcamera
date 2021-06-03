@@ -47,6 +47,7 @@ static cmr_int dre_open(cmr_handle ipm_handle, struct ipm_open_in *in,
                         struct ipm_open_out *out, cmr_handle *class_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct class_dre *dre_handle = NULL;
+    sprd_dre_memory init_param;
     char value[PROPERTY_VALUE_MAX] = {
         0,
     };
@@ -72,11 +73,14 @@ static cmr_int dre_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     dre_handle->height = in->frame_size.height;
     dre_handle->width = in->frame_size.width;
 
+    init_param.malloc = dre_handle->common.ipm_cxt->init_in.ops.heap_mem_malloc;
+    init_param.free = dre_handle->common.ipm_cxt->init_in.ops.heap_mem_free;
+
     CMR_LOGI("sprd_dre_init height=%d,width = %d", dre_handle->height,
              dre_handle->width);
 
     ret = sprd_dre_adpt_init(&dre_handle->handle, dre_handle->width,
-                        dre_handle->height, NULL);
+                        dre_handle->height, &init_param);
 
     if (ret != CMR_CAMERA_SUCCESS) {
         CMR_LOGE("failed to create");

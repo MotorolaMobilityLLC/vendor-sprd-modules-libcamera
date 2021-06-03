@@ -64,7 +64,7 @@ enum setting_cmd_type {
     SETTING_GET_CAPTURE_MODE,
     SETTING_GET_DV_MODE,
     SETTING_SET_PRE_LOWFLASH,
-    SETTING_GET_FLASH_STATUS,
+    SETTING_GET_IS_NEED_FLASH,
     SETTING_SET_HIGHFLASH_AE_MEASURE,
     SETTING_GET_HW_FLASH_STATUS,
     SETTING_GET_PERFECT_SKINLEVEL,
@@ -140,7 +140,7 @@ enum setting_flash_status {
 struct setting_cmd_parameter {
     cmr_uint camera_id;
     union {
-        cmr_u64 cmd_type_value;
+        cmr_uint cmd_type_value;
         struct beauty_info fb_param;
         struct exif_spec_pic_taking_cond_tag exif_pic_cond_info;
         struct cmr_zoom_param zoom_param;

@@ -9,8 +9,7 @@
 extern "C" {
 #endif
 
-#define MAX_WIDTH  32
-#define MAX_HEIGHT 32
+#define MAX_NUM 1024
 
 
 /**---------------------------------------------------------------------------*
@@ -102,7 +101,7 @@ struct lsc_sprd_calc_in {
 	unsigned int img_height;
 	unsigned short *lsc_tab[8];
 
-	unsigned short last_lsc_table[MAX_WIDTH*MAX_HEIGHT*4];
+	unsigned short last_lsc_table[MAX_NUM * 4];
 	unsigned int main_flash_mode;
 	float captureFlashEnvRatio;
 	float captureFlash1ofAllRatio;

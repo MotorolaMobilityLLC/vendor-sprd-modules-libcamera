@@ -77,3 +77,56 @@ JNIEXPORT void *GraphicBuffer_getNativeBuffer(void *h_graphic_buffer)
     }
     return h_gb->gb->getNativeBuffer();
 }
+
+JNIEXPORT void *GraphicBuffer_getPointer(void *h_graphic_buffer)
+{
+    GraphicBufferHandle *h_gb = (GraphicBufferHandle *)h_graphic_buffer;
+    if (NULL == h_gb) {
+        CAA_LOGE("null h_graphic_buffer");
+        return NULL;
+    }
+    return h_gb->gb.get();
+}
+
+JNIEXPORT void GraphicBufferPointer_setWidth(void *p_graphic_buffer, uint32_t width)
+{
+    GraphicBuffer *p_gb = (GraphicBuffer *)p_graphic_buffer;
+    if (NULL == p_gb) {
+        CAA_LOGE("null p_graphic_buffer");
+        return;
+    }
+    p_gb->width = width;
+}
+
+JNIEXPORT void *GraphicBufferPointer_lock(void *p_graphic_buffer)
+{
+    GraphicBuffer *p_gb = (GraphicBuffer *)p_graphic_buffer;
+    if (NULL == p_gb) {
+        CAA_LOGE("null p_graphic_buffer");
+        return NULL;
+    }
+    void *buf = NULL;
+    p_gb->lock(GraphicBuffer::USAGE_SW_READ_OFTEN | GraphicBuffer::USAGE_SW_WRITE_OFTEN, &buf);
+    CAA_LOGD("GraphicBufferPointer_lock: %p", buf);
+    return buf;
+}
+
+JNIEXPORT void GraphicBufferPointer_unlock(void *p_graphic_buffer)
+{
+    GraphicBuffer *p_gb = (GraphicBuffer *)p_graphic_buffer;
+    if (NULL == p_gb) {
+        CAA_LOGE("null p_graphic_buffer");
+        return;
+    }
+    p_gb->unlock();
+}
+
+JNIEXPORT void *GraphicBufferPointer_getNativeBuffer(void *p_graphic_buffer)
+{
+    GraphicBuffer *p_gb = (GraphicBuffer *)p_graphic_buffer;
+    if (NULL == p_gb) {
+        CAA_LOGE("null p_graphic_buffer");
+        return NULL;
+    }
+    return p_gb->getNativeBuffer();
+}

@@ -1401,6 +1401,67 @@ ctrl_flash:
 
     return ret;
 }
+cmr_int camera_convert_coor_sensor_to_capture(const struct img_rect *sn_trim,
+        const struct img_size *capture_size, cmr_u32 *cropRegion) {
+
+        float left = 0, top = 0, width = 0, height = 0, zoomWidth = 0, zoomHeight = 0;
+        int ret = 0;
+        int flag_square = 0;
+        float sensorAspect = 0, captureAspect = 0;
+        cmr_u32 roiW = 0, roiH = 0;
+        cmr_u32 capture_width = 0, capture_height = 0;
+        cmr_u32 sensor_width = 0, sensor_height = 0;
+
+        roiW = cropRegion[2] - cropRegion[0];
+        roiH = cropRegion[3] - cropRegion[1];
+        if (roiW == 0 || roiH == 0) {
+            CMR_LOGE("parameters error.");
+            return 1;
+        }
+        if (roiW == roiH)
+            flag_square = 1;
+
+        capture_width = capture_size->width;
+        capture_height = capture_size->height;
+        sensor_width = sn_trim->width;
+        sensor_height = sn_trim->height;
+        sensorAspect = (float)sensor_width / sensor_height;
+        captureAspect = (float)capture_width / capture_height;
+        if (sensorAspect > captureAspect) {
+            width = capture_width;
+            height = captureAspect * capture_height / sensorAspect;
+            left = 0;
+            top = 0 + (capture_height - height) / 2;
+        } else {
+            width = sensorAspect * capture_width / captureAspect;
+            height = capture_height;
+            left = 0 + (capture_width - width) / 2;
+            top = 0;
+        }
+
+        zoomWidth = width / (float)sensor_width;
+        zoomHeight = height / (float)sensor_height;
+        CMR_LOGD("before_crop_rect_calculated: (xs=%d,sy=%d,ex=%d,ey=%d)",
+                 cropRegion[0], cropRegion[1], cropRegion[2], cropRegion[3]);
+        cropRegion[0] = (cmr_u32)((float)cropRegion[0] * zoomWidth + left);
+        cropRegion[1] = (cmr_u32)((float)cropRegion[1] * zoomHeight + top);
+        cropRegion[2] = (cmr_u32)((float)cropRegion[2] * zoomWidth + left);
+        cropRegion[3] = (cmr_u32)((float)cropRegion[3] * zoomHeight + top);
+        //If it was originally square, it should be square after conversion
+        roiW = cropRegion[2] - cropRegion[0];
+        roiH = cropRegion[3] - cropRegion[1];
+        if (flag_square == 1){
+            if (roiW > roiH){
+               cropRegion[2] = cropRegion[0] +roiH;
+            } else if (roiH > roiW){
+               cropRegion[3] = cropRegion[1]+ roiW;
+            }
+            flag_square = 0;
+        }
+        CMR_LOGD("after_crop_rect_calculated: (sx=%d,sy=%d,ex=%d,ey=%d)",
+                 cropRegion[0], cropRegion[1], cropRegion[2], cropRegion[3]);
+        return ret;
+}
 
 cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
                           cmr_u32 data_len) {
@@ -1410,6 +1471,11 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
     cmr_u32 cmd = evt & 0xFF;
     cmr_int oem_cb;
     cmr_u32 *ae_info = NULL;
+    struct isp_af_notice *isp_af = NULL;
+    cmr_u32 rect[4] = {0};
+    struct img_size capture_size;
+    struct img_rect sn_trim;
+
 
     if (!oem_handle || CMR_EVT_ISP_BASE != (CMR_EVT_ISP_BASE & evt)) {
         CMR_LOGE("err param, 0x%lx 0x%x 0x%lx", (cmr_uint)data, evt,
@@ -1460,6 +1526,31 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
             case ISP_AF_STAT_CALLBACK:
                     ret = camera_isp_af_stat(data);
                     break;*/
+        isp_af = (struct isp_af_notice *)data;
+        /*get capture size*/
+        capture_size.width = cxt->snp_cxt.request_size.width;
+        capture_size.height = cxt->snp_cxt.request_size.height;
+
+        /*get sensor size*/
+        ret = camera_get_sensor_mode_trim(oem_handle, &sn_trim);
+        if (ret) {
+           CMR_LOGE("get_sensor info failed!");
+           ret = CMR_CAMERA_FAIL;
+        }
+        rect[0] = isp_af->af_roi.sx;
+        rect[1] = isp_af->af_roi.sy;
+        rect[2] = isp_af->af_roi.ex;
+        rect[3] = isp_af->af_roi.ey;
+        ret = camera_convert_coor_sensor_to_capture(&sn_trim, &capture_size, rect);
+        if (ret) {
+            CMR_LOGE("convert coor sensor to capture failed!");
+            ret = CMR_CAMERA_FAIL;
+        }
+        cxt->af_roi.sx = rect[0];
+        cxt->af_roi.sy = rect[1];
+        cxt->af_roi.ex = rect[2];
+        cxt->af_roi.ey = rect[3];
+
     case ISP_AE_STAB_CALLBACK:
         ret =
             cmr_setting_isp_notice_done(cxt->setting_cxt.setting_handle, data);
@@ -4071,6 +4162,11 @@ cmr_int camera_ipm_open_module(cmr_handle oem_handle) {
         in_param.frame_rect.height = in_param.frame_size.height;
         in_param.reg_cb = camera_ipm_cb;
         in_param.adgain = 16;
+        in_param.af_ctrl_roi.start_x = cxt->af_roi.sx;
+        in_param.af_ctrl_roi.start_y = cxt->af_roi.sy;
+        in_param.af_ctrl_roi.width = cxt->af_roi.ex - cxt->af_roi.sx;
+        in_param.af_ctrl_roi.height = cxt->af_roi.ey - cxt->af_roi.sy;
+
         if (1 == camera_get_sw_3dnr_flag(cxt)) {
             ret = camera_get_tuning_info((cmr_handle)cxt, &adgain_exp_info);
             if (ret) {
@@ -5921,7 +6017,7 @@ cmr_int camera_local_snapshot_is_need_flash(cmr_handle oem_handle,
     setting_param.ctrl_flash.flash_type = FLASH_HIGH_LIGHT;
     setting_param.ctrl_flash.work_mode = 1; // capture
     ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                            SETTING_GET_FLASH_STATUS, &setting_param);
+                            SETTING_GET_IS_NEED_FLASH, &setting_param);
     if (ret) {
         CMR_LOGE("failed to get flash mode %ld", ret);
         goto exit;
@@ -5959,7 +6055,7 @@ cmr_int camera_capture_highflash(cmr_handle oem_handle, cmr_u32 camera_id) {
         setting_param.ctrl_flash.flash_type = FLASH_HIGH_LIGHT;
         setting_param.ctrl_flash.work_mode = 1; // capture
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                                SETTING_GET_FLASH_STATUS, &setting_param);
+                                SETTING_GET_IS_NEED_FLASH, &setting_param);
         if (ret) {
             CMR_LOGE("failed to get flash mode %ld", ret);
             goto exit;
@@ -8607,7 +8703,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
 #if defined(CONFIG_CAMERA_FLASH_HIGH_AE_MEASURE)
     setting_param.ctrl_flash.capture_mode.capture_mode = snp_cxt->snp_mode;
     ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                            SETTING_GET_FLASH_STATUS, &setting_param);
+                            SETTING_GET_IS_NEED_FLASH, &setting_param);
     if (ret) {
         CMR_LOGE("failed to get flash mode %ld", ret);
     }
@@ -12107,6 +12203,10 @@ cmr_int camera_nightpro_open(cmr_handle oem_handle) {
         in_param.frame_rect.height = in_param.frame_size.height;
         in_param.reg_cb = camera_ipm_cb;
         in_param.adgain = 16;
+        in_param.af_ctrl_roi.start_x = cxt->af_roi.sx;
+        in_param.af_ctrl_roi.start_y = cxt->af_roi.sy;
+        in_param.af_ctrl_roi.width = cxt->af_roi.ex - cxt->af_roi.sx;
+        in_param.af_ctrl_roi.height = cxt->af_roi.ey - cxt->af_roi.sy;
 
         ret = camera_get_tuning_info((cmr_handle)cxt, &adgain_exp_info);
         if (ret) {

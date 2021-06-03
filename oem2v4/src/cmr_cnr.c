@@ -87,7 +87,7 @@ static cmr_int cnr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     property_get("vendor.cam.cnr.corebundle", value, "0");
     threadSet.coreBundle = atoi(value);
 
-    cnr_handle->handle = sprd_cnr_init(width, height, runversion);
+    cnr_handle->handle = sprd_cnr_init(width, height, runversion, NULL);
     if (NULL == cnr_handle->handle) {
         CMR_LOGE("failed to create");
         goto exit;
