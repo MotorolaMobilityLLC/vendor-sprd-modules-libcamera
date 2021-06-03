@@ -2,20 +2,35 @@
 #include <string.h>
 #include "cmr_type.h"
 
+typedef enum {
+    /* Main camera of the related cam subsystem which controls*/
+    CAM_TYPE_MAIN = 0,
+    /* Aux camera of the related cam subsystem */
+    CAM_TYPE_AUX,
+    CAM_TYPE_AUX1 = CAM_TYPE_AUX,
+    CAM_TYPE_AUX2,
+    CAM_TYPE_AUX3,
+    CAM_TYPE_OPTIMUTI,
+} CameraType;
+
+struct zoom_region{
+    float Min;
+    float Max;
+    uint8_t Enable;
+};
+
 struct zoom_info_config {
     int PhyCameras;
     float MaxDigitalZoom;
-    float ZoomRatioSection[6];
     float BinningRatio;
-    float IspMaxHwScalCap;
+    struct zoom_region PhyCamZoomRegion[CAM_TYPE_OPTIMUTI];
 };
 
 typedef enum {
-    W_SW_T_THREESECTION_ZOOM,
-    SW_T_DUALVIDEO_ZOOM,
-    W_SW_TWOSECTION_ZOOM,
+    DEFAULT_ZOOM,
+    DUALVIDEO_ZOOM,
     COMBINATION_MAX
-} combination_type;
+} CombinationType;
 
 struct sensor_zoom_info {
     bool init;

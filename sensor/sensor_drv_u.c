@@ -5079,13 +5079,24 @@ LOGICAL_SENSOR_INFO_T *sensorGetLogicaInfo4multiCameraId(int multiCameraId) {
     return NULL;
 }
 
-void copy_zoom_cfg_info(struct sensor_zoom_param_input *dest_zoom_param,
-                        struct zoom_info_config *src_zoom_param) {
-    dest_zoom_param->PhyCameras = src_zoom_param->PhyCameras;
-    dest_zoom_param->MaxDigitalZoom = src_zoom_param->MaxDigitalZoom;
-    memcpy(&(dest_zoom_param->ZoomRatioSection),
-           src_zoom_param->ZoomRatioSection, sizeof(src_zoom_param->ZoomRatioSection));
-    dest_zoom_param->BinningRatio = src_zoom_param->BinningRatio;
+void copy_zoom_cfg_info(struct sensor_zoom_param_input *dest_param,
+                        struct zoom_info_config *src_param)
+{
+    dest_param->PhyCameras = src_param->PhyCameras;
+    dest_param->MaxDigitalZoom = src_param->MaxDigitalZoom;
+    dest_param->BinningRatio = src_param->BinningRatio;
+
+    memset(dest_param->PhyCamEnable, 0, sizeof(dest_param->PhyCamEnable));
+    memset(dest_param->ZoomRatioSection, 0, sizeof(dest_param->ZoomRatioSection));
+
+    dest_param->PhyCamEnable[CAM_TYPE_AUX1] = src_param->PhyCamZoomRegion[CAM_TYPE_AUX1].Enable;
+    dest_param->PhyCamEnable[CAM_TYPE_MAIN] = src_param->PhyCamZoomRegion[CAM_TYPE_MAIN].Enable;
+    dest_param->PhyCamEnable[CAM_TYPE_AUX2] = src_param->PhyCamZoomRegion[CAM_TYPE_AUX2].Enable;
+
+    dest_param->ZoomRatioSection[0] = src_param->PhyCamZoomRegion[CAM_TYPE_AUX1].Min;
+    dest_param->ZoomRatioSection[1] = src_param->PhyCamZoomRegion[CAM_TYPE_MAIN].Min;
+    dest_param->ZoomRatioSection[2] = src_param->PhyCamZoomRegion[CAM_TYPE_MAIN].Max;
+    dest_param->ZoomRatioSection[3] = src_param->PhyCamZoomRegion[CAM_TYPE_AUX2].Max;
 }
 
 cmr_int sensorGetZoomParam(struct sensor_zoom_param_input *zoom_param) {
@@ -5094,25 +5105,20 @@ cmr_int sensorGetZoomParam(struct sensor_zoom_param_input *zoom_param) {
 
     property_get("persist.vendor.cam.multi.section", value, "3");
 
+    CombinationType comb_type =
+        zoom_param->camera_id == SPRD_DUAL_VIEW_VIDEO_ID ? DUALVIDEO_ZOOM : DEFAULT_ZOOM;
+
     if (sns_zoom_info.init == true){
-        if (atoi(value) == 3) {
-            if (zoom_param->camera_id == SPRD_DUAL_VIEW_VIDEO_ID) {
-                copy_zoom_cfg_info(zoom_param, &sns_zoom_info.zoom_info_cfg[SW_T_DUALVIDEO_ZOOM]);
-            } else {
-                copy_zoom_cfg_info(zoom_param, &sns_zoom_info.zoom_info_cfg[W_SW_T_THREESECTION_ZOOM]);
-            }
-        } else if (atoi(value) == 2) {
-            copy_zoom_cfg_info(zoom_param, &sns_zoom_info.zoom_info_cfg[W_SW_TWOSECTION_ZOOM]);
-        }
+        copy_zoom_cfg_info(zoom_param, &sns_zoom_info.zoom_info_cfg[comb_type]);
     } else {
         if (atoi(value) == 3) {
             if (zoom_param->camera_id == SPRD_DUAL_VIEW_VIDEO_ID) {
                 zoom_param->PhyCameras = 2;
                 zoom_param->MaxDigitalZoom = 10.0;
-                zoom_param->ZoomRatioSection[0] = 2.0;
-                zoom_param->ZoomRatioSection[1] = 10.0;
-                zoom_param->ZoomRatioSection[2] = 0;
-                zoom_param->ZoomRatioSection[3] = 0;
+                zoom_param->ZoomRatioSection[0] = 0;
+                zoom_param->ZoomRatioSection[1] = 0;
+                zoom_param->ZoomRatioSection[2] = 2.0;
+                zoom_param->ZoomRatioSection[3] = 10.0;
                 zoom_param->ZoomRatioSection[4] = 0;
                 zoom_param->ZoomRatioSection[5] = 0;
                 zoom_param->BinningRatio = 5.0;
@@ -5126,7 +5132,11 @@ cmr_int sensorGetZoomParam(struct sensor_zoom_param_input *zoom_param) {
                 zoom_param->ZoomRatioSection[4] = 0;
                 zoom_param->ZoomRatioSection[5] = 0;
                 zoom_param->BinningRatio = 5.0;
+
+                zoom_param->PhyCamEnable[CAM_TYPE_MAIN] = 1;
             }
+            zoom_param->PhyCamEnable[CAM_TYPE_AUX1] = 1;
+            zoom_param->PhyCamEnable[CAM_TYPE_AUX2] = 1;
         } else if (atoi(value) == 2) {
             zoom_param->PhyCameras = 2;
             zoom_param->MaxDigitalZoom = 8.0;
@@ -5137,6 +5147,10 @@ cmr_int sensorGetZoomParam(struct sensor_zoom_param_input *zoom_param) {
             zoom_param->ZoomRatioSection[4] = 0;
             zoom_param->ZoomRatioSection[5] = 0;
             zoom_param->BinningRatio = 8.0;
+
+            zoom_param->PhyCamEnable[CAM_TYPE_AUX1] = 1;
+            zoom_param->PhyCamEnable[CAM_TYPE_MAIN] = 1;
+            zoom_param->PhyCamEnable[CAM_TYPE_AUX2] = 0;
         }
     }
 
