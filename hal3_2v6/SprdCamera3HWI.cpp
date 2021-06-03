@@ -478,9 +478,7 @@ int SprdCamera3HWI::closeCamera() {
     mOEMIf = NULL;
 
     if (!checkMultimodeAndIdForPool()) {
-        if (mMultiCameraMode == MODE_BOKEH | mMultiCameraMode == MODE_BLUR) {
-            mPoolManager.releasePool();
-        }
+        mPoolManager.releasePool();
         mPoolManager.deinit();
     }
 
@@ -1090,9 +1088,9 @@ int SprdCamera3HWI::configureStreams(
         //initialize pool size
         mCaptureSize = capture_size.width * capture_size.height;
         HAL_LOGD("hwi capsize is %d configurestreams, multimode is %d", mCaptureSize, mMultiCameraMode);
+        mPoolManager.releasePool();
         if (mMultiCameraMode == MODE_BOKEH | mMultiCameraMode == MODE_BLUR) {
-            mPoolManager.releasePool();
-            mPoolManager.initializePool(mCaptureSize * 28);
+            mPoolManager.initializePool(mCaptureSize * 8);
         } else {
             mPoolManager.initializePool(mCaptureSize * 6);
         }
@@ -1440,11 +1438,15 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     if (!checkMultimodeAndIdForPool()) {
         //check if need to resize buffer pool
         if ((sprddefInfo->sprd_auto_hdr_enable | (controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR)) !=
-            cur_hdr_state && mMultiCameraMode != MODE_BOKEH) {
+            cur_hdr_state) {
             cur_hdr_state = sprddefInfo->sprd_auto_hdr_enable | (controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR);
             HAL_LOGD("capsize is %d, hdr state %d", mCaptureSize, cur_hdr_state);
             if (cur_hdr_state == 0) {
-                mPoolManager.resizePool(mCaptureSize * 6);
+                if (mMultiCameraMode == MODE_BOKEH | mMultiCameraMode == MODE_BLUR) {
+                    mPoolManager.resizePool(mCaptureSize * 8);
+                } else {
+                    mPoolManager.resizePool(mCaptureSize * 6);
+                }
             } else if (cur_hdr_state == 1) {
                 mPoolManager.resizePool(mCaptureSize * 16);
             }
@@ -2754,13 +2756,6 @@ int SprdCamera3HWI::flush() {
     mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE;
     mFlush = false;
     mBufferStatusError = false;
-
-    if (!checkMultimodeAndIdForPool()) {
-        if (mMultiCameraMode != MODE_BOKEH && mMultiCameraMode != MODE_BLUR) {
-            mPoolManager.releasePool();
-        }
-    }
-
 
     HAL_LOGI(":hal3: X");
 
