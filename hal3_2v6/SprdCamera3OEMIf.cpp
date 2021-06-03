@@ -12459,9 +12459,9 @@ void SprdCamera3OEMIf::Set_cnr_mode() {
     CONTROL_Tag controlInfo;
     mSetting->getCONTROLTag(&controlInfo);
     char value[PROPERTY_VALUE_MAX];
-    if((! ((CAMERA_MODE_CONTINUE != mSprdAppmodeId) &&
-        (0 == mMultiCameraMode || MODE_MULTI_CAMERA == mMultiCameraMode ||
-        MODE_BOKEH == mMultiCameraMode || MODE_BLUR == mMultiCameraMode) &&
+    if((! ((CAMERA_MODE_CONTINUE != mSprdAppmodeId) && (0 == mMultiCameraMode ||
+        MODE_MULTI_CAMERA == mMultiCameraMode || MODE_BOKEH == mMultiCameraMode ||
+        MODE_BLUR == mMultiCameraMode || MODE_ULTRA_WIDE == mMultiCameraMode) &&
         (mSprdAppmodeId != -1) && (false == mRecordingMode)))){
         mCNRMode = 0;
     } else {
