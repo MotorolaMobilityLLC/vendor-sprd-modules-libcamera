@@ -17,6 +17,9 @@ static sem_t sem;
 
 PoolManager::PoolManager() {
     is_inited = false;
+    is_deinited = true;
+    is_pool_inited = false;
+    is_pool_released = true;
     count = 0;
 }
 
