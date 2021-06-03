@@ -493,7 +493,7 @@ extern "C" {
 		cmr_u32 touch_hold_flag;
 		struct ae_trim touch_hold_roi;	/*touch ROI*/
 		/*touch flash hold */
-		cmr_u8 touchev_Flag;
+
 		void *hdr_tuning_param;
 		cmr_s32 hdr_tuning_size;
 		struct ae_thd_param mfnr_hdr_thrd;
