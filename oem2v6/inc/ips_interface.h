@@ -19,7 +19,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 #include "cmr_types.h"
 #include "cmr_common.h"
 
@@ -28,11 +27,12 @@ extern "C" {
 #define IPS_THUMB_REQID 0x7FFFFFFF
 
 enum {
+	IPS_TYPE_UWARP,
 	IPS_TYPE_HDR,
 	IPS_TYPE_MFNR,
-	IPS_TYPE_UWARP,
+	IPS_TYPE_MFSR,
 	IPS_TYPE_CNR,
-	IPS_TYPE_DRE,
+	IPS_TYPE_SHARP,
 	IPS_TYPE_DREPRO,
 	IPS_TYPE_FB,
 	IPS_TYPE_FILTER,
@@ -54,6 +54,8 @@ struct ips_jpeg_param_t {
 	struct img_size thumb_size;
 	struct cmr_op_mean mean;
 	saved_exif_info_t exif_data;
+	void *isp_debug_info;
+	cmr_u32 isp_debug_info_size;
 };
 
 struct ips_handle_t {

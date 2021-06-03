@@ -512,10 +512,10 @@ cmr_int afl_ctrl_init(cmr_handle * isp_afl_handle, struct afl_ctrl_init_in * inp
 		ISP_LOGI("afl version: built time: %s.\n", cxt->afl_version.built_time);
 		ISP_LOGI("afl version: built rev: %s.\n", cxt->afl_version.built_rev);
 	}
-	afl_input.pm_param_num = input_ptr->pm_param_num;
+	afl_input.pm_param_size = input_ptr->pm_param_size;
 	afl_input.afl_log_level = (cmr_u32) g_isp_log_level;
 
-	if (1 == input_ptr->pm_param_num) {
+	if (input_ptr->pm_param_size > 0) {
 		if (input_ptr->afl_tune_param !=NULL){
 		    afl_input.afl_tune_param = input_ptr->afl_tune_param;
 		    afl_tuning_param = (cmr_u32 *)input_ptr->afl_tune_param;
@@ -550,6 +550,12 @@ cmr_int afl_ctrl_init(cmr_handle * isp_afl_handle, struct afl_ctrl_init_in * inp
 	cxt->caller_handle = input_ptr->caller_handle;
 	cxt->version = input_ptr->version;
 	cxt->camera_id = input_ptr->camera_id;
+
+	if((input_ptr->afl_reg_param != NULL) && (input_ptr->reg_param_size > 0)){
+		memcpy((void *)&cxt->afl_reg_param, input_ptr->afl_reg_param, sizeof(struct isp_antiflicker_reg_param));
+	}else{
+	   ISP_LOGE("afl_reg_param ERROR");
+	}
 
 	rtn = aflctrl_create_thread(cxt);
 exit:
@@ -602,6 +608,14 @@ cmr_int aflnew_ctrl_cfg(isp_handle isp_afl_handle)
 	cxt->start_col = 0;
 	cxt->end_col = (cmr_u32)cxt->width;
 
+	cmr_u32 start_thrd = (cmr_u32)cxt->width - 640;
+	cmr_u32 end_thrd = 640;
+	cmr_u32 afl_basic_wid = 0;
+	cmr_u32 afl_region_wid = 0;
+        ISP_LOGI("AFL TUNE PARAM start %d ed %d regin_strat %d ed %d",
+		cxt->afl_reg_param.afl_x_st,cxt->afl_reg_param.afl_x_ed,
+		cxt->afl_reg_param.afl_x_st_region,cxt->afl_reg_param.afl_x_ed_region);
+
 #if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8) ||defined(CONFIG_ISP_2_9)
 	afl_info_v3.bayer2y_chanel = 0;
 	afl_info_v3.bayer2y_mode = 2;
@@ -610,15 +624,57 @@ cmr_int aflnew_ctrl_cfg(isp_handle isp_afl_handle)
 	afl_info_v3.bypass = cxt->bypass;
 	afl_info_v3.mode = cxt->mode;
 	afl_info_v3.skip_frame_num = cxt->skip_frame_num;
-	afl_info_v3.afl_stepx = (cmr_u64) cxt->width * 0x100000 / 640;
-	afl_info_v3.afl_stepy = (cmr_u64) cxt->height * 0x100000 / 480;
 	afl_info_v3.frame_num = cxt->frame_num;
-	afl_info_v3.start_col = cxt->start_col;
-	afl_info_v3.end_col = cxt->end_col;
-	afl_info_v3.step_x_region = (cmr_u64) cxt->width * 0x100000 / 640;
-	afl_info_v3.step_y_region = (cmr_u64) cxt->height * 0x100000 / 480;
-	afl_info_v3.step_x_start_region = 0;
-	afl_info_v3.step_x_end_region = cxt->width;
+	if ((cxt->afl_reg_param.afl_x_st > 0)&&(cxt->afl_reg_param.afl_x_ed > 0) \
+	    && (cxt->afl_reg_param.afl_x_st < 41)&&(cxt->afl_reg_param.afl_x_ed < 41)){
+	        afl_info_v3.start_col = 2*((cmr_u32) cxt->width * cxt->afl_reg_param.afl_x_st / 200);
+	        afl_info_v3.end_col = 2*((cmr_u32) cxt->width * (100 - cxt->afl_reg_param.afl_x_ed) / 200);
+		afl_basic_wid = afl_info_v3.end_col - afl_info_v3.start_col;
+
+		if ((afl_info_v3.start_col < start_thrd) && (afl_info_v3.end_col > end_thrd)\
+		    &&(afl_basic_wid > 640)){
+			afl_info_v3.afl_stepx = (cmr_u64) afl_basic_wid * 0x100000 / 640;
+	        	afl_info_v3.afl_stepy = (cmr_u64) cxt->height * 0x100000 / 480;
+		}else{
+			ISP_LOGE("ERROR REG PARAM");
+		        afl_info_v3.afl_stepx = (cmr_u64) cxt->width * 0x100000 / 640;
+	        	afl_info_v3.afl_stepy = (cmr_u64) cxt->height * 0x100000 / 480;
+	        	afl_info_v3.start_col = cxt->start_col;
+	        	afl_info_v3.end_col = cxt->end_col;
+		}
+	}else{
+	        ISP_LOGE("ERROR REG PARAM");
+	        afl_info_v3.afl_stepx = (cmr_u64) cxt->width * 0x100000 / 640;
+	        afl_info_v3.afl_stepy = (cmr_u64) cxt->height * 0x100000 / 480;
+	        afl_info_v3.start_col = cxt->start_col;
+	        afl_info_v3.end_col = cxt->end_col;
+	}
+
+	if ((cxt->afl_reg_param.afl_x_st_region> 0)&&(cxt->afl_reg_param.afl_x_ed_region > 0) \
+	     && (cxt->afl_reg_param.afl_x_st_region < 41)&&(cxt->afl_reg_param.afl_x_ed_region < 41)){
+                 afl_info_v3.step_x_start_region = 2*((cmr_u32) cxt->width * cxt->afl_reg_param.afl_x_st_region / 200);
+	         afl_info_v3.step_x_end_region = 2*((cmr_u32) cxt->width * (100 - cxt->afl_reg_param.afl_x_ed_region) / 200);
+                 afl_region_wid = afl_info_v3.step_x_end_region - afl_info_v3.step_x_start_region;
+
+		if ((afl_info_v3.step_x_start_region < start_thrd) && (afl_info_v3.step_x_end_region > end_thrd)\
+	             &&(afl_region_wid > 640)){
+			  afl_info_v3.step_x_region = (cmr_u64) afl_region_wid * 0x100000 / 640;
+			  afl_info_v3.step_y_region = (cmr_u64) cxt->height * 0x100000 / 480;
+		}else{
+			  ISP_LOGE("ERROR REG PARAM");
+			  afl_info_v3.step_x_region = (cmr_u64) cxt->width * 0x100000 / 640;
+			  afl_info_v3.step_y_region = (cmr_u64) cxt->height * 0x100000 / 480;
+			  afl_info_v3.step_x_start_region = 0;
+			  afl_info_v3.step_x_end_region = cxt->width;
+
+		}
+	}else{
+	        ISP_LOGE("ERROR REG PARAM");
+	        afl_info_v3.step_x_region = (cmr_u64) cxt->width * 0x100000 / 640;
+	        afl_info_v3.step_y_region = (cmr_u64) cxt->height * 0x100000 / 480;
+	        afl_info_v3.step_x_start_region = 0;
+	        afl_info_v3.step_x_end_region = cxt->width;
+	}
 
 	afl_info_v3.img_size.width = cxt->width;
 	afl_info_v3.img_size.height = cxt->height;
@@ -627,8 +683,9 @@ cmr_int aflnew_ctrl_cfg(isp_handle isp_afl_handle)
 		cxt->afl_set_cb(cxt->caller_handle, ISP_AFL_NEW_SET_CFG_PARAM, &afl_info_v3, NULL);
 	}
 
-	ISP_LOGI("done:stepx: 0x%x, y: 0x%x, x_region %x, y 0x%x, x_start_region 0x%x, x_end 0x%x",
+	ISP_LOGI("done:stepx: 0x%x, y: 0x%x, x_start 0x%x, x_end 0x%x, x_region %x, y 0x%x, x_start_region 0x%x, x_end 0x%x",
 		 afl_info_v3.afl_stepx, afl_info_v3.afl_stepy,
+		 afl_info_v3.start_col,afl_info_v3.end_col,
 		 afl_info_v3.step_x_region, afl_info_v3.step_y_region,
 		 afl_info_v3.step_x_start_region, afl_info_v3.step_x_end_region);
 	return rtn;

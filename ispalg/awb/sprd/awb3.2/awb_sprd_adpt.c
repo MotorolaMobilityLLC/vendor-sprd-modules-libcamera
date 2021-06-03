@@ -1352,7 +1352,7 @@ awb_ctrl_handle_t awb_sprd_ctrl_init_v3_2(void *in, void *out)
 	otp_info.otp_random_r = cxt->otp_info.rdm_stat_info.r;
 	otp_info.otp_random_g = cxt->otp_info.rdm_stat_info.g;
 	otp_info.otp_random_b = cxt->otp_info.rdm_stat_info.b;
-
+/*
 #ifndef CONFIG_ISP_2_2
 	ISP_LOGI("start the isp_br_ioctrl()");
 	if (cxt->ptr_isp_br_ioctrl != NULL) {
@@ -1360,6 +1360,7 @@ awb_ctrl_handle_t awb_sprd_ctrl_init_v3_2(void *in, void *out)
 	}
 	ISP_LOGI("end the isp_br_ioctrl()");
 #endif
+*/
 	_awb_read_file_for_init(cxt);
 
 	//init recover_gain & awb result gain

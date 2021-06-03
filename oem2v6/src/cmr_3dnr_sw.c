@@ -387,6 +387,8 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     cmr_u32 small_buf_num;
     cmr_uint sensor_id;
     struct threednr_tuning_param *cap_3dnr_param;
+    struct mfnr_tuning_param_info cap_3dnr_tuning_param;
+    struct __mfnr_memory_ops bufferpool_ops;
     struct common_isp_cmd_param isp_cmd_parm;
     char flag[PROPERTY_VALUE_MAX];
     mfnr_cmd_proc_t process_param;
@@ -413,6 +415,9 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     threednr_handle->common.receive_frame_count = 0;
     threednr_handle->common.save_frame_count = 0;
     threednr_handle->common.ops = &threednr_ops_tab_info;
+
+    bufferpool_ops.malloc = threednr_handle->common.ipm_cxt->init_in.ops.heap_mem_malloc;
+    bufferpool_ops.free = threednr_handle->common.ipm_cxt->init_in.ops.heap_mem_free;
 
     threednr_handle->mem_size = size;
 
@@ -491,6 +496,13 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     param.thread_num_acc = 4; // 2 | (1 << 4) | (2 << 6) |(1<<12);
     param.thread_num = 4;     // 2 | (1<<4) | (2<<6) | (1<<12);
     param.preview_cpyBuf = 1;
+    param.AF_ROI_start_x = in->af_ctrl_roi.start_x;
+    param.AF_ROI_start_y = in->af_ctrl_roi.start_y;
+    param.AF_ROI_width = in->af_ctrl_roi.width;
+    param.AF_ROI_height = in->af_ctrl_roi.height;
+    CMR_LOGD("af_roi: x=%d, y=%d, w=%d, h=%d", param.AF_ROI_start_x, param.AF_ROI_start_y,
+        param.AF_ROI_width, param.AF_ROI_height);
+
 
 #if 0
     if (!strcmp(flag, "1")) {
@@ -524,20 +536,22 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
         }
     }
 
-    param.SearchWindow_x = cap_3dnr_param->searchWindow_x;
-    param.SearchWindow_y = cap_3dnr_param->searchWindow_y;
-    param.threthold = cap_3dnr_param->threshold;
-    param.slope = cap_3dnr_param->slope;
-    param.recur_str = cap_3dnr_param->recur_str;
-    param.match_ratio_sad = cap_3dnr_param->match_ratio_sad;
-    param.match_ratio_pro = cap_3dnr_param->match_ratio_pro;
-    param.feat_thr = cap_3dnr_param->feat_thr;
-    param.luma_ratio_high = cap_3dnr_param->luma_ratio_high;
-    param.luma_ratio_low = cap_3dnr_param->luma_ratio_low;
-    param.zone_size = cap_3dnr_param->zone_size;
-    memcpy(param.gain_thr, cap_3dnr_param->gain_thr, (6 * sizeof(int)));
-    memcpy(param.reserverd, cap_3dnr_param->reserverd, (16 * sizeof(int)));
-    CMR_LOGD("auto3dnr_flag %d sprd_3dnr_type %d", cam_cxt->auto3dnr_flag, cam_cxt->snp_cxt.sprd_3dnr_type);
+    cap_3dnr_tuning_param.SearchWindow_x = cap_3dnr_param->searchWindow_x;
+    cap_3dnr_tuning_param.SearchWindow_y = cap_3dnr_param->searchWindow_y;
+    cap_3dnr_tuning_param.threthold = cap_3dnr_param->threshold;
+    cap_3dnr_tuning_param.slope = cap_3dnr_param->slope;
+    cap_3dnr_tuning_param.recur_str = cap_3dnr_param->recur_str;
+    cap_3dnr_tuning_param.match_ratio_sad = cap_3dnr_param->match_ratio_sad;
+    cap_3dnr_tuning_param.match_ratio_pro = cap_3dnr_param->match_ratio_pro;
+    cap_3dnr_tuning_param.feat_thr = cap_3dnr_param->feat_thr;
+    cap_3dnr_tuning_param.luma_ratio_high = cap_3dnr_param->luma_ratio_high;
+    cap_3dnr_tuning_param.luma_ratio_low = cap_3dnr_param->luma_ratio_low;
+    cap_3dnr_tuning_param.zone_size = cap_3dnr_param->zone_size;
+    memcpy(cap_3dnr_tuning_param.gain_thr, cap_3dnr_param->gain_thr, (6 * sizeof(int)));
+    memcpy(cap_3dnr_tuning_param.reserved, cap_3dnr_param->reserverd, (16 * sizeof(int)));
+    CMR_LOGD("auto3dnr_flag %d sprd_3dnr_type %d sensor_id %ld index %d search window %hdx%hd threthold[3][2] %d",
+        cam_cxt->auto3dnr_flag, cam_cxt->snp_cxt.sprd_3dnr_type, sensor_id, param_3dnr_index, cap_3dnr_tuning_param.SearchWindow_x,
+             cap_3dnr_tuning_param.SearchWindow_y, cap_3dnr_tuning_param.threthold[3][2]);
     if (cam_cxt->snp_cxt.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
           if (cam_cxt->auto3dnr_flag == 2) {
               ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_MFNR_PARAM,
@@ -545,16 +559,16 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
               if (ret) {
                   CMR_LOGE("failed to get mfnr isp param  %ld", ret);
               } else {
-                  param.SearchWindow_x = isp_cmd_parm.mfnr_param.searchWindow_x;
-                  param.SearchWindow_y = isp_cmd_parm.mfnr_param.searchWindow_y;
-                  param.recur_str = isp_cmd_parm.mfnr_param.recur_str;
-                  param.match_ratio_sad = isp_cmd_parm.mfnr_param.match_ratio_sad;
-                  param.match_ratio_pro = isp_cmd_parm.mfnr_param.match_ratio_pro;
-                  param.feat_thr = isp_cmd_parm.mfnr_param.feat_thr;
-                  param.luma_ratio_high = isp_cmd_parm.mfnr_param.luma_ratio_high;
-                  param.luma_ratio_low = isp_cmd_parm.mfnr_param.luma_ratio_low;
-                  param.zone_size = isp_cmd_parm.mfnr_param.zone_size;
-                  memcpy(param.reserverd, isp_cmd_parm.mfnr_param.reserverd,(16 * sizeof(int)));
+                  cap_3dnr_tuning_param.SearchWindow_x = isp_cmd_parm.mfnr_param.searchWindow_x;
+                  cap_3dnr_tuning_param.SearchWindow_y = isp_cmd_parm.mfnr_param.searchWindow_y;
+                  cap_3dnr_tuning_param.recur_str = isp_cmd_parm.mfnr_param.recur_str;
+                  cap_3dnr_tuning_param.match_ratio_sad = isp_cmd_parm.mfnr_param.match_ratio_sad;
+                  cap_3dnr_tuning_param.match_ratio_pro = isp_cmd_parm.mfnr_param.match_ratio_pro;
+                  cap_3dnr_tuning_param.feat_thr = isp_cmd_parm.mfnr_param.feat_thr;
+                  cap_3dnr_tuning_param.luma_ratio_high = isp_cmd_parm.mfnr_param.luma_ratio_high;
+                  cap_3dnr_tuning_param.luma_ratio_low = isp_cmd_parm.mfnr_param.luma_ratio_low;
+                  cap_3dnr_tuning_param.zone_size = isp_cmd_parm.mfnr_param.zone_size;
+                  memcpy(cap_3dnr_tuning_param.reserved, isp_cmd_parm.mfnr_param.reserverd,(16 * sizeof(int)));
               }
           } else {
               ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_SW3DNR_PARAM,
@@ -562,21 +576,22 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
               if (ret) {
                   CMR_LOGE("failed to get sw3dnr isp param for %ld", ret);
               } else {
-                  param.SearchWindow_x = isp_cmd_parm.threednr_param.searchWindow_x;
-                  param.SearchWindow_y = isp_cmd_parm.threednr_param.searchWindow_y;
-                  param.recur_str = isp_cmd_parm.threednr_param.recur_str;
-                  param.match_ratio_sad = isp_cmd_parm.threednr_param.match_ratio_sad;
-                  param.match_ratio_pro = isp_cmd_parm.threednr_param.match_ratio_pro;
-                  param.feat_thr = isp_cmd_parm.threednr_param.feat_thr;
-                  param.luma_ratio_high = isp_cmd_parm.threednr_param.luma_ratio_high;
-                  param.luma_ratio_low = isp_cmd_parm.threednr_param.luma_ratio_low;
-                  param.zone_size = isp_cmd_parm.threednr_param.zone_size;
-                  memcpy(param.reserverd, isp_cmd_parm.threednr_param.reserverd,(16 * sizeof(int)));
+                  cap_3dnr_tuning_param.SearchWindow_x = isp_cmd_parm.threednr_param.searchWindow_x;
+                  cap_3dnr_tuning_param.SearchWindow_y = isp_cmd_parm.threednr_param.searchWindow_y;
+                  cap_3dnr_tuning_param.recur_str = isp_cmd_parm.threednr_param.recur_str;
+                  cap_3dnr_tuning_param.match_ratio_sad = isp_cmd_parm.threednr_param.match_ratio_sad;
+                  cap_3dnr_tuning_param.match_ratio_pro = isp_cmd_parm.threednr_param.match_ratio_pro;
+                  cap_3dnr_tuning_param.feat_thr = isp_cmd_parm.threednr_param.feat_thr;
+                  cap_3dnr_tuning_param.luma_ratio_high = isp_cmd_parm.threednr_param.luma_ratio_high;
+                  cap_3dnr_tuning_param.luma_ratio_low = isp_cmd_parm.threednr_param.luma_ratio_low;
+                  cap_3dnr_tuning_param.zone_size = isp_cmd_parm.threednr_param.zone_size;
+                  memcpy(cap_3dnr_tuning_param.reserved, isp_cmd_parm.threednr_param.reserverd,(16 * sizeof(int)));
               }
           }
     }
     param.productInfo = PLATFORM_ID;
-    ret = sprd_mfnr_adpt_init((void **)&(threednr_handle->proc_handle),  &param, (void *)cap_3dnr_param);
+    param.pMemoryOps = &bufferpool_ops;
+    ret = sprd_mfnr_adpt_init((void **)&(threednr_handle->proc_handle),  &param, (void *)(&cap_3dnr_tuning_param));
     if (ret != 0 || !threednr_handle->proc_handle) {
         CMR_LOGE("Fail to call threednr_init, ret = %d",ret);
     }
@@ -1364,6 +1379,7 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
     cmr_uint size;
     cmr_int i = 0;
     struct mfnr_param_info param;
+    struct mfnr_tuning_param_info cap_3dnr_tuning_param;
     cmr_handle oem_handle = NULL;
     struct camera_context *cam_cxt = NULL;
     struct preview_context *prev_cxt = NULL;
@@ -1376,6 +1392,7 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
     struct preview_smallbuf_node smallbuff_node;
     cmr_uint sensor_id;
     struct threednr_tuning_param *prev_3dnr_param;
+    struct __mfnr_memory_ops bufferpool_ops;
     char flag[PROPERTY_VALUE_MAX];
 
     CMR_LOGV("E");
@@ -1408,6 +1425,9 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
     threednr_prev_handle->common.ipm_cxt = (struct ipm_context_t *)ipm_handle;
     threednr_prev_handle->common.class_type = IPM_TYPE_3DNR_PRE;
     threednr_prev_handle->common.ops = &threednr_prev_ops_tab_info;
+
+    bufferpool_ops.malloc = threednr_prev_handle->common.ipm_cxt->init_in.ops.heap_mem_malloc;
+    bufferpool_ops.free = threednr_prev_handle->common.ipm_cxt->init_in.ops.heap_mem_free;
 
     oem_handle = threednr_prev_handle->common.ipm_cxt->init_in.oem_handle;
     cam_cxt = (struct camera_context *)oem_handle;
@@ -1503,25 +1523,26 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
     param_3dnr_index = threednr_get_sns_match_index(sensor_id);
     prev_3dnr_param = sns_3dnr_param_tab[param_3dnr_index].prev_param;
 
-    param.SearchWindow_x = prev_3dnr_param->searchWindow_x;
-    param.SearchWindow_y = prev_3dnr_param->searchWindow_y;
-    param.threthold = prev_3dnr_param->threshold;
-    param.slope = prev_3dnr_param->slope;
-    param.recur_str = prev_3dnr_param->recur_str;
-    param.match_ratio_sad = prev_3dnr_param->match_ratio_sad;
-    param.match_ratio_pro = prev_3dnr_param->match_ratio_pro;
-    param.feat_thr = prev_3dnr_param->feat_thr;
-    param.luma_ratio_high = prev_3dnr_param->luma_ratio_high;
-    param.luma_ratio_low = prev_3dnr_param->luma_ratio_low;
-    param.zone_size = prev_3dnr_param->zone_size;
-    memcpy(param.gain_thr, prev_3dnr_param->gain_thr, (6 * sizeof(int)));
-    memcpy(param.reserverd, prev_3dnr_param->reserverd, (16 * sizeof(int)));
+    cap_3dnr_tuning_param.SearchWindow_x = prev_3dnr_param->searchWindow_x;
+    cap_3dnr_tuning_param.SearchWindow_y = prev_3dnr_param->searchWindow_y;
+    cap_3dnr_tuning_param.threthold = prev_3dnr_param->threshold;
+    cap_3dnr_tuning_param.slope = prev_3dnr_param->slope;
+    cap_3dnr_tuning_param.recur_str = prev_3dnr_param->recur_str;
+    cap_3dnr_tuning_param.match_ratio_sad = prev_3dnr_param->match_ratio_sad;
+    cap_3dnr_tuning_param.match_ratio_pro = prev_3dnr_param->match_ratio_pro;
+    cap_3dnr_tuning_param.feat_thr = prev_3dnr_param->feat_thr;
+    cap_3dnr_tuning_param.luma_ratio_high = prev_3dnr_param->luma_ratio_high;
+    cap_3dnr_tuning_param.luma_ratio_low = prev_3dnr_param->luma_ratio_low;
+    cap_3dnr_tuning_param.zone_size = prev_3dnr_param->zone_size;
+    memcpy(cap_3dnr_tuning_param.gain_thr, prev_3dnr_param->gain_thr, (6 * sizeof(int)));
+    memcpy(cap_3dnr_tuning_param.reserved, prev_3dnr_param->reserverd, (16 * sizeof(int)));
     CMR_LOGD("sensor_id %ld index %d search window %hdx%hd threthold[3][2] %d",
-             sensor_id, param_3dnr_index, param.SearchWindow_x,
-             param.SearchWindow_y, param.threthold[3][2]);
+             sensor_id, param_3dnr_index, cap_3dnr_tuning_param.SearchWindow_x,
+             cap_3dnr_tuning_param.SearchWindow_y, cap_3dnr_tuning_param.threthold[3][2]);
 
     param.productInfo = PLATFORM_ID;
-    ret = sprd_mfnr_adpt_init((void **)&(threednr_prev_handle->proc_handle), &param, (void *)prev_3dnr_param);
+    param.pMemoryOps = &bufferpool_ops;
+    ret = sprd_mfnr_adpt_init((void **)&(threednr_prev_handle->proc_handle), &param, (void *)(&cap_3dnr_tuning_param));
     if (ret != 0) {
         CMR_LOGE("Fail to call preview threednr_init");
     } else {

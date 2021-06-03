@@ -88,7 +88,10 @@ extern "C" {
 #define CAMERA_CONFIG_BUFFER_TO_KERNAL_ARRAY_SIZE 4
 #define CAMERA_EMBEDDED_INFO_TYPE 0x12
 #define CAP_4IN1_NUM 5
+
+#define HDR3_CAP_NUM 7
 #define HDR_CAP_NUM 3
+
 #define PRE_3DNR_NUM 2
 #define CAP_3DNR_NUM 5
 #define PRE_SW_3DNR_RESERVE_NUM 8
@@ -500,6 +503,7 @@ enum common_isp_cmd_type {
     COM_ISP_SET_AE_TARGET_REGION,
     COM_ISP_GET_AE_FPS_RANGE,
     COM_ISP_SET_SENSOR_SIZE,
+    COM_ISP_GET_MFSR_PARAM,
     COM_ISP_GET_CNR3_PARAM,
     COM_ISP_GET_FB_PREV_PARAM,
     COM_ISP_GET_FB_CAP_PARAM,
@@ -1219,6 +1223,7 @@ struct common_isp_cmd_param {
         struct leds_ctrl leds_ctrl;
         struct cmr_ae_compensation_param ae_compensation_param;
         struct isp_ev_control ev_setting;
+        struct isp_blkpm_t isp_blk_param;
         cmr_u32 cnr2cnr3_ynr_en;
         struct isp_sw_cnr2_info cnr2_param;
         struct isp_ynrs_info ynr_param;
@@ -1294,6 +1299,7 @@ enum ipm_class_type {
     IPM_TYPE_NONE = 0x0,
     IPM_TYPE_HDR = 0x00000001,
     IPM_TYPE_FD = 0x00000002,
+    IPM_TYPE_HDR3 = 0x00000003,
     IPM_TYPE_REFOCUS = 0x00000010,
     IPM_TYPE_3DNR = 0x00000020,
     IPM_TYPE_3DNR_PRE = 0x00000040,
@@ -1352,6 +1358,7 @@ struct face_finder_data {
     struct fdrect_to_isp fd_ptr;
     int data[FA_SHAPE_POINTNUM * 2];
     int fascore;
+    cmr_u8 flag_square;
 };
 
 struct img_face_area {
@@ -1559,6 +1566,17 @@ enum {
     CAMERA_AE_MODE_MAX
 };
 
+enum fd_ae_info_index {
+    FD_AE_STABLE_INDEX = 0,
+    FD_AE_BLS_INDEX,
+    FD_AE_BLS_ENABLE_INDEX,
+    FD_AE_BV_INDEX,
+    FD_AE_FACE_INDEX,
+    FD_AE_RESERVED_INDEX,
+    FD_AE_MAX_INDEX
+};
+
+
 enum ae_stab_cb_value_index {
     AE_CB_STABLE_INDEX = 0,
     AE_CB_BLS_INDEX,
@@ -1635,10 +1653,18 @@ enum sprd_camera_app_mode {
  */
 enum top_app_id {
     TOP_APP_NONE,
-    TOP_APP_WECHAT = (1 << 0),
-    TOP_APP_QQ = (1 << 1),
+    TOP_APP_WECHAT     = (1 << 0),
+    TOP_APP_WTFACTORY  = (1 << 1),
+    TOP_APP_QQ         = (1 << 2),
+    TOP_APP_FACEBOOK   = (1 << 3),
+    TOP_APP_INSTAGRAM  = (1 << 4),
+    TOP_APP_MESSENGER  = (1 << 5),
+    TOP_APP_SNAPCHAT   = (1 << 6),
+    TOP_APP_WHATSAPP   = (1 << 7),
+    TOP_APP_QQINT      = (1 << 8),
     TOP_APP_MAX
 };
+
 
 enum cmr_focus_mode {
     CAMERA_FOCUS_MODE_AUTO = 0,
@@ -1860,6 +1886,7 @@ enum camera_param_type {
     CAMERA_PARAM_ZSL_IPS_ENABLE,
     CAMERA_PARAM_3RD_3DNR_ENABLED,
     CAMERA_PARAM_FACE_BEAUTY_ENABLE,
+    CAMERA_PARAM_SET_TOP_APP_ID,
     CAMERA_PARAM_TYPE_MAX
 };
 
@@ -1942,6 +1969,7 @@ struct camera_face_info {
     struct fdrect_to_isp fd_cb_ptr;
     int data[FA_SHAPE_POINTNUM * 2];
     cmr_u32 fascore;
+    cmr_u8 flag_square;
 };
 
 struct super_cap {
@@ -2195,7 +2223,7 @@ struct visible_region_info {
 };
 
 struct ae_params {
-    cmr_s64 exp_time;
+    cmr_u64 exp_time;
     cmr_s32 sensitivity;
     cmr_u8 ae_mode;
     cmr_s32 frame_number;
@@ -2207,7 +2235,7 @@ struct ae_params {
 };
 
 struct tmp_cts_ae_params{
-    cmr_u32 exp_time;
+    cmr_u64 exp_time;
     cmr_u32 sensitivity;
     cmr_u32 ae_mode;/*0:auto 1:shutter&&iso 2:shutter first 3:iso first*/
     cmr_s32 frame_number;
@@ -2216,11 +2244,11 @@ struct tmp_cts_ae_params{
 struct af_params {
     float focus_distance;
     cmr_s32 frame_number;
+    float min_real_focus_distance;
     cmr_u8 af_mode;
     cmr_u8 lens_state;
     bool is_cts;
     cmr_u8 af_triger;
-    float min_real_focus_distance;
 };
 
 struct isp_sync_params {
@@ -2269,6 +2297,7 @@ typedef enum {
     CAMERA_IOCTRL_COVERED_SENSOR_STREAM_CTRL,
     CAMERA_IOCTRL_GET_FULLSCAN_INFO,
     CAMERA_IOCTRL_SET_AF_POS,
+    CAMERA_IOCTRL_SET_AF_BYPASS,
     CAMERA_IOCTRL_SET_3A_BYPASS,
     CAMERA_IOCTRL_GET_AE_FPS,
     CAMERA_IOCTRL_3DNR_VIDEOMODE,

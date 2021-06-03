@@ -1,4 +1,5 @@
 #include "SprdBokehAlgo.h"
+#include "cmr_memory.h"
 
 using namespace android;
 namespace sprdcamera {
@@ -54,6 +55,10 @@ int SprdBokehAlgo::initParam(BokehSize *size, OtpData *data,
         return rc;
     }
 
+    //memory pool interface for bokeh
+    mbokeh_ops.malloc = heap_malloc;
+    mbokeh_ops.free = heap_free;
+
     memcpy(&mSize, size, sizeof(BokehSize));
     memcpy(&mCalData, data, sizeof(OtpData));
     if (mFirstSprdBokeh) {
@@ -94,6 +99,7 @@ int SprdBokehAlgo::initParam(BokehSize *size, OtpData *data,
     memset(&adpt_init,0,sizeof(init_param));
     adpt_init.mode = MODE_DUAL_CAMERA;
     adpt_init.productID = PLATFORM_ID;
+    adpt_init.memOps = &mbokeh_ops;
     mCapBokehInitParams.param = &adpt_init;
     rc = sprd_bokeh_ctrl_adpt(SPRD_CAPTURE_BOKEH_INIT_CMD,&mCapBokehInitParams);
 
@@ -201,6 +207,14 @@ exit:
     return rc;
 }
 
+void* SprdBokehAlgo::heap_malloc(size_t size, char* type) {
+    return camera_heap_malloc(size, type);
+}
+
+void SprdBokehAlgo::heap_free(void* addr) {
+    camera_heap_free(addr);
+}
+
 int SprdBokehAlgo::initAlgo() {
     int rc = NO_ERROR;
     if (mFirstSprdBokeh) {
@@ -212,6 +226,10 @@ int SprdBokehAlgo::initAlgo() {
         }
     }
 
+    //memory pool interface for depth
+    mdepth_ops.mempool_malloc = heap_malloc;
+    mdepth_ops.mempool_free = heap_free;
+
     struct sprd_depth_configurable_para depth_config_param;
     // preview depth params
     mPrevDepthInitParams.inparam.input_width_main = mSize.preview_w;
@@ -222,6 +240,7 @@ int SprdBokehAlgo::initAlgo() {
     mPrevDepthInitParams.inparam.otpsize = mCalData.otp_size;
     mPrevDepthInitParams.inparam.config_param = NULL;
     mPrevDepthInitParams.format = PREVIEW_MODE;
+    mPrevDepthInitParams.mempool_ptr = &mdepth_ops;
     mDepthPrevHandle = NULL;
     // capture depth params
     mCapDepthInitParams.inparam.input_width_main = mSize.depth_snap_main_w;
@@ -232,6 +251,7 @@ int SprdBokehAlgo::initAlgo() {
     mCapDepthInitParams.inparam.otpsize = mCalData.otp_size;
     mCapDepthInitParams.inparam.config_param = NULL;
     mCapDepthInitParams.format = CAPTURE_MODE;
+    mCapDepthInitParams.mempool_ptr = &mdepth_ops;
     mDepthCapHandle = NULL;
     rc = checkDepthPara(&depth_config_param);
     if (rc) {

@@ -155,6 +155,7 @@ cmr_int cmr_grab_start_capture(cmr_handle grab_handle,
                                struct sprd_img_capture_param capture_param);
 // for offline isp architecture
 cmr_int cmr_grab_stop_capture(cmr_handle grab_handle);
+cmr_int cmr_grab_cfg_ch_crop(cmr_handle grab_handle, cmr_u32 ch_id, struct img_rect *crop);
 
 
 cmr_int cmr_grab_stream_pause(cmr_handle grab_handle);

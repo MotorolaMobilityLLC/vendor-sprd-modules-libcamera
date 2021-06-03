@@ -148,7 +148,9 @@ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, voi
 		{
 			cmr_u16 *ptr = NULL;
 
-			memcpy((void *)dst_lnc_ptr->final_lsc_param.data_ptr, param_ptr0, dst_lnc_ptr->final_lsc_param.size);
+			cmr_u32 lsc_param_size = dst_lnc_ptr->lsc_info.gain_w * dst_lnc_ptr->lsc_info.gain_h * 4 * sizeof(cmr_u16);
+			lsc_param_size = lsc_param_size < dst_lnc_ptr->final_lsc_param.size ? lsc_param_size : dst_lnc_ptr->final_lsc_param.size;
+			memcpy((void *)dst_lnc_ptr->final_lsc_param.data_ptr, param_ptr0, lsc_param_size);
 			dst_lnc_ptr->cur.grid_tab_addr = (cmr_u64)dst_lnc_ptr->final_lsc_param.data_ptr;
 			dst_lnc_ptr->cur.bypass = lnc_header_ptr->bypass;
 

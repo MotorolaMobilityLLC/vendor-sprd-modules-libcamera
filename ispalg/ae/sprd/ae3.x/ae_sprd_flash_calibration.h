@@ -19,11 +19,13 @@
 
 #include "ae_sprd_adpt_internal.h"
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 void flash_calibration_script(cmr_handle ae_cxt);
+void flash_calibration(cmr_handle ae_cxt, struct flash_cali_stat *stat);
 
 #ifdef __cplusplus
 }

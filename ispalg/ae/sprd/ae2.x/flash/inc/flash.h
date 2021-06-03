@@ -41,6 +41,62 @@ typedef  signed int int32;
 
 typedef void* flash_handle;
 
+struct flash_correct_info
+{
+	//config info
+	int32 LED_enable;			//0:LED1+LED2	1:LED1	2:LED2
+
+	uint32 numP1_hw;
+	uint32 numP2_hw;
+	uint32 numM1_hw;
+	uint32 numM2_hw;	//32
+
+	uint32 numP1_hwSample;					//num:3 low/mid/high
+	uint32 indP1_hwSample[3];		//LED1 sample index: 3
+	float maP1_hwSample[3];		//LED1 sample value: 	//	8 * 4 bytes
+
+	uint32 numP2_hwSample;
+	uint32 indP2_hwSample[3];
+	float maP2_hwSample[3];
+
+	uint32 numM1_hwSample;
+	uint32 indM1_hwSample[3];
+	float maM1_hwSample[3];
+
+	uint32 numM2_hwSample;
+	uint32 indM2_hwSample[3];
+	float maM2_hwSample[3];			//	21 * 4 bytes
+
+	uint32 prefm[3];					//pre
+	uint32 mainfm[3];					//main 	//6 * 4 bytes
+
+	float mAMaxP1;		//200
+	float mAMaxP2;
+	float mAMaxP12;
+	float mAMaxM1;		//1000
+	float mAMaxM2;
+	float mAMaxM12;
+
+	//precision of light/color
+	float fourcorners[2];
+	float around2center[2];				//4 * 4
+
+	//NV info
+	float P1rgbData[3][3];    //pre1     [][0]:r [][1]:g [][2]:b
+	uint32 P1expgain[3][2];      //[][0]:exp [][1]:gain
+
+	float P2rgbData[3][3];    // pre2
+	uint32 P2expgain[3][2];
+
+	float M1rgbData[3][3];       // main1
+	uint32 M1expgain[3][2];
+
+	float M2rgbData[3][3];       // main2
+	uint32 M2expgain[3][2];  		//60 * 4 bytes
+};/*109 * 4 bypes*/
+
+
+
 struct flash_tune_param {
 	uint8 version;/*version 0: just for old flash controlled by AE algorithm, and Dual Flash must be 1*/
 	uint8 alg_id;
@@ -135,7 +191,10 @@ struct flash_tune_param {
 	int32 flashIntensityBv2;
 	int16 flashIntensityLevel1;
 	int16 flashIntensityLevel2;
-	uint8 reserved1[1760];
+	//flash_correct_info_param
+	uint32 flashcorrectflag;
+	struct flash_correct_info flash_correct_base;
+	uint8 reserved1[1320];
 };/*2500 * 4 bypes*/
 
 
@@ -148,6 +207,7 @@ struct Flash_initInput
 	uint32 tmpForPack1;
 #endif
 	double tmp4pack;
+	struct flash_correct_info flash_correct_nv;
 	struct flash_tune_param *tune_info;/*flash algorithm tune param*/
 #if defined(__i386)
 	uint32 tmpForPack2;

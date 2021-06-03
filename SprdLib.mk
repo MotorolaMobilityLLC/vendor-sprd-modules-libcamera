@@ -1,7 +1,7 @@
 LOCAL_SHARED_LIBRARIES += libutils libmemion libcutils libhardware
 LOCAL_SHARED_LIBRARIES += libcamera_metadata
 #LOCAL_SHARED_LIBRARIES += libpowermanager
-LOCAL_SHARED_LIBRARIES += libui libbinder libdl libcamsensor libcamoem libxml2
+LOCAL_SHARED_LIBRARIES += libui libbinder libdl libcamsensor libcamoem libxml2 libmempool
 LOCAL_STATIC_LIBRARIES += android.hardware.camera.common@1.0-helper
 LOCAL_SHARED_LIBRARIES += libinterface libinfo libverify libkey
 
@@ -34,9 +34,14 @@ LOCAL_SHARED_LIBRARIES += libsprddepth libsprdbokeh
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
-ifeq ($(strip $(TARGET_BOARD_SPRD_HDR_VERSION)),2)
-LOCAL_SHARED_LIBRARIES += libsprdhdr
-else
+ifneq ($(strip $(TARGET_BOARD_SPRD_HDR_VERSION)),1)
+LOCAL_SHARED_LIBRARIES += libsprdhdr libsprdhdr3
+endif
+endif
+
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
+ifeq ($(strip $(TARGET_BOARD_SPRD_HDR_VERSION)),1)
 LOCAL_SHARED_LIBRARIES += libsprd_easy_hdr
 endif
 endif

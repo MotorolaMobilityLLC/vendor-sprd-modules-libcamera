@@ -65,6 +65,8 @@ LOCAL_C_INCLUDES := \
     $(TOP)/vendor/sprd/modules/enhance/include \
     $(LOCAL_PATH)/kernel_module/interface
 
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/memory_pool
+
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/$(ISPDRV_DIR)/isp_tune \
     $(LOCAL_PATH)/$(ISPALG_DIR)/common/inc \
@@ -116,7 +118,7 @@ LOCAL_HEADER_LIBRARIES += media_plugin_headers
 LOCAL_HEADER_LIBRARIES += libutils_headers
 LOCAL_HEADER_LIBRARIES += jni_headers
 
-LOCAL_SHARED_LIBRARIES := liblog libxml2
+LOCAL_SHARED_LIBRARIES := liblog libxml2 libmempool
 
 LOCAL_HEADER_LIBRARIES += libjsoncpp_headers
 LOCAL_SHARED_LIBRARIES += libjsoncpp
@@ -299,6 +301,10 @@ endif
 ifeq ($(strip $(CONFIG_DEBUG_MALLOC_64)),true)
 LOCAL_STATIC_LIBRARIES += libc_malloc_debug_backtrace
 LOCAL_CFLAGS += -DDEBUG_MALLOC_ON_64
+endif
+
+ifeq ($(strip $(CONFIG_BUFFER_POOL)),true)
+LOCAL_CFLAGS += -DCAMERA_BUFFER_POOL
 endif
 
 LOCAL_MODULE_RELATIVE_PATH := hw

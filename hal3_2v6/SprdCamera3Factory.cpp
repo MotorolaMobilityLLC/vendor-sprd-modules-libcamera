@@ -527,12 +527,10 @@ int SprdCamera3Factory::open_(const struct hw_module_t *module, const char *id,
                                                           hw_device);
 #endif
 
-#ifdef CONFIG_BOKEH_PARAM_SWITCH
     if(atoi(id) == SPRD_BLUR_ID || atoi(id) == SPRD_PORTRAIT_ID)
         switchTuningParam((int)SENSOR_TUNING_PARAM_BOKEH);
     else
         switchTuningParam((int)SENSOR_TUNING_PARAM_DEFAULT);
-#endif
     /* try other multi-camera */
     if (mWrapper && is_single_expose(cameraId))
         return mWrapper->cameraDeviceOpen(module, id, hw_device);
@@ -602,6 +600,9 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
     }
     if (SPRD_OPTICSZOOM_T_ID == camera_id) {
         hw->setMultiCameraMode(MODE_OPTICSZOOM_CALIBRATION);
+    }
+    if (SPRD_ULTRA_WIDE_ID == camera_id) {
+        hw->setMultiCameraMode(MODE_ULTRA_WIDE);
     }
     rc = hw->openCamera(hw_device);
     if (rc != 0) {

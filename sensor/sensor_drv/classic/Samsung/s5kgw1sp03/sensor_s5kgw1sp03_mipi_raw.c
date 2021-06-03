@@ -313,6 +313,9 @@ static cmr_int s5kgw1sp03_drv_write_exp_dummy(cmr_handle handle,
 
     sns_drv_cxt->exp_line = expsure_line;
     linetime = sns_drv_cxt->trim_tab_info[size_index].line_time;
+
+    /*  HAL write exif info after adding manual sensor tag */
+#ifndef CAMERA_MANULE_SNEOSR
     if (sns_drv_cxt->ops_cb.set_exif_info) {
         sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
                                           SENSOR_EXIF_CTRL_EXPOSURETIME,
@@ -321,6 +324,7 @@ static cmr_int s5kgw1sp03_drv_write_exp_dummy(cmr_handle handle,
         /*sns_drv_cxt->exif_info.exposure_time = expsure_line;*/
         sns_drv_cxt->exif_info.exposure_time = expsure_line * linetime / 1000;
     }
+#endif
 
     return ret_value;
 }
@@ -913,6 +917,8 @@ static cmr_int s5kgw1sp03_drv_get_static_info(cmr_handle handle,
     ex_info = (struct sensor_ex_info *)param;
     ex_info->f_num = static_info->f_num;
     ex_info->focal_length = static_info->focal_length;
+    ex_info->min_focus_distance = static_info->min_focal_distance;
+    ex_info->start_offset_time = static_info->start_offset_time;
     ex_info->max_fps = static_info->max_fps;
     ex_info->max_adgain = static_info->max_adgain;
     ex_info->ois_supported = static_info->ois_supported;
@@ -1003,6 +1009,27 @@ static cmr_int s5kgw1sp03_drv_4in1_deinit(cmr_handle handle, cmr_u32 *param) {
     return rtn;
 }
 #endif
+
+static cmr_s64 s5kgw1sp03_drv_get_shutter_skew(cmr_handle handle, cmr_u32 *param) {
+    cmr_int rtn = SENSOR_SUCCESS;
+    cmr_u16 height = 0;
+    cmr_u32 line_time = 0;
+    cmr_s64 shutter_skew = 0;
+    SENSOR_IC_CHECK_PTR(param);
+    SENSOR_LOGI("E\n");
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_shutter_skew_info *shutter_skew_info =
+        (struct sensor_shutter_skew_info *)param;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    height = s_s5kgw1sp03_resolution_Tab_RAW[0].reg_tab[shutter_skew_info->sns_mode].height;
+    line_time = s_s5kgw1sp03_Resolution_Trim_Tab[0].trim_info[shutter_skew_info->sns_mode].line_time;
+    shutter_skew = (height - 1) * line_time;
+    shutter_skew_info->shutter_skew = shutter_skew;
+    SENSOR_LOGI("sensor_mode:%d, height:%d, line_time:%d, shutter_skew:%d",
+                shutter_skew_info->sns_mode, height, line_time, shutter_skew);
+    return rtn;
+}
+
 static cmr_int s5kgw1sp03_drv_access_val(cmr_handle handle, cmr_int param) {
     cmr_int rtn = SENSOR_SUCCESS;
     SENSOR_VAL_T *param_ptr = (SENSOR_VAL_T *)param;
@@ -1043,6 +1070,9 @@ static cmr_int s5kgw1sp03_drv_access_val(cmr_handle handle, cmr_int param) {
         rtn = s5kgw1sp03_drv_get_pdaf_info(handle, param_ptr->pval);
         break;
 #endif
+    case SENSOR_VAL_TYPE_GET_SHUTTER_SKEW_DATA:
+        rtn = s5kgw1sp03_drv_get_shutter_skew(handle, param_ptr->pval);
+        break;
     default:
         break;
     }

@@ -191,10 +191,12 @@ static void imx616_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
     sns_drv_cxt->sensor_ev_info.preview_shutter = shutter;
     imx616_drv_write_shutter(handle, aec_info, shutter);
 
+#ifndef CAMERA_MANULE_SNEOSR
     if (sns_drv_cxt->ops_cb.set_exif_info) {
         sns_drv_cxt->ops_cb.set_exif_info(
             sns_drv_cxt->caller_handle, SENSOR_EXIF_CTRL_EXPOSURETIME, shutter);
     }
+#endif
 }
 
 static void imx616_drv_calc_gain(cmr_handle handle, cmr_uint isp_gain,
@@ -339,6 +341,8 @@ static cmr_int imx616_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     }
     ex_info->f_num = static_info->f_num;
     ex_info->focal_length = static_info->focal_length;
+    ex_info->min_focus_distance = static_info->min_focal_distance;
+    ex_info->start_offset_time = static_info->start_offset_time;
     ex_info->max_fps = static_info->max_fps;
     ex_info->max_adgain = static_info->max_adgain;
     ex_info->ois_supported = static_info->ois_supported;
@@ -438,6 +442,27 @@ imx616_drv_init_raw_info(sns_drv_cxt->sensor_id, vendor_id, 0, 0);
     return rtn;
 }
 */
+
+static cmr_s64 imx616_drv_get_shutter_skew(cmr_handle handle, cmr_u32 *param) {
+    cmr_int rtn = SENSOR_SUCCESS;
+    cmr_u16 height = 0;
+    cmr_u32 line_time = 0;
+    cmr_s64 shutter_skew = 0;
+    SENSOR_IC_CHECK_PTR(param);
+    SENSOR_LOGI("E\n");
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_shutter_skew_info *shutter_skew_info =
+        (struct sensor_shutter_skew_info *)param;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    height = s_imx616_resolution_tab_raw[0].reg_tab[shutter_skew_info->sns_mode].height;
+    line_time = s_imx616_resolution_trim_tab[0].trim_info[shutter_skew_info->sns_mode].line_time;
+    shutter_skew = (height - 1) * line_time;
+    shutter_skew_info->shutter_skew = shutter_skew;
+    SENSOR_LOGI("sensor_mode:%d, height:%d, line_time:%d, shutter_skew:%d",
+                shutter_skew_info->sns_mode, height, line_time, shutter_skew);
+    return rtn;
+}
+
 #if 1
 static const cmr_u32 sns_4in1_mode[] = {0, 0, 0, 1};
 static cmr_int imx616_drv_get_4in1_info(cmr_handle handle, cmr_u32 *param) {
@@ -499,6 +524,9 @@ static cmr_int imx616_drv_access_val(cmr_handle handle, cmr_uint param) {
     //        break;
     case SENSOR_VAL_TYPE_GET_PDAF_INFO:
         ret = imx616_drv_get_pdaf_info(handle, param_ptr->pval);
+        break;
+    case SENSOR_VAL_TYPE_GET_SHUTTER_SKEW_DATA:
+        ret = imx616_drv_get_shutter_skew(handle, param_ptr->pval);
         break;
     default:
         break;

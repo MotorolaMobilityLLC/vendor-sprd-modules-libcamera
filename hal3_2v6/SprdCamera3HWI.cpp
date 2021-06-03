@@ -41,6 +41,7 @@
 #include <ui/Fence.h>
 #endif
 #include "SprdCamera3HWI.h"
+#include "PoolManager.h"
 #include <sprd_ion.h>
 #include <gralloc_public.h>
 #include <hardware/gralloc1.h>
@@ -88,6 +89,7 @@ namespace sprdcamera {
 
 unsigned int SprdCamera3HWI::mCameraSessionActive = 0;
 multiCameraMode SprdCamera3HWI::mMultiCameraMode = MODE_SINGLE_CAMERA;
+static PoolManager& mPoolManager = PoolManager::getInstance();
 
 // gHalLogLevel(default is 4):
 //   1 - only show ALOGE, err log is always show
@@ -367,6 +369,11 @@ int SprdCamera3HWI::openCamera() {
         return NO_MEMORY;
     }
 
+    if (!checkMultimodeAndIdForPool()) {
+        mPoolManager.initialize();
+        cur_hdr_state = 0;
+    }
+
     mOEMIf = new SprdCamera3OEMIf(mCameraId, mSetting);
     if (!mOEMIf) {
         HAL_LOGE("alloc oemif failed.");
@@ -469,6 +476,13 @@ int SprdCamera3HWI::closeCamera() {
     mOEMIf->closeCamera();
     delete mOEMIf;
     mOEMIf = NULL;
+
+    if (!checkMultimodeAndIdForPool()) {
+        if (mMultiCameraMode == MODE_BOKEH | mMultiCameraMode == MODE_BLUR) {
+            mPoolManager.releasePool();
+        }
+        mPoolManager.deinit();
+    }
 
     if (mMetadataChannel) {
         delete mMetadataChannel;
@@ -641,6 +655,20 @@ static void set_usage_for_preview(camera3_stream_t *newStream)
 #endif // CONFIG_CAMERA_USAGE_PRIVATE_17
     HAL_LOGD("usage reserved[1] %p, usage 0x%x", newStream->reserved[1],
             newStream->usage);
+}
+
+int SprdCamera3HWI::checkMultimodeAndIdForPool() {
+#ifdef CAMERA_BUFFER_POOL
+    if (MODE_ULTRA_WIDE == mMultiCameraMode) {
+        return 0;
+    }
+    if (mCameraId == 0 || mCameraId == 1) {
+        return 0;
+    }
+    return 1;
+#else
+    return 1;
+#endif
 }
 
 int SprdCamera3HWI::configureStreams(
@@ -1058,6 +1086,18 @@ int SprdCamera3HWI::configureStreams(
     mOEMIf->setZslIpsEnable(mZslIpsEnable);
     mOEMIf->setMsizeZero();
 
+    if (!checkMultimodeAndIdForPool()) {
+        //initialize pool size
+        mCaptureSize = capture_size.width * capture_size.height;
+        HAL_LOGD("hwi capsize is %d configurestreams, multimode is %d", mCaptureSize, mMultiCameraMode);
+        if (mMultiCameraMode == MODE_BOKEH | mMultiCameraMode == MODE_BLUR) {
+            mPoolManager.releasePool();
+            mPoolManager.initializePool(mCaptureSize * 28);
+        } else {
+            mPoolManager.initializePool(mCaptureSize * 6);
+        }
+    }
+
     mOEMIf->setCamStreamInfo(preview_size, previewFormat, previewStreamType);
     mOEMIf->setCamStreamInfo(capture_size, captureFormat, captureStreamType);
     mOEMIf->setCamStreamInfo(video_size, videoFormat, videoStreamType);
@@ -1397,6 +1437,21 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     mSetting->getFLASHTag(&flashInfo);
     captureIntent = controlInfo.capture_intent;
 
+    if (!checkMultimodeAndIdForPool()) {
+        //check if need to resize buffer pool
+        if ((sprddefInfo->sprd_auto_hdr_enable | (controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR)) !=
+            cur_hdr_state && mMultiCameraMode != MODE_BOKEH) {
+            cur_hdr_state = sprddefInfo->sprd_auto_hdr_enable | (controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR);
+            HAL_LOGD("capsize is %d, hdr state %d", mCaptureSize, cur_hdr_state);
+            if (cur_hdr_state == 0) {
+                mPoolManager.resizePool(mCaptureSize * 6);
+            } else if (cur_hdr_state == 1) {
+                mPoolManager.resizePool(mCaptureSize * 16);
+            }
+        }
+    }
+
+
     if (meta.exists(ANDROID_REQUEST_ID)) {
         captureRequestId = meta.find(ANDROID_REQUEST_ID).data.i32[0];
     }
@@ -1448,8 +1503,8 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     switch (captureIntent) {
     case ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW:
         if ((sprddefInfo->high_resolution_mode == 1 && mHighResNonzsl == 1) || (sprddefInfo->long_expo_enable && mSuperExposeNonzsl == 1)) {
-            int i = 600, tmp;
-            // high res, preview need wait nonzsl capture finish(sensor stream off)
+            int i = 2000, tmp;
+            //long exposure, preview need wait nonzsl capture finish(sensor stream off)
             while (i--) {
                camera_ioctrl(CAMERA_TOCTRL_GET_SN_STREAM_STATUS, &tmp, NULL);
                if (tmp == 0)
@@ -1756,6 +1811,14 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
 #endif
     }
 
+    if (mOEMIf->isIspToolMode()) {
+        if (streamType[0] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT ||
+            streamType[1] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT ||
+            streamType[2] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
+            mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE;
+        }
+    }
+
     if (captureRequestId == 0)
         captureRequestId = mOldRequesId;
     else
@@ -1765,6 +1828,12 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
              "first_regular_req=%d",
              mCameraId, request->num_output_buffers, request->frame_number,
              captureIntent, mPictureRequest, mFirstRegularRequest);
+    //recover normal max pendingList
+    if (mFirstRegularRequest && sprddefInfo->sprd_appmode_id != -1) {
+        if (SprdCamera3RegularChannel::kMaxBuffers == 8)
+            SprdCamera3RegularChannel::kMaxBuffers = 4;
+        mReciveQeqMax = mZslIpsEnable ? mReciveQeqMax : SprdCamera3RegularChannel::kMaxBuffers;
+    }
 
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         const camera3_stream_buffer_t &output = request->output_buffers[i];
@@ -2595,6 +2664,7 @@ int SprdCamera3HWI::flush() {
 
     if (mMetadataChannel) {
         mMetadataChannel->stop(mFrameNum);
+        mMetadataChannel->clear();
     }
     if (mRegularChan) {
         mRegularChan->stop(mFrameNum);
@@ -2660,6 +2730,14 @@ int SprdCamera3HWI::flush() {
     mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE;
     mFlush = false;
     mBufferStatusError = false;
+
+    if (!checkMultimodeAndIdForPool()) {
+        if (mMultiCameraMode != MODE_BOKEH && mMultiCameraMode != MODE_BLUR) {
+            mPoolManager.releasePool();
+        }
+    }
+
+
     HAL_LOGI(":hal3: X");
 
     return 0;

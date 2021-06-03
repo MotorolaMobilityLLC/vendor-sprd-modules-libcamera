@@ -8410,6 +8410,8 @@ static SENSOR_STATIC_INFO_T s_s5kgw1sp03_static_info[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
      .static_info = {.f_num = 180,
                      .focal_length = 558,
+                     .min_focal_distance = 100,
+                     .start_offset_time = 5800000,
                      .max_fps = 0,
                      .max_adgain = 16,
                      .ois_supported = 0,

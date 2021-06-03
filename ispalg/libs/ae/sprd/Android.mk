@@ -108,38 +108,3 @@ endif
 LOCAL_SHARED_LIBRARIES +=liblog
 
 include $(BUILD_PREBUILT)
-
-
-include $(CLEAR_VARS)
-
-ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
-LIB_PATH := lib
-LIB_PATH_32 := armeabi-v7a
-LIB_PATH_64 := arm64-v8a
-else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
-LIB_PATH := x86_lib
-endif
-
-ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
-LOCAL_PROPRIETARY_MODULE := true
-endif
-
-LOCAL_MODULE := libhdr
-LOCAL_MODULE_CLASS := SHARED_LIBRARIES
-LOCAL_MODULE_TAGS := optional
-LOCAL_MULTILIB := both
-LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE).so
-LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
-LOCAL_SRC_FILES_32 := $(LIB_PATH_32)/$(LOCAL_MODULE).so
-LOCAL_SRC_FILES_64 := $(LIB_PATH_64)/$(LOCAL_MODULE).so
-LOCAL_SHARED_LIBRARIES := libc libdl liblog libm
-
-ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
-LOCAL_PROPRIETARY_MODULE := true
-endif
-ifeq ($(PLATFORM_VERSION),4.4.4)
-LOCAL_MODULE_STEM := $(notdir $(LIB_PATH_32)/$(LOCAL_MODULE).so)
-LOCAL_SRC_FILES := $(LIB_PATH_32)/$(LOCAL_MODULE).so
-endif
-
-include $(BUILD_PREBUILT)

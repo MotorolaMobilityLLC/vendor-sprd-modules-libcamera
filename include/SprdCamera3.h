@@ -229,7 +229,7 @@ static tags_info_t
         {"sprdAutoChasingTraceRegion", TYPE_INT32},
         {"sprdFlashLcdMode", TYPE_BYTE},
         {"sprdUltraWideId", TYPE_INT32},
-        {"sprdTopAppId", TYPE_INT32},
+        {"sprdTopAppId", TYPE_BYTE},
         {"sprdAutoChasingEnable", TYPE_BYTE},
         {"sprdFaceAttributesEnable", TYPE_BYTE},
         {"sprdTouchInfo", TYPE_INT32},

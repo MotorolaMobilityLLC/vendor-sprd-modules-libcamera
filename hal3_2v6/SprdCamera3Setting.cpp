@@ -47,7 +47,6 @@ uint8_t SprdCamera3Setting::mSensorFocusEnable[] = {0, 0, 0, 0, 0, 0};
 uint8_t SprdCamera3Setting::mSensorType[] = {0, 0, 0, 0, 0, 0};
 char SprdCamera3Setting::mSensorName[][SENSOR_NAME_LEN];
 uint16_t SprdCamera3Setting::mpdaf_type[] = {0, 0, 0, 0, 0, 0};
-
 /**********************Macro Define**********************/
 #ifdef CONFIG_CAMERA_FACE_DETECT
 #ifdef CONFIG_COVERED_SENSOR
@@ -105,7 +104,7 @@ typedef struct {
     uint8_t availDistortionCorrectionModes[1];
     uint8_t availLogoWatermark;
     uint8_t availTimeWatermark;
-    double availExposureLongTime[12];
+    double availExposureLongTime[64];
     int32_t availExposureLongTimeSize;
 } camera3_common_t;
 
@@ -154,6 +153,18 @@ static cmr_u32 alreadyGetSensorStaticInfo[CAMERA_ID_COUNT] = {0, 0, 0, 0, 0, 0};
 
 static front_flash_type front_flash[] = {
     {"2", "lcd"}, {"1", "led"}, {"2", "flash"}, {"1", "none"},
+};
+
+static TopAppS topAppList[] = {
+    { TOP_APP_WECHAT, "com.tencent.mm" },
+    // { TOP_APP_WTFACTORY, ""},
+    { TOP_APP_QQ, "com.tencent.mobileqq"},
+    { TOP_APP_FACEBOOK, "com.facebook.katana"},
+    { TOP_APP_INSTAGRAM, "com.instagram.android"},
+    { TOP_APP_MESSENGER, "com.facebook.orca"},
+    { TOP_APP_SNAPCHAT, "com.snapchat.android"},
+    { TOP_APP_WHATSAPP, "com.whatsapp"},
+    { TOP_APP_QQINT, "com.tencent.mobileqqi"},
 };
 
 #if 0
@@ -559,6 +570,8 @@ const cam_stream_info_t stream_info[] = {
     {{2048, 1536}, 33331760L, 33331760L},
     {{2048, 1152}, 33331760L, 33331760L},
     {{1920, HEIGHT_2M}, 33331760L, 33331760L},
+    {{1920, 896}, 33331760L, 33331760L},
+    {{1920, 1072}, 33331760L, 33331760L},
     {{1600, 1200}, 33331760L, 33331760L},
     {{1440, 1080}, 33331760L, 33331760L},
     {{1280, 720}, 33331760L, 33331760L},
@@ -888,6 +901,7 @@ int SprdCamera3Setting::mLogicalSensorNum = 0;
 int SprdCamera3Setting::mPhysicalSensorNum = 0;
 cmr_u32 SprdCamera3Setting::save_iso_value = 0;
 uint8_t SprdCamera3Setting::camera_identify_state[] = {1, 1, 1, 1, 1, 1};
+static float maxDigitalZoom[CAMERA_ID_COUNT];
 
 enum cmr_flash_lcd_mode {
     FLASH_LCD_MODE_OFF = 0,
@@ -2179,28 +2193,8 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
     int ultrawide_id =
         sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE, SNS_FACE_BACK);
     s_setting[cameraId].sprddefInfo.ultrawide_id = ultrawide_id;
-    // if get scaler capability fail from driver, using default value
-    uint32_t scaler = 0;
-    void *dso = NULL;
-    dso = dlopen(OEM_LIBRARY_PATH, RTLD_NOW);
-    if (NULL == dso) {
-        char const *err_str = dlerror();
-        HAL_LOGE("dlopen error%s ", err_str ? err_str : "unknown");
-    } else {
-        const char *sym = OEM_MODULE_INFO_SYM_AS_STR;
-        oem_module_t *omi = NULL;
-        omi = (oem_module_t *)dlsym(dso, sym);
-        if (omi && omi->ops != NULL) {
-            if (omi->ops->camera_get_scaler)
-               omi->ops->camera_get_scaler(&scaler);
-        }
-        dlclose(dso);
-    }
 
-    if (scaler > 0)
-        s_setting[cameraId].scalerInfo.max_digital_zoom = scaler;
-    else
-        s_setting[cameraId].scalerInfo.max_digital_zoom = MAX_DIGITAL_ZOOM_RATIO;
+    s_setting[cameraId].scalerInfo.max_digital_zoom = maxDigitalZoom[cameraId];
     HAL_LOGD("cameraId = %d, ultrawide_id = %d, max_digital_zoom = %f",
              cameraId, ultrawide_id,
              s_setting[cameraId].scalerInfo.max_digital_zoom);
@@ -2586,6 +2580,37 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
 
 }
 
+int SprdCamera3Setting::getMaxDigitalZoom(uint32_t cameraId)
+{
+    /* if get scaler capability fail from driver, using default value */
+    uint32_t scaler = 0;
+    void *dso = NULL;
+    dso = dlopen(OEM_LIBRARY_PATH, RTLD_NOW);
+    if (NULL == dso) {
+        char const *err_str = dlerror();
+        HAL_LOGE("dlopen error%s ", err_str ? err_str : "unknown");
+    } else {
+        const char *sym = OEM_MODULE_INFO_SYM_AS_STR;
+        oem_module_t *omi = NULL;
+        omi = (oem_module_t *)dlsym(dso, sym);
+        if (omi && omi->ops != NULL) {
+            if (omi->ops->camera_get_scaler)
+               omi->ops->camera_get_scaler(&scaler);
+        }
+        dlclose(dso);
+    }
+
+    if (scaler > 0)
+        maxDigitalZoom[cameraId] = scaler;
+    else
+        maxDigitalZoom[cameraId] = MAX_DIGITAL_ZOOM_RATIO;
+
+    s_setting[cameraId].scalerInfo.max_digital_zoom = maxDigitalZoom[cameraId];
+    HAL_LOGD("cameraId = %d,  max_digital_zoom = %f",
+             cameraId, maxDigitalZoom[cameraId]);
+    return 0;
+}
+
 int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     int ret = NO_ERROR;
     SprdCamera3DefaultInfo *default_info = &camera3_default_info;
@@ -2698,12 +2723,10 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                    sizeof(avail_scene_modes)-sizeof(uint8_t));
         }
 #ifdef CONFIG_CAMERA_HDR_CAPTURE
-        uint32_t sizeSceneModes =
-            sizeof(avail_scene_modes) / avail_scene_modes[0];
+        uint32_t sizeSceneModes = sizeof(avail_scene_modes) / avail_scene_modes[0];
         if (mSensorType[cameraId] != FOURINONE_SW &&
             mSensorType[cameraId] != YUVSENSOR) {
-            s_setting[cameraId]
-                .controlInfo.available_scene_modes[sizeSceneModes] =
+            s_setting[cameraId].controlInfo.available_scene_modes[sizeSceneModes] =
                 ANDROID_CONTROL_SCENE_MODE_HDR;
         }
 #endif
@@ -3181,6 +3204,9 @@ int SprdCamera3Setting::initStaticMetadata(
     /* android.info: hardware level */
     staticInfo.update(ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL,
                       &(s_setting[cameraId].supported_hardware_level), 1);
+
+    /* scaler */
+    getMaxDigitalZoom(cameraId);
 
     /*COLOR*/
     FILL_CAM_INFO(s_setting[cameraId].colorInfo.available_aberration_modes, 1,
@@ -4647,8 +4673,9 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     int32_t sprdAppmodeId = -1;
     requestInfo.update(ANDROID_SPRD_APP_MODE_ID, &sprdAppmodeId, 1);
 
-    int32_t topAppId = 0;
-    requestInfo.update(ANDROID_SPRD_TOP_APP_ID, &topAppId, 1);
+    uint8_t topAppId[50] = {0};
+    requestInfo.update(ANDROID_SPRD_TOP_APP_ID, topAppId,
+        sizeof(topAppId)/sizeof(uint8_t));
 
     uint8_t sprdFilterType = 0;
     requestInfo.update(ANDROID_SPRD_FILTER_TYPE, &sprdFilterType, 1);
@@ -4955,9 +4982,26 @@ int SprdCamera3Setting::updateWorkParameters(
     }
 
     if (frame_settings.exists(ANDROID_SPRD_TOP_APP_ID)) {
-        valueI32 = frame_settings.find(ANDROID_SPRD_TOP_APP_ID).data.i32[0];
-        s_setting[mCameraId].sprddefInfo.top_app_id = valueI32;
-        HAL_LOGV("mTopAppId=%d", s_setting[mCameraId].sprddefInfo.top_app_id);
+        int i = 0;
+        s_setting[mCameraId].sprddefInfo.top_app_id = 0;
+        while(frame_settings.find(ANDROID_SPRD_TOP_APP_ID).data.u8[i] != 0) {
+            valueU8 = frame_settings.find(ANDROID_SPRD_TOP_APP_ID).data.u8[i];
+            s_setting[mCameraId].sprddefInfo.mTopID[i] = (char) valueU8;
+            i++;
+            if(i > 50)
+                break;
+        }
+        s_setting[mCameraId].sprddefInfo.mTopID[i] = '\0';
+        for(int found = 0;
+            found < sizeof(topAppList)/sizeof(TopAppS); found++) {
+            if(!strncmp(topAppList[found].PackageName,
+                       s_setting[mCameraId].sprddefInfo.mTopID,
+                       strlen(topAppList[found].PackageName))) {
+                HAL_LOGD("mTopID %d", topAppList[found].id);
+                s_setting[mCameraId].sprddefInfo.top_app_id = topAppList[found].id;
+                break;
+            }
+        }
     }
 
     if (frame_settings.exists(ANDROID_SPRD_SENSOR_ORIENTATION)) {
@@ -6222,6 +6266,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     int32_t maxRegionsAe = 0;
     int32_t maxRegionsAwb = 0;
     int32_t maxRegionsAf = 0;
+    int32_t sensitivityValue = 0;
 #ifdef CAMERA_MANULE_SNEOSR
     float minimum_focus_distance = 0.0f;
     float focus_distance = 0.0f;
@@ -6229,6 +6274,8 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     float valueFloat =  s_setting[mCameraId].lensInfo.focus_distance;
     int sprd_app_id = s_setting[mCameraId].sprddefInfo.sprd_appmode_id;
 #endif
+    SPRD_DEF_Tag *sprddefInfo;
+    sprddefInfo = getSPRDDEFTagPTR();
     maxRegionsAe = s_setting[mCameraId].controlInfo.max_regions[0];
     maxRegionsAwb = s_setting[mCameraId].controlInfo.max_regions[1];
     maxRegionsAf = s_setting[mCameraId].controlInfo.max_regions[2];
@@ -6457,10 +6504,10 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
         camMetadata.find(ANDROID_CONTROL_AE_STATE).data.u8[0]);
 
 
-    // Update ANDROID_SPRD_AE_INFO
+    // Update ANDROID_SPRD_AE_INFO for fd DMS apk
     camMetadata.update(ANDROID_SPRD_AE_INFO,
-                       s_setting[mCameraId].sprddefInfo.ae_info,
-                       AE_CB_MAX_INDEX - 1);
+                       s_setting[mCameraId].sprddefInfo.fd_ae_info,
+                       FD_AE_MAX_INDEX - 1);
 
      HAL_LOGV("AE_STATE  ae state=%d precap id=%d",
         s_setting[mCameraId].controlInfo.ae_state,
@@ -6673,6 +6720,14 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     HAL_LOGV("exposure_time: %lld", s_setting[mCameraId].sensorInfo.exposure_time);
     camMetadata.update(ANDROID_SENSOR_EXPOSURE_TIME,
                        &(s_setting[mCameraId].sensorInfo.exposure_time), 1);
+     sensitivityValue = mFrameNumMap[s_setting[mCameraId].syncInfo.frame_number].sensitivity;
+     if (!sensitivityValue && sprddefInfo->long_expo_enable) {
+            sensitivityValue = mFrameNumMap[s_setting[mCameraId].syncInfo.frame_number -1].sensitivity;
+     } else if (sensitivityValue < ksensitivity_range[0])
+            sensitivityValue = ksensitivity_range[0];
+     else if (sensitivityValue > ksensitivity_range[1])
+            sensitivityValue = ksensitivity_range[1];
+    mFrameNumMap[s_setting[mCameraId].syncInfo.frame_number].sensitivity = sensitivityValue;
     HAL_LOGV("mFrameNumMap sensitivity is %d", mFrameNumMap[s_setting[mCameraId].syncInfo.frame_number].sensitivity);
     camMetadata.update(ANDROID_SENSOR_SENSITIVITY,
                        &(mFrameNumMap[s_setting[mCameraId].syncInfo.frame_number].sensitivity), 1);
@@ -6856,7 +6911,7 @@ camera_metadata_t *SprdCamera3Setting::reportMetadataToFramework
     camMetadata->update(ANDROID_SENSOR_FRAME_DURATION,
                        &(tmp_cts_isp_params.ae_cts_params.frame_duration), 1);
     camMetadata->update(ANDROID_SENSOR_EXPOSURE_TIME,
-                       &(tmp_cts_isp_params.ae_cts_params.exp_time), 1);
+                       (int64_t *)&(tmp_cts_isp_params.ae_cts_params.exp_time), 1);
     HAL_LOGV("report AE Control exp_time %lld ", tmp_cts_isp_params.ae_cts_params.exp_time);
     HAL_LOGV("report AE Control sensitivity %d sensitivity range [%d,%d]",
         tmp_cts_isp_params.ae_cts_params.sensitivity, ksensitivity_range[0], ksensitivity_range[1]);

@@ -294,6 +294,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool isFaceBeautyOn(SPRD_DEF_Tag *sprddefInfo);
     bool mManualExposureEnabled;
     char *mFrontFlash;
+    int mWhitelists;
 
     enum camera_flush_mem_type_e {
         CAMERA_FLUSH_RAW_HEAP,
@@ -368,6 +369,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void setMultiAppRatio(float app_ratio);
     void setZslIpsEnable(bool zslIpsEnable);
     void setThumbNumber(uint32_t thumbNumber);
+    bool isNeedFlush();
 
   public:
     uint32_t isPreAllocCapMem();
@@ -378,6 +380,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int32_t mSprdAppmodeId;
     int32_t mStreamOnWithZsl;
     int64_t mRollingShutterSkew;
+    bool mAeTouchCancel;
 
     static int ZSLMode_monitor_thread_init(void *p_data);
     static int ZSLMode_monitor_thread_deinit(void *p_data);
@@ -1053,10 +1056,10 @@ class SprdCamera3OEMIf : public virtual RefBase {
     static const ASensor *mcolortempSensor;
     static uint32_t mcolor_temp_sensor_flag;
     static uint32_t mcolor_temp_sensor_count;
+    static Mutex mCTlock;
 #endif
     bool mNonZslFlag;
     uint32_t mSkipNum;
-    int mWhitelists;
     bool EisErr;
     uint32_t mNeed_share_buf;
 };

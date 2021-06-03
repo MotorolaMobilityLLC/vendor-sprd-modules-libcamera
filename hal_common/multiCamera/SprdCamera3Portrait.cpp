@@ -2627,7 +2627,7 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
         rc = BAD_VALUE;
         goto exit;
     }
-    prepareParamForAlgo();
+
     if (mPortrait->mIsNrMode == true && input_buf1 != NULL && input_buf2 != NULL) {
         HAL_LOGI("nr do depth");
         if (!mPortrait->lptMask || !mPortrait->bokehMask) {
@@ -2640,10 +2640,13 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
             }
             return rc;
         }
-        mPortrait->mBokehAlgo->getPortraitMask(input_buf2_addr,
-                    (void *)mPortrait->mScaleInfo.addr_vir.addr_y,
-                    output_buf_addr, input_buf1_addr,
-                    mPortrait->mVcmStepsFixed, mPortrait->bokehMask, mPortrait->lptMask);
+        prepareParamForAlgo();
+        if (mPortrait->mPortraitFlag) {
+            mPortrait->mBokehAlgo->getPortraitMask(input_buf2_addr,
+                        (void *)mPortrait->mScaleInfo.addr_vir.addr_y,
+                        output_buf_addr, input_buf1_addr,
+                        mPortrait->mVcmStepsFixed, mPortrait->bokehMask, mPortrait->lptMask);
+        }
         if (output_buf != NULL) {
             mPortrait->unmap(output_buf);
         }
@@ -2663,10 +2666,13 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
             }
             return rc;
         }
-        mPortrait->mBokehAlgo->getPortraitMask(input_buf2_addr,
-                    (void *)mPortrait->mScaleInfo.addr_vir.addr_y,
-                    output_buf_addr, input_buf1_addr,
-                    mPortrait->mVcmStepsFixed, mPortrait->bokehMask, mPortrait->lptMask);
+        prepareParamForAlgo();
+        if (mPortrait->mPortraitFlag) {
+            mPortrait->mBokehAlgo->getPortraitMask(input_buf2_addr,
+                        (void *)mPortrait->mScaleInfo.addr_vir.addr_y,
+                        output_buf_addr, input_buf1_addr,
+                        mPortrait->mVcmStepsFixed, mPortrait->bokehMask, mPortrait->lptMask);
+        }
     }
 
     /*do cynr*/
