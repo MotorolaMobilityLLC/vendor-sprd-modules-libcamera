@@ -3469,17 +3469,17 @@ int SprdCamera3RealBokeh::configureStreams(
     auxconfig.streams = pauxStreams;
     SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_DEPTH].hwi;
 
-    rc =
-        hwiAux->configure_streams(m_pPhyCamera[CAM_TYPE_DEPTH].dev, &auxconfig);
-    if (rc < 0) {
-        HAL_LOGE("failed. configure aux streams!!");
-        return rc;
-    }
-
     rc = hwiMain->configure_streams(m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].dev,
                                     &mainconfig);
     if (rc < 0) {
         HAL_LOGE("failed. configure main streams!!");
+        return rc;
+    }
+
+    rc =
+        hwiAux->configure_streams(m_pPhyCamera[CAM_TYPE_DEPTH].dev, &auxconfig);
+    if (rc < 0) {
+        HAL_LOGE("failed. configure aux streams!!");
         return rc;
     }
 

@@ -44,8 +44,8 @@ cmr_u16 lock =0;
 cmr_u32 proc_start_gain_w = 0;	// SBS master gain width
 cmr_u32 proc_start_gain_h = 0;	// SBS master gain height
 cmr_u32 proc_start_gain_pattern = 0;	// SBS master gain pattern
-cmr_u16 proc_start_param_table[32 * 32 * 4] = { 0 };	// SBS master DNP table
-cmr_u16 proc_start_output_table[32 * 32 * 4] = { 0 };	// SBS master output table
+cmr_u16 proc_start_param_table[MAX_NUM * 4] = { 0 };	// SBS master DNP table
+cmr_u16 proc_start_output_table[MAX_NUM * 4] = { 0 };	// SBS master output table
 
 cmr_u16 *id1_addr = NULL;
 cmr_u16 *id2_addr = NULL;
@@ -615,10 +615,10 @@ static void lsc_channel_to_interlace(cmr_u32 width, cmr_u32 height, cmr_u32 patt
 
 static void lsc_table_planar2interlace(cmr_u16 * lsc_table, cmr_u32 width, cmr_u32 height, cmr_u32 pattern, cmr_u32 new_pattern)
 {
-	cmr_u16 table_r[32 * 32 * 4] = { 0 };
-	cmr_u16 table_gr[32 * 32 * 4] = { 0 };
-	cmr_u16 table_gb[32 * 32 * 4] = { 0 };
-	cmr_u16 table_b[32 * 32 * 4] = { 0 };
+	cmr_u16 table_r[MAX_NUM * 4] = { 0 };
+	cmr_u16 table_gr[MAX_NUM * 4] = { 0 };
+	cmr_u16 table_gb[MAX_NUM * 4] = { 0 };
+	cmr_u16 table_b[MAX_NUM * 4] = { 0 };
 
 	lsc_planar_to_channel(width, height, pattern, table_r, table_gr, table_gb, table_b, lsc_table);
 	lsc_channel_to_interlace(width, height, new_pattern, table_r, table_gr, table_gb, table_b, lsc_table);
@@ -626,10 +626,10 @@ static void lsc_table_planar2interlace(cmr_u16 * lsc_table, cmr_u32 width, cmr_u
 
 static void lsc_table_interlace2planar(cmr_u16 * lsc_table, cmr_u32 width, cmr_u32 height, cmr_u32 pattern, cmr_u32 new_pattern)
 {
-	cmr_u16 table_r[32 * 32 * 4] = { 0 };
-	cmr_u16 table_gr[32 * 32 * 4] = { 0 };
-	cmr_u16 table_gb[32 * 32 * 4] = { 0 };
-	cmr_u16 table_b[32 * 32 * 4] = { 0 };
+	cmr_u16 table_r[MAX_NUM * 4] = { 0 };
+	cmr_u16 table_gr[MAX_NUM * 4] = { 0 };
+	cmr_u16 table_gb[MAX_NUM * 4] = { 0 };
+	cmr_u16 table_b[MAX_NUM * 4] = { 0 };
 
 	lsc_interlace_to_channel(width, height, pattern, table_r, table_gr, table_gb, table_b, lsc_table);
 	lsc_channel_to_planar(width, height, new_pattern, table_r, table_gr, table_gb, table_b, lsc_table);
@@ -637,10 +637,10 @@ static void lsc_table_interlace2planar(cmr_u16 * lsc_table, cmr_u32 width, cmr_u
 
 static void lsc_interlace_change_pattern(cmr_u16 * lsc_table, cmr_u32 width, cmr_u32 height, cmr_u32 pattern, cmr_u32 new_pattern)
 {
-	cmr_u16 table_r[32 * 32 * 4] = { 0 };
-	cmr_u16 table_gr[32 * 32 * 4] = { 0 };
-	cmr_u16 table_gb[32 * 32 * 4] = { 0 };
-	cmr_u16 table_b[32 * 32 * 4] = { 0 };
+	cmr_u16 table_r[MAX_NUM * 4] = { 0 };
+	cmr_u16 table_gr[MAX_NUM * 4] = { 0 };
+	cmr_u16 table_gb[MAX_NUM * 4] = { 0 };
+	cmr_u16 table_b[MAX_NUM * 4] = { 0 };
 
 	lsc_interlace_to_channel(width, height, pattern, table_r, table_gr, table_gb, table_b, lsc_table);
 	lsc_channel_to_interlace(width, height, new_pattern, table_r, table_gr, table_gb, table_b, lsc_table);
@@ -649,18 +649,18 @@ static void lsc_interlace_change_pattern(cmr_u16 * lsc_table, cmr_u32 width, cmr
 static int lsc_table_linear_scaler(cmr_u16 * src_tab, cmr_u32 src_w, cmr_u32 src_h, cmr_u16 * dst_tab, cmr_u32 dst_w, cmr_u32 dst_h, cmr_u32 is_plane)
 {
 	cmr_u32 i, j;
-	cmr_u16 pre_r[32 * 32] = { 0 };
-	cmr_u16 pre_gr[32 * 32] = { 0 };
-	cmr_u16 pre_gb[32 * 32] = { 0 };
-	cmr_u16 pre_b[32 * 32] = { 0 };
-	cmr_u16 new_r[32 * 32] = { 0 };
-	cmr_u16 new_gr[32 * 32] = { 0 };
-	cmr_u16 new_gb[32 * 32] = { 0 };
-	cmr_u16 new_b[32 * 32] = { 0 };
-	cmr_u16 out_r[32 * 32] = { 0 };
-	cmr_u16 out_gr[32 * 32] = { 0 };
-	cmr_u16 out_gb[32 * 32] = { 0 };
-	cmr_u16 out_b[32 * 32] = { 0 };
+	cmr_u16 pre_r[MAX_NUM] = { 0 };
+	cmr_u16 pre_gr[MAX_NUM] = { 0 };
+	cmr_u16 pre_gb[MAX_NUM] = { 0 };
+	cmr_u16 pre_b[MAX_NUM] = { 0 };
+	cmr_u16 new_r[MAX_NUM] = { 0 };
+	cmr_u16 new_gr[MAX_NUM] = { 0 };
+	cmr_u16 new_gb[MAX_NUM] = { 0 };
+	cmr_u16 new_b[MAX_NUM] = { 0 };
+	cmr_u16 out_r[MAX_NUM] = { 0 };
+	cmr_u16 out_gr[MAX_NUM] = { 0 };
+	cmr_u16 out_gb[MAX_NUM] = { 0 };
+	cmr_u16 out_b[MAX_NUM] = { 0 };
 	cmr_u16 *ch_r;
 	cmr_u16 *ch_gr;
 	cmr_u16 *ch_gb;
@@ -668,12 +668,12 @@ static int lsc_table_linear_scaler(cmr_u16 * src_tab, cmr_u32 src_w, cmr_u32 src
 
 	ISP_LOGV("src_w=%d, src_h=%d, dst_w=%d, dst_h=%d, plane_flag=%d", src_w, src_h, dst_w, dst_h, is_plane);
 
-	if (src_w < 4 || src_h < 4 || src_w > MAX_WIDTH || src_h > MAX_HEIGHT) {
+	if (src_w < 4 || src_h < 4 || (src_w * src_h) > MAX_NUM) {
 		ISP_LOGE("the size of src_tab out of limit !");
 		return -1;
 	}
 
-	if (dst_w < 4 || dst_h < 4 || dst_w > MAX_WIDTH || dst_h > MAX_HEIGHT) {
+	if (dst_w < 4 || dst_h < 4 || (dst_w * dst_h) > MAX_NUM) {
 		ISP_LOGE("the size of dst_tab out of limit !");
 		return -1;
 	}
@@ -771,18 +771,18 @@ static cmr_s32 lsc_master_slave_sync(struct lsc_sprd_ctrl_context *cxt, struct a
 	cmr_u32 pre_width = proc_start_gain_w;
 	cmr_u32 pre_height = proc_start_gain_h;
 	cmr_u32 pre_pattern = proc_start_gain_pattern;
-	cmr_u16 lsc_pre_reslut_table[32 * 32 * 4] = { 0 };
-	cmr_u16 lsc_pre_table[32 * 32 * 4] = { 0 };
+	cmr_u16 lsc_pre_reslut_table[MAX_NUM * 4] = { 0 };
+	cmr_u16 lsc_pre_table[MAX_NUM * 4] = { 0 };
 	cmr_u32 new_width = fwprocstart_info->gain_width_new;
 	cmr_u32 new_height = fwprocstart_info->gain_height_new;;
 	cmr_u32 new_pattern = 3;	//for initial value
 	cmr_u16 *lsc_result_address_new = fwprocstart_info->lsc_result_address_new;	// slave output table buffer
-	cmr_u16 new_table[32 * 32 * 4] = { 0 };	// slave DNP param table
-	cmr_u16 output_tab[32 * 32 * 4] = { 0 };
-	cmr_u16 out_r_tab[32 * 32] = { 0 };
-	cmr_u16 out_gr_tab[32 * 32] = { 0 };
-	cmr_u16 out_gb_tab[32 * 32] = { 0 };
-	cmr_u16 out_b_tab[32 * 32] = { 0 };
+	cmr_u16 new_table[MAX_NUM * 4] = { 0 };	// slave DNP param table
+	cmr_u16 output_tab[MAX_NUM * 4] = { 0 };
+	cmr_u16 out_r_tab[MAX_NUM] = { 0 };
+	cmr_u16 out_gr_tab[MAX_NUM] = { 0 };
+	cmr_u16 out_gb_tab[MAX_NUM] = { 0 };
+	cmr_u16 out_b_tab[MAX_NUM] = { 0 };
 	cmr_u32 new_chnl_gain_num = new_width * new_height;
 
 	for (i = 0; i < pre_width * pre_height * 4; i++) {
@@ -804,18 +804,18 @@ static cmr_s32 lsc_master_slave_sync(struct lsc_sprd_ctrl_context *cxt, struct a
 	lsc_interlace_to_channel(new_width, new_height, pre_pattern, out_r_tab, out_gr_tab, out_gb_tab, out_b_tab, output_tab);
 
 	// get slave dnp table
-	cmr_u16 output_r_new[32 * 32] = { 0 };
-	cmr_u16 output_gr_new[32 * 32] = { 0 };
-	cmr_u16 output_gb_new[32 * 32] = { 0 };
-	cmr_u16 output_b_new[32 * 32] = { 0 };
+	cmr_u16 output_r_new[MAX_NUM] = { 0 };
+	cmr_u16 output_gr_new[MAX_NUM] = { 0 };
+	cmr_u16 output_gb_new[MAX_NUM] = { 0 };
+	cmr_u16 output_b_new[MAX_NUM] = { 0 };
 
 	lsc_interlace_to_channel(new_width, new_height, new_pattern, output_r_new, output_gr_new, output_gb_new, output_b_new, new_table);
 
 	//get level weight matrix
-	float lsc_new_weight_tab_gb[32 * 32] = { 0 };
-	float lsc_new_weight_tab_b[32 * 32] = { 0 };
-	float lsc_new_weight_tab_r[32 * 32] = { 0 };
-	float lsc_new_weight_tab_gr[32 * 32] = { 0 };
+	float lsc_new_weight_tab_gb[MAX_NUM] = { 0 };
+	float lsc_new_weight_tab_b[MAX_NUM] = { 0 };
+	float lsc_new_weight_tab_r[MAX_NUM] = { 0 };
+	float lsc_new_weight_tab_gr[MAX_NUM] = { 0 };
 	float rate_gb = 0.0;
 	float rate_b = 0.0;
 	float rate_r = 0.0;
@@ -857,10 +857,10 @@ static cmr_s32 lsc_master_slave_sync(struct lsc_sprd_ctrl_context *cxt, struct a
 	}
 
 	// scale master output table to slave size
-	cmr_u16 output_r[32 * 32] = { 0 };
-	cmr_u16 output_gr[32 * 32] = { 0 };
-	cmr_u16 output_gb[32 * 32] = { 0 };
-	cmr_u16 output_b[32 * 32] = { 0 };
+	cmr_u16 output_r[MAX_NUM] = { 0 };
+	cmr_u16 output_gr[MAX_NUM] = { 0 };
+	cmr_u16 output_gb[MAX_NUM] = { 0 };
+	cmr_u16 output_b[MAX_NUM] = { 0 };
 	rtn = lsc_table_linear_scaler(lsc_pre_reslut_table, pre_width, pre_height, lsc_result_address_new, new_width, new_height, cxt->is_planar);
 	if(rtn)
 		return -1;
@@ -1490,14 +1490,14 @@ static void lsc_scale_table_to_stat_size(cmr_u16 * new_tab, cmr_u16 * org_tab, c
 static void lsc_inverse_ae_stat(struct lsc_sprd_ctrl_context *cxt, cmr_u16 * inverse_table)
 {
 	cmr_u32 i;
-	cmr_u16 gain_r[32 * 32] = {0};
-	cmr_u16 gain_gr[32 * 32] = {0};
-	cmr_u16 gain_gb[32 * 32] = {0};
-	cmr_u16 gain_b[32 * 32] = {0};
-	cmr_u16 gain_g[32 * 32] = {0};
-	cmr_u16 scaled_gain_r[32 * 32] = {0};
-	cmr_u16 scaled_gain_g[32 * 32] = {0};
-	cmr_u16 scaled_gain_b[32 * 32] = {0};
+	cmr_u16 gain_r[MAX_NUM] = {0};
+	cmr_u16 gain_gr[MAX_NUM] = {0};
+	cmr_u16 gain_gb[MAX_NUM] = {0};
+	cmr_u16 gain_b[MAX_NUM] = {0};
+	cmr_u16 gain_g[MAX_NUM] = {0};
+	cmr_u16 scaled_gain_r[MAX_NUM] = {0};
+	cmr_u16 scaled_gain_g[MAX_NUM] = {0};
+	cmr_u16 scaled_gain_b[MAX_NUM] = {0};
 
 	cmr_u32 *stat_r = &cxt->ae_stat[0];
 	cmr_u32 *stat_g = &cxt->ae_stat[1024];
@@ -1518,7 +1518,7 @@ static void lsc_inverse_ae_stat(struct lsc_sprd_ctrl_context *cxt, cmr_u16 * inv
 		lsc_interlace_to_channel(cxt->gain_width, cxt->gain_height, cxt->output_gain_pattern, gain_r, gain_gr, gain_gb, gain_b, inverse_table);
 	}
 
-	for (i = 0; i < 32 * 32; i++) {
+	for (i = 0; i < MAX_NUM; i++) {
 		gain_g[i] = (cmr_u32) ((gain_gr[i] + gain_gb[i]) / 2);
 	}
 
@@ -1610,13 +1610,13 @@ static cmr_s32 lsc_fwstart_update_first_tab(struct lsc_sprd_ctrl_context *cxt, s
 	cmr_u32 pre_width = cxt->gain_width;
 	cmr_u32 pre_height = cxt->gain_height;
 	cmr_u32 pre_pattern = cxt->gain_pattern;
-	cmr_u16 lsc_pre_reslut_table[32 * 32 * 4] = { 0 };
-	cmr_u16 lsc_pre_table[32 * 32 * 4] = { 0 };
+	cmr_u16 lsc_pre_reslut_table[MAX_NUM * 4] = { 0 };
+	cmr_u16 lsc_pre_table[MAX_NUM * 4] = { 0 };
 	cmr_u32 new_width = fwstart_info->gain_width_new;
 	cmr_u32 new_height = fwstart_info->gain_height_new;
 	cmr_u32 new_pattern = 3;
 	cmr_u16 *lsc_result_new = fwstart_info->lsc_result_address_new;	//new dest output address
-	cmr_u16 lsc_new_table[32 * 32 * 4] = { 0 };	// golden new DNP table from pm, no OTP apply
+	cmr_u16 lsc_new_table[MAX_NUM * 4] = { 0 };	// golden new DNP table from pm, no OTP apply
 	cmr_u32 output_gain_pattern = cxt->output_gain_pattern;
 
 	if (cxt->lsc_buffer == NULL || cxt->lsc_pm0 == NULL || cxt->fwstop_output_table[0] == 0) {
@@ -1640,7 +1640,7 @@ static cmr_s32 lsc_fwstart_update_first_tab(struct lsc_sprd_ctrl_context *cxt, s
 		}
 	}
 
-	memset(cxt->fwstop_output_table, 0, sizeof(cmr_u16) * 32 * 32 * 4);
+	memset(cxt->fwstop_output_table, 0, sizeof(cmr_u16) * MAX_NUM * 4);
 
 	// collect the new dest table, new dnp table and other info
 	memcpy(lsc_new_table, fwstart_info->lsc_tab_address_new[0], sizeof(cmr_u16) * new_width * new_height * 4);
@@ -1651,23 +1651,23 @@ static cmr_s32 lsc_fwstart_update_first_tab(struct lsc_sprd_ctrl_context *cxt, s
 	if (pre_width == new_width && pre_height == new_height) {
 		memcpy(lsc_result_new, lsc_pre_reslut_table, pre_width * pre_height * 4 * sizeof(cmr_u16));
 	} else {
-		cmr_u16 scaled_tab[32 * 32 * 4] = { 0 };
-		cmr_u16 r_tab[32 * 32] = { 0 };
-		cmr_u16 gr_tab[32 * 32] = { 0 };
-		cmr_u16 gb_tab[32 * 32] = { 0 };
-		cmr_u16 b_tab[32 * 32] = { 0 };
-		cmr_u16 pre_out_r[32 * 32] = { 0 };
-		cmr_u16 pre_out_gr[32 * 32] = { 0 };
-		cmr_u16 pre_out_gb[32 * 32] = { 0 };
-		cmr_u16 pre_out_b[32 * 32] = { 0 };
-		cmr_u16 r_tab_new[32 * 32] = { 0 };
-		cmr_u16 gr_tab_new[32 * 32] = { 0 };
-		cmr_u16 gb_tab_new[32 * 32] = { 0 };
-		cmr_u16 b_tab_new[32 * 32] = { 0 };
-		float weight_tab_gb[32 * 32] = { 0 };
-		float weight_tab_b[32 * 32] = { 0 };
-		float weight_tab_r[32 * 32] = { 0 };
-		float weight_tab_gr[32 * 32] = { 0 };
+		cmr_u16 scaled_tab[MAX_NUM * 4] = { 0 };
+		cmr_u16 r_tab[MAX_NUM] = { 0 };
+		cmr_u16 gr_tab[MAX_NUM] = { 0 };
+		cmr_u16 gb_tab[MAX_NUM] = { 0 };
+		cmr_u16 b_tab[MAX_NUM] = { 0 };
+		cmr_u16 pre_out_r[MAX_NUM] = { 0 };
+		cmr_u16 pre_out_gr[MAX_NUM] = { 0 };
+		cmr_u16 pre_out_gb[MAX_NUM] = { 0 };
+		cmr_u16 pre_out_b[MAX_NUM] = { 0 };
+		cmr_u16 r_tab_new[MAX_NUM] = { 0 };
+		cmr_u16 gr_tab_new[MAX_NUM] = { 0 };
+		cmr_u16 gb_tab_new[MAX_NUM] = { 0 };
+		cmr_u16 b_tab_new[MAX_NUM] = { 0 };
+		float weight_tab_gb[MAX_NUM] = { 0 };
+		float weight_tab_b[MAX_NUM] = { 0 };
+		float weight_tab_r[MAX_NUM] = { 0 };
+		float weight_tab_gr[MAX_NUM] = { 0 };
 		float rate_gb = 0.0;
 		float rate_b = 0.0;
 		float rate_r = 0.0;
@@ -1974,7 +1974,7 @@ static int lsc_read_last_info(struct lsc_last_info *cxt, unsigned int camera_id,
 		fclose(fp);
 		fp = NULL;
 
-		if (cxt->gain_width <= 32 && cxt->gain_height <= 32) {
+		if ((cxt->gain_width * cxt->gain_height) <= MAX_NUM) {
 			width = cxt->gain_width;
 		        height = cxt->gain_height;
 		} else {
@@ -2138,31 +2138,31 @@ static int lsc_malloc_buffer(struct lsc_sprd_ctrl_context *cxt)
 	int i = 0;
 
 	for (i = 0; i < 9; i++) {
-		cxt->std_init_lsc_table_param_buffer[i] = (cmr_u16 *) malloc(MAX_WIDTH * MAX_HEIGHT * 4 * sizeof(cmr_u16));
+		cxt->std_init_lsc_table_param_buffer[i] = (cmr_u16 *) malloc(MAX_NUM * 4 * sizeof(cmr_u16));
 		if (NULL == cxt->std_init_lsc_table_param_buffer[i]) {
 			ISP_LOGE("fail to alloc std_init_lsc_table_param_buffer!");
 			goto exit;
 		}
-		cxt->std_lsc_table_param_buffer[i] = (cmr_u16 *) malloc(MAX_WIDTH * MAX_HEIGHT * 4 * sizeof(cmr_u16));
+		cxt->std_lsc_table_param_buffer[i] = (cmr_u16 *) malloc(MAX_NUM * 4 * sizeof(cmr_u16));
 		if (NULL == cxt->std_lsc_table_param_buffer[i]) {
 			ISP_LOGE("fail to alloc std_lsc_table_param_buffer!");
 			goto exit;
 		}
 	}
 
-	cxt->dst_gain = (cmr_u16 *) malloc(MAX_WIDTH * MAX_HEIGHT * 4 * sizeof(cmr_u16));
+	cxt->dst_gain = (cmr_u16 *) malloc(MAX_NUM * 4 * sizeof(cmr_u16));
 	if (NULL == cxt->dst_gain) {
 		ISP_LOGE("fail to alloc dst_gain!");
 		goto exit;
 	}
 
-	cxt->fwstart_new_scaled_table = (cmr_u16 *) malloc(MAX_WIDTH * MAX_HEIGHT * 4 * sizeof(cmr_u16));
+	cxt->fwstart_new_scaled_table = (cmr_u16 *) malloc(MAX_NUM * 4 * sizeof(cmr_u16));
 	if (NULL == cxt->fwstart_new_scaled_table) {
 		ISP_LOGE("fail to alloc fwstart_new_scaled_table!");
 		goto exit;
 	}
 
-	cxt->fwstop_output_table = (cmr_u16 *) malloc(MAX_WIDTH * MAX_HEIGHT * 4 * sizeof(cmr_u16));
+	cxt->fwstop_output_table = (cmr_u16 *) malloc(MAX_NUM * 4 * sizeof(cmr_u16));
 	if (NULL == cxt->fwstop_output_table) {
 		ISP_LOGE("fail to alloc fwstop_output_table!");
 		goto exit;
@@ -2180,19 +2180,19 @@ static int lsc_malloc_buffer(struct lsc_sprd_ctrl_context *cxt)
 		goto exit;
 	}
 
-	cxt->last_lsc_table = (cmr_u16 *) malloc(MAX_WIDTH * MAX_HEIGHT * 4 * sizeof(cmr_u16));
+	cxt->last_lsc_table = (cmr_u16 *) malloc(MAX_NUM * 4 * sizeof(cmr_u16));
 	if (cxt->last_lsc_table == NULL) {
 		ISP_LOGE("malloc last_lsc_table error!");
 		goto exit;
 	}
 
-	cxt->output_lsc_table = (cmr_u16 *) malloc(MAX_WIDTH * MAX_HEIGHT * 4 * sizeof(cmr_u16));
+	cxt->output_lsc_table = (cmr_u16 *) malloc(MAX_NUM * 4 * sizeof(cmr_u16));
 	if (cxt->output_lsc_table == NULL) {
 		ISP_LOGE("malloc output_lsc_table error!");
 		goto exit;
 	}
 
-	cxt->lsc_buffer_interlace = (cmr_u16 *) malloc(MAX_WIDTH * MAX_HEIGHT * 4 * sizeof(cmr_u16));
+	cxt->lsc_buffer_interlace = (cmr_u16 *) malloc(MAX_NUM * 4 * sizeof(cmr_u16));
 	if (cxt->lsc_buffer_interlace == NULL) {
 		ISP_LOGE("malloc lsc_buffer_interlace error!");
 		goto exit;
@@ -2215,7 +2215,6 @@ static void lsc_sprd_do_postgain(void *handle,cmr_u16 *org_gain,cmr_u32 gain_wid
 {
 	struct lsc_sprd_ctrl_context *cxt = (struct lsc_sprd_ctrl_context *)handle;
 	struct lsc_post_shading_param post_gain_param;
-	cmr_u32 chnl_gain_num = gain_width * gain_height;
 
 	post_gain_param.org_gain = org_gain;
 	post_gain_param.gain_width = gain_width;
@@ -2227,7 +2226,6 @@ static void lsc_sprd_do_postgain(void *handle,cmr_u16 *org_gain,cmr_u32 gain_wid
 	post_gain_param.pre_flash_mode = pre_flash_mode;
 
 	cxt->lib_ops.alsc_io_ctrl(cxt->alsc_handle, LSC_CMD_DO_POSTPROCESS, &post_gain_param, dst_gain);
-	ISP_LOGV("postgain process dst_gain[%d,%d,%d,%d]",dst_gain[0*chnl_gain_num],dst_gain[1*chnl_gain_num],dst_gain[2*chnl_gain_num],dst_gain[3*chnl_gain_num]);
 }
 
 static void alsc_do_simulation(void *handle,void *in)
@@ -2328,8 +2326,8 @@ static void lsc_multi_camera_sync(struct lsc_sprd_ctrl_context *cxt){
 	cmr_u32 pre_width = proc_start_gain_w;
 	cmr_u32 pre_height = proc_start_gain_h;
 	cmr_u32 pre_pattern = proc_start_gain_pattern;
-	cmr_u16 lsc_pre_result_scale_table[32 * 32 * 4] = { 0 };
-	cmr_u16 lsc_pre_pm0_scale_table[32 * 32 * 4] = { 0 };
+	cmr_u16 lsc_pre_result_scale_table[MAX_NUM * 4] = { 0 };
+	cmr_u16 lsc_pre_pm0_scale_table[MAX_NUM * 4] = { 0 };
 
 	cmr_u32 new_width = cxt->gain_width;
 	cmr_u32 new_height = cxt->gain_height;
@@ -2337,30 +2335,30 @@ static void lsc_multi_camera_sync(struct lsc_sprd_ctrl_context *cxt){
 	cmr_u16 *lsc_result_sync_new = cxt->lsc_buffer;
 	cmr_u32 channel_gain_num = new_height * new_width;
 
-	cmr_u16 pre_pm0_r_tab[32 * 32] = { 0 };
-	cmr_u16 pre_pm0_gr_tab[32 * 32] = { 0 };
-	cmr_u16 pre_pm0_gb_tab[32 * 32] = { 0 };
-	cmr_u16 pre_pm0_b_tab[32 * 32] = { 0 };
-	cmr_u16 pre_out_r[32 * 32] = { 0 };
-	cmr_u16 pre_out_gr[32 * 32] = { 0 };
-	cmr_u16 pre_out_gb[32 * 32] = { 0 };
-	cmr_u16 pre_out_b[32 * 32] = { 0 };
+	cmr_u16 pre_pm0_r_tab[MAX_NUM] = { 0 };
+	cmr_u16 pre_pm0_gr_tab[MAX_NUM] = { 0 };
+	cmr_u16 pre_pm0_gb_tab[MAX_NUM] = { 0 };
+	cmr_u16 pre_pm0_b_tab[MAX_NUM] = { 0 };
+	cmr_u16 pre_out_r[MAX_NUM] = { 0 };
+	cmr_u16 pre_out_gr[MAX_NUM] = { 0 };
+	cmr_u16 pre_out_gb[MAX_NUM] = { 0 };
+	cmr_u16 pre_out_b[MAX_NUM] = { 0 };
 
-	cmr_u16 new_pm0_r_tab[32 * 32] = { 0 };
-	cmr_u16 new_pm0_gr_tab[32 * 32] = { 0 };
-	cmr_u16 new_pm0_gb_tab[32 * 32] = { 0 };
-	cmr_u16 new_pm0_b_tab[32 * 32] = { 0 };
-	cmr_u16 new_out_r[32 * 32] = { 0 };
-	cmr_u16 new_out_gr[32 * 32] = { 0 };
-	cmr_u16 new_out_gb[32 * 32] = { 0 };
-	cmr_u16 new_out_b[32 * 32] = { 0 };
+	cmr_u16 new_pm0_r_tab[MAX_NUM] = { 0 };
+	cmr_u16 new_pm0_gr_tab[MAX_NUM] = { 0 };
+	cmr_u16 new_pm0_gb_tab[MAX_NUM] = { 0 };
+	cmr_u16 new_pm0_b_tab[MAX_NUM] = { 0 };
+	cmr_u16 new_out_r[MAX_NUM] = { 0 };
+	cmr_u16 new_out_gr[MAX_NUM] = { 0 };
+	cmr_u16 new_out_gb[MAX_NUM] = { 0 };
+	cmr_u16 new_out_b[MAX_NUM] = { 0 };
 
-	float gain_ratio_g[32 * 32] = { 0 };
-	float gain_ratio_pre_rgbg[32 * 32] = { 0 };
-	float gain_ratio_new_rgbg[32 * 32] = { 0 };
-	float ratio_rgbg[32 * 32] = { 0 };
-	float gain_ratio_input_rgbg[32 * 32] = { 0 };
-	float gain_ratio_output_rgbg[32 * 32] = { 0 };
+	float gain_ratio_g[MAX_NUM] = { 0 };
+	float gain_ratio_pre_rgbg[MAX_NUM] = { 0 };
+	float gain_ratio_new_rgbg[MAX_NUM] = { 0 };
+	float ratio_rgbg[MAX_NUM] = { 0 };
+	float gain_ratio_input_rgbg[MAX_NUM] = { 0 };
+	float gain_ratio_output_rgbg[MAX_NUM] = { 0 };
 
 	cmr_u8 off_gr = 0, off_r = 1, off_b = 2, off_gb = 3;
 	cmr_u32 gr_chnl_off, r_chnl_off, b_chnl_off, gb_chnl_off;
@@ -2900,10 +2898,6 @@ lsc_calc_exit:
 	if (!cxt->can_update_dest)
 		cxt->alsc_update_flag = 0;
 
-	if (cxt->cmd_alsc_dump_table) {
-		lsc_dump_gain(cxt->lsc_buffer, gain_width, gain_height, cxt->output_gain_pattern, cxt->is_planar, cxt->frame_count, cxt->camera_id);
-	}
-
 	cmr_u64 ae_time1 = systemTime(CLOCK_MONOTONIC);
 	ATRACE_END();
 
@@ -3294,12 +3288,12 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 
 	case SMART_LSC_ALG_LOCK:
 		cxt->alg_locked = 1;
-		ISP_LOGD("SMART_LSC_ALG_LOCK, alsc alg lock!");
+		ISP_LOGV("SMART_LSC_ALG_LOCK, alsc alg lock!");
 		break;
 
 	case SMART_LSC_ALG_UNLOCK:
 		cxt->alg_locked = 0;
-		ISP_LOGD("SMART_LSC_ALG_UNLOCK, alsc alg un-lock!");
+		ISP_LOGV("SMART_LSC_ALG_UNLOCK, alsc alg un-lock!");
 		break;
 
 	case ALSC_FW_PROC_START:	//for sbs feature now
@@ -3429,6 +3423,11 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 			alsc_update_info_out->alsc_update_flag = 1;
 			alsc_update_info_out->can_update_dest = 1;
 		}
+
+		if (cxt->cmd_alsc_dump_table) {
+			lsc_dump_gain(cxt->lsc_buffer_interlace, cxt->gain_width, cxt->gain_height, cxt->output_gain_pattern, 0, cxt->frame_count, cxt->camera_id);
+	        }
+
 		break;
 
 	case ALSC_DO_SIMULATION:

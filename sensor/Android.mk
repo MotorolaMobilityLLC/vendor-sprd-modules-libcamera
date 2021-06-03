@@ -77,7 +77,8 @@ LOCAL_SRC_FILES += \
     sensor_cfg.c \
     sensor_drv_u.c \
     sensor_pdaf.c \
-    sensor_drv_xml_parse.c
+    sensor_drv_xml_parse.c \
+    sensor_drv_json_parse.c
 
 ifeq ($(strip $(TARGET_CAMERA_OIS_FUNC)),true)
 LOCAL_C_INCLUDES += ois

@@ -515,11 +515,11 @@
 			0x00,0x00,0x00/*0-2*/
 		},
 		/*center_x*/
-		0x0000,
+		0x0FA0,
 		/*center_y*/
-		0x0000,
+		0x0BB8,
 		/*radius_threshold*/
-		0x0000,
+		0x00CD,
 		/*radius_threshold_factor*/
 		0x0000,
 		/*old_gradient_ratio_coef*/
@@ -931,7 +931,7 @@
 		/*ee_ratio_old_gradient*/
 		0x20,
 		/*ee_ratio_new_pyramid*/
-		0x20,
+		0x3F,
 		/*ee_offset_layer*/
 		{
 			/*[0x0]*/

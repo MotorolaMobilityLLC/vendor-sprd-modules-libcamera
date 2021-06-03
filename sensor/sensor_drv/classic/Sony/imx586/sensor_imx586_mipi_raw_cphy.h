@@ -1228,8 +1228,9 @@ static SENSOR_STATIC_INFO_T s_imx586_static_info[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
      .static_info = {.f_num = 200,
                      .focal_length = 354,
-                     .max_fps = 30,
                      .min_focal_distance = 100,
+                     .start_offset_time = 5800000,
+                     .max_fps = 30,
                      .max_adgain = 8,
                      .ois_supported = 0,
 #ifdef CONFIG_CAMERA_PDAF_TYPE

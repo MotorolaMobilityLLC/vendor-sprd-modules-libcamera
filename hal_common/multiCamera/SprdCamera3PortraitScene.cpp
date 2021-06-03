@@ -1712,10 +1712,10 @@ bool SprdCamera3PortraitScene::PreviewThread::threadLoop() {
         switch (muxer_msg.msg_type) {
         case PORTRAIT_SCENE_MSG_INIT: {
             HAL_LOGD("PREVIEW_PORTRAIT_SCENE_MSG_INIT");
-            Mutex::Autolock l(mPbrp->mPrevBGLock);
             if (!mApiSegHandle) {
                 int64_t initStart = systemTime();
                 mApiSegHandle = sprd_portrait_scene_adpt_init(&mPrevInitParams);
+                mPbrp->mCondVar.notify_all();
                 if (mApiSegHandle != NULL) {
                     HAL_LOGD("prev matting init cost %d ms",
                              (int)ns2ms(systemTime() - initStart));
@@ -2660,6 +2660,10 @@ int SprdCamera3PortraitScene::configureStreams(
 
     camera3_stream_configuration mainconfig;
 
+    {
+        std::unique_lock l(mInitMutex);
+        mCondVar.wait(l,[&](){return mPrevT->mPrevInitParams.mask_size > 0;});
+    }
     if (mPbrp->allocateBuff(mPbrp->mBGWidth, mPbrp->mBGHeight) < 0) {
         HAL_LOGE("failed to allocateBuff.");
         return -1;
@@ -3215,8 +3219,6 @@ int SprdCamera3PortraitScene::allocateBuff(int w, int h) {
         h = 720;
     }
 
-    /* lock for pre-init mask_size */
-    Mutex::Autolock l(mPrevBGLock);
     bgimgsize = w * h * bitdepth / 8 + (bitmapheader);
     for (int j = 0; j < 2; j++) {
         for (size_t i = 0; i < AI_BGIMG_BUFF_NUM; i++) {

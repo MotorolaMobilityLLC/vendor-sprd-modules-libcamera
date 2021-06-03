@@ -1247,6 +1247,7 @@ unsigned int camera_get_mipi_raw_dcam_pitch(int w)
     return (((w + 3) / 4 * 5) + 3) & (~(4 - 1));
 }
 
+cmr_u32 g_limit_size = 256 * 1024 * 1024;
 
 int check_free_buffer(struct cmr_queue *q, uint32_t size, uint32_t *cnt)
 {
@@ -1411,8 +1412,9 @@ int inc_buffer_q(struct cmr_queue *q, struct memory_param *mops, uint32_t size, 
 
 	pthread_mutex_lock((pthread_mutex_t *)q->lock);
 
-	if (q->cnt >= q->max) {
-		CMR_LOGD("buffer q is full, max %d, cnt %d\n", q->max, q->cnt);
+	if (q->cnt >= q->max || (q->total_size >= q->limit_size)) {
+		CMR_LOGD("buffer q is full, max %d, cnt %d, total_size (%d >= %d)\n",
+				q->max, q->cnt, q->total_size, q->limit_size);
 		ret = CMR_CAMERA_NO_MEM;
 		*cnt = 0;
 		goto exit;
@@ -1448,6 +1450,8 @@ int inc_buffer_q(struct cmr_queue *q, struct memory_param *mops, uint32_t size, 
 		list_add_head(&q->header, &new_buf->list);
 		CMR_LOGD("alloc new buf %p, fd=0x%x, size %d, vaddr 0x%lx, qmax %d, cnt %d, free %d, total_size %d\n",
 				new_buf, new_buf->fd, size, new_buf->vaddr, q->max, q->cnt, q->free_cnt, q->total_size);
+		if (q->cnt >= q->max || (q->total_size >= q->limit_size))
+			break;
 	}
 
 	ret = CMR_CAMERA_SUCCESS;
@@ -1483,12 +1487,14 @@ int inc_gbuffer_q(struct cmr_queue *q, struct memory_param *mops,
 
 	pthread_mutex_lock((pthread_mutex_t *)q->lock);
 
-	if (q->cnt >= q->max) {
-		CMR_LOGD("buffer q is full, max %d, cnt %d\n", q->max, q->cnt);
+	if (q->cnt >= q->max || (q->total_size >= q->limit_size)) {
+		CMR_LOGD("buffer q is full, max %d, cnt %d, total_size (%d >= %d)\n",
+				q->max, q->cnt, q->total_size, q->limit_size);
 		ret = CMR_CAMERA_NO_MEM;
 		*cnt = 0;
 		goto exit;
 	}
+
 	w = (cmr_uint)width;
 	h = (cmr_uint)height;
 	loop = MIN(*cnt, (q->max - q->cnt));
@@ -1525,6 +1531,8 @@ int inc_gbuffer_q(struct cmr_queue *q, struct memory_param *mops,
 		CMR_LOGD("alloc new buf %p, fd=0x%x, gpu %p, size %d, vaddr 0x%lx, qmax %d, cnt %d, free %d, total_size %d\n",
 				new_buf, new_buf->fd, new_buf->gpu_handle, size,
 				new_buf->vaddr, q->max, q->cnt, q->free_cnt, q->total_size);
+		if (q->cnt >= q->max || (q->total_size >= q->limit_size))
+			break;
 	}
 
 	ret = CMR_CAMERA_SUCCESS;
@@ -1661,6 +1669,7 @@ int init_buffer_q(struct cmr_queue *q, uint32_t max, uint32_t type)
 	memset(q, 0, sizeof(struct cmr_queue));
 	q->type = type;
 	q->max = max;
+	q->limit_size = g_limit_size;
 	list_init(&q->header);
 
 	lock = (pthread_mutex_t  *)malloc(sizeof(pthread_mutex_t));
@@ -1671,6 +1680,7 @@ int init_buffer_q(struct cmr_queue *q, uint32_t max, uint32_t type)
 	pthread_mutex_init(lock, NULL);
 	q->lock = (void *)lock;
 
+	CMR_LOGI("max %d, limit_size %d\n", q->max, g_limit_size);
 	return ret;
 }
 

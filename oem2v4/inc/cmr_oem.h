@@ -366,6 +366,8 @@ struct camera_context {
     bool snp_cancel;
     cmr_uint mfnr_on_off;
     void *aux_param;
+    struct isp_afctrl_roi af_roi;
+
 };
 
 struct prev_threednr_info {

@@ -57,6 +57,7 @@ struct ipm_frame_out {
     struct auto_tracking_info output;
 };
 
+
 typedef cmr_int (*ipm_callback)(cmr_u32 class_type,
                                 struct ipm_frame_out *cb_parm);
 
@@ -72,6 +73,8 @@ struct ipm_md_ops {
     cmr_int (*img_scale)(cmr_handle oem_handle, cmr_handle caller_handle,
                          struct img_frm *src, struct img_frm *dst,
                          struct cmr_op_mean *mean);
+    void* (*heap_mem_malloc)(size_t size, char* type);
+    void (*heap_mem_free)(void* addr);
 };
 
 struct ipm_init_in {
@@ -99,12 +102,13 @@ struct ipm_open_in {
     struct img_size frame_scale_size;
     cmr_u32 binning_factor;
     multiCameraMode multi_mode;
+    struct img_rect  af_ctrl_roi;
     bool is_cap;
 };
 
 typedef struct {
     float zoomRatio;
-    int fullsize_width;  
+    int fullsize_width;
     int fullsize_height;
     int input_width;
     int input_height;

@@ -147,6 +147,8 @@ class SprdCamera3HWI {
     void checkHighResZslSetting(uint32_t *ambient_highlight);
     uint8_t getReqCapureIntent(uint8_t capIntent);
     bool getIpsEnable(bool orgIpsEnable, const camera_metadata_t *metadata);
+    int checkMultimodeAndIdForPool();
+
   public:
     SprdCamera3Setting *mSetting;
     uint32_t mFrameNum;
@@ -341,6 +343,9 @@ class SprdCamera3HWI {
     uint32_t mThumbFrameNum;
 
     bool mIsLastVideoOn;
+
+    size_t mCaptureSize;
+    int cur_hdr_state;
 };
 
 }; // namespace sprdcamera

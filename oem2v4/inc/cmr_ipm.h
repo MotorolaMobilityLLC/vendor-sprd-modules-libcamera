@@ -101,6 +101,8 @@ struct ipm_open_in {
 
     cmr_u32 binning_factor;
     multiCameraMode multi_mode;
+    struct img_rect  af_ctrl_roi;
+
 };
 
 struct ipm_version {

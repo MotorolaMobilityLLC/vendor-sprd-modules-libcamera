@@ -248,6 +248,8 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
     sprd_camera_memory_t *mPrevMaskBuffArr[PBRP_PREV_TMP_BUFF_NUM];
     sprd_camera_memory_t *mdebugPrev;
     bool mdebugPrevSwitch;
+    std::condition_variable mCondVar;
+    std::mutex mInitMutex;
     /*capture*/
     sprd_portrait_scene_proc_t mCacheCapWeightParams;
     int32_t mFaceInfo[4];

@@ -46,6 +46,12 @@ LOCAL_SHARED_LIBRARIES += libsprdhdr libsprdhdradapter
 endif
 endif
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
+ifeq ($(strip $(TARGET_BOARD_SPRD_HDR_VERSION)),3)
+LOCAL_SHARED_LIBRARIES += libsprdhdr3 libsprdhdradapter
+endif
+endif
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_CNR_CAPTURE)),true)
 LOCAL_SHARED_LIBRARIES += libsprdcnr libsprdcnradapter
 endif

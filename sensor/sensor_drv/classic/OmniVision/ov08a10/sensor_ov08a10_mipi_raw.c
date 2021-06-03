@@ -214,7 +214,7 @@ static void ov08a10_drv_calc_gain(cmr_handle handle, cmr_uint isp_gain,
   ov08a10_drv_write_gain(handle, aec_info, sensor_gain);
 }
 
-static const cmr_u16 ov08a10_normal_pd_is_right[] = {1, 0, 1, 0};
+static const cmr_u16 ov08a10_normal_pd_is_right[] = {1, 0, 0, 1};
 
 static const cmr_u16 ov08a10_normal_pd_col[] = {14, 14, 6, 6};
 

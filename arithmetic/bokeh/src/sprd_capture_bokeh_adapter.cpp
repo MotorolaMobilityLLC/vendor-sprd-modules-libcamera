@@ -82,7 +82,7 @@ int sprd_bokeh_init_adpt(void **handle, int imgW, int imgH, init_param *param)
 {
 	imgWidth=imgW;
 	imgHeight=imgH;
-	param->memOps=NULL;       
+	//param->memOps=NULL;       
 	return sprd_bokeh_Init(handle, imgW, imgH, param);
 }
 

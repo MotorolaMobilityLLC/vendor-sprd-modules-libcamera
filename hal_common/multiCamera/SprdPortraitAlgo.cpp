@@ -1,6 +1,8 @@
 #define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 #include "SprdPortraitAlgo.h"
 #include <cutils/trace.h>
+#include "cmr_memory.h"
+
 typedef enum { PREVIEW = 0, CAPTURE = 1 } portrait_mode;
 
 using namespace android;
@@ -225,6 +227,14 @@ exit:
     return rc;
 }
 
+void* SprdPortraitAlgo::heap_malloc(size_t size, char* type) {
+    return camera_heap_malloc(size, type);
+}
+
+void SprdPortraitAlgo::heap_free(void* addr) {
+    camera_heap_free(addr);
+}
+
 int SprdPortraitAlgo::initAlgo() {
     int rc = NO_ERROR;
     if (mFirstSprdBokeh) {
@@ -236,6 +246,10 @@ int SprdPortraitAlgo::initAlgo() {
         }
     }
 
+    //memory pool interface for depth
+    mdepth_ops.mempool_malloc = heap_malloc;
+    mdepth_ops.mempool_free = heap_free;
+
     struct sprd_depth_configurable_para depth_config_param;
     // preview depth params
     mPrevDepthInitParams.inparam.input_width_main = mSize.preview_w;
@@ -246,6 +260,7 @@ int SprdPortraitAlgo::initAlgo() {
     mPrevDepthInitParams.inparam.otpsize = mCalData.otp_size;
     mPrevDepthInitParams.inparam.config_param = NULL;
     mPrevDepthInitParams.format = PREVIEW_MODE;
+    mPrevDepthInitParams.mempool_ptr = &mdepth_ops;
     mDepthPrevHandle = NULL;
     // capture depth params
     mCapDepthInitParams.inparam.input_width_main = mSize.depth_snap_main_w;
@@ -256,6 +271,7 @@ int SprdPortraitAlgo::initAlgo() {
     mCapDepthInitParams.inparam.otpsize = mCalData.otp_size;
     mCapDepthInitParams.inparam.config_param = NULL;
     mCapDepthInitParams.format = CAPTURE_MODE;
+    mCapDepthInitParams.mempool_ptr = &mdepth_ops;
     mDepthCapHandle = NULL;
     rc = checkDepthPara(&depth_config_param);
     if (rc) {
@@ -718,6 +734,10 @@ int SprdPortraitAlgo::initPortraitParams(BokehSize *size, OtpData *data,
         HAL_LOGE(" mPortraitHandle is not null");
     }
 
+    //memory pool interface for portrait
+    mportrait_ops.malloc = heap_malloc;
+    mportrait_ops.free = heap_free;
+
     PortraitCap_Init_Params initParams;
     BokehSize m_Size;
     OtpData m_CalData;
@@ -764,6 +784,7 @@ int SprdPortraitAlgo::initPortraitParams(BokehSize *size, OtpData *data,
     initParams.config_param = NULL;
     initParams.imageFormat_main = ImageFormat(YUV420_NV21);
     initParams.imageFormat_sub = ImageFormat(YUV420_NV21);
+    initParams.memOps = &mportrait_ops;
     mPortraitCapInitParams.ctx = &mPortraitHandle;
     mPortraitCapInitParams.param = &initParams;
     rc = sprd_capture_portrait_adpt(SPRD_CAPTURE_PORTRAIT_INIT_CMD,&mPortraitCapInitParams);

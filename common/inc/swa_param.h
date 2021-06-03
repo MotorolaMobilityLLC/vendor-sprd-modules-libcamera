@@ -16,21 +16,37 @@ extern "C" {
 
 
 /*========= for HDR ========*/
-
+#define HDR3_CAP_MAX 7
 #define HDR_CAP_MAX 3
 
 struct swa_hdr_param {
 	uint32_t pic_w;
 	uint32_t pic_h;
 	uint32_t fmt;
-	float ev[HDR_CAP_MAX];
+	uint32_t hdr_version;
+	float ev[HDR3_CAP_MAX];
 	cmr_s32 tuning_param_size;
 	void *tuning_param_ptr;
 	void *hdr_callback;
 	void *ae_exp_gain_info;
+	void* (*heap_mem_malloc)(size_t size, char* type);
+	void (*heap_mem_free)(void* addr);
 };
 
 /*========= for HDR end  ========*/
+
+
+
+/*========= for MFSR   =========*/
+struct swa_mfsr_info {
+	void *data;
+	uint32_t data_size;
+	struct img_size frame_size;
+	struct img_rect frame_crop;
+	void *out_exif_ptr;
+	uint32_t out_exif_size;
+};
+/*========= for MFSR end  =========*/
 
 
 
@@ -351,11 +367,15 @@ struct swa_init_data {
 	struct img_size sensor_size;
 	struct img_size frame_size;
 	struct img_rect frame_crop;
+	uint32_t pri_data_size;
 	uint32_t sn_fmt;
 	uint32_t pic_fmt;
 	uint32_t frm_total_num;
 	uint32_t ae_again;
 	void *pri_data;
+	void* (*heap_mem_malloc)(size_t size, char* type);
+	void (*heap_mem_free)(void* addr);
+	struct img_rect af_ctrl_roi;
 };
 
 struct swa_common_info {
@@ -378,6 +398,7 @@ struct swa_common_info {
 struct swa_frame_param {
 	struct swa_common_info common_param;
 	struct swa_hdr_param hdr_param;
+	struct swa_mfsr_info mfsr_param;
 	struct isp_warp_info warp_info;
 	struct swa_filter_info filter_param;
 	struct swa_watermark_info wm_param;
@@ -389,6 +410,7 @@ struct swa_frame_param {
 	struct isp_dre_pro_level dre_pro_param;
 	struct isp_face_area face_param;
 	struct isp_fb_info fb_info;
+	struct img_rect af_ctrl_roi;
 };
 
 

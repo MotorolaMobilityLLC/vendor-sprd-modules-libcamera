@@ -21,6 +21,7 @@
 
 #ifdef CONFIG_CAMERA_HDR_CAPTURE
 extern struct class_tab_t hdr_tab_info;
+extern struct class_tab_t hdr3_tab_info;
 #endif
 #ifdef CONFIG_CAMERA_FACE_DETECT
 extern struct class_tab_t fd_tab_info;
@@ -57,6 +58,7 @@ struct ipm_class_tab class_type_tab[] = {
     {IPM_TYPE_NONE, NULL},
 #ifdef CONFIG_CAMERA_HDR_CAPTURE
     {IPM_TYPE_HDR, &hdr_tab_info},
+    {IPM_TYPE_HDR3, &hdr3_tab_info},
 #endif
 #ifdef CONFIG_CAMERA_FACE_DETECT
     {IPM_TYPE_FD, &fd_tab_info},

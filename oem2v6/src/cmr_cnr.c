@@ -23,6 +23,7 @@
 #include "isp_mw.h"
 #include "sprd_yuv_denoise_adapter.h"
 #include <math.h>
+#include <unistd.h>
 
 
 struct class_cnr {
@@ -84,6 +85,8 @@ static cmr_int cnr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     cnr_handle->common.class_type = IPM_TYPE_CNR;
 
     cnr_handle->common.ops = &cnr_ops_tab_info;
+    param.memory_ops.malloc = cnr_handle->common.ipm_cxt->init_in.ops.heap_mem_malloc;
+    param.memory_ops.free = cnr_handle->common.ipm_cxt->init_in.ops.heap_mem_free;
 
     cnr_handle->handle = sprd_yuv_denoise_adpt_init((void *)&param);
     if (NULL == cnr_handle->handle) {
@@ -171,7 +174,6 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
         return CMR_CAMERA_INVALID_PARAM;
     }
 
-
     CMR_LOGV("E ");
     sem_wait(&cnr_handle->sem);
     if(!cnr_handle->is_inited) {
@@ -200,7 +202,7 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
 
     struct ipm_init_in *ipm_in = &cnr_handle->common.ipm_cxt->init_in;
     denoise_param.zoom_ratio = cxt->zoom_ratio;
-    CMR_LOGD("cnr_flag %d, night_flag %d,\n", cxt->nr_flag, cxt->night_flag);
+    CMR_LOGD("cnr_flag %d, night_flag %d", cxt->nr_flag, cxt->night_flag);
     if (cxt->nr_flag & YNRS_ENABLE) {
         ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_YNRS_PARAM,
                                     &isp_cmd_parm);

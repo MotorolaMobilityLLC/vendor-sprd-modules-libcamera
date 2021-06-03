@@ -93,6 +93,11 @@ class SprdBokehAlgo : public IBokehAlgo {
     int getPortraitMask(void *para1, void *para2, void *output_buff, void *input_buf1_addr,
                     int vcmCurValue, void *bokehMask, unsigned char *lptMask);
 
+    static void* heap_malloc(size_t size, char* type);
+
+    static void heap_free(void* addr);
+
+
   private:
     bool mFirstSprdBokeh;
     bool mReadOtp;
@@ -128,7 +133,9 @@ class SprdBokehAlgo : public IBokehAlgo {
     sprd_depth_userset_param_t mDepthUsersetParams;
     portrait_mode_param mBokehPortraitParams;
     af_relbokeh_oem_data tuning_golden_vcm;
-  
+    depth_mempool mdepth_ops;
+    sprd_bokeh_memory_ops mbokeh_ops;
+
     int checkDepthPara(struct sprd_depth_configurable_para *depth_config_param);
     void loadDebugOtp();
 };

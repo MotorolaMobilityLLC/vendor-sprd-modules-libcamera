@@ -5,7 +5,6 @@
 #include <math.h>
 #include "sprd_camalg_assist.h"
 
-
 #ifdef DEFAULT_RUNTYPE_VDSP
 static enum camalg_run_type g_run_type = SPRD_CAMALG_RUN_TYPE_VDSP;
 #else
@@ -35,7 +34,7 @@ void *sprd_yuv_denoise_adpt_init(void *param)
 
     if (g_run_type == SPRD_CAMALG_RUN_TYPE_CPU)
     {
-        handle=sprd_cnr_init(init_param->width,init_param->height,init_param->runversion);
+        handle=sprd_cnr_init(init_param->width,init_param->height,init_param->runversion, &(init_param->memory_ops));
     }
     else if (g_run_type == SPRD_CAMALG_RUN_TYPE_VDSP)
     {
@@ -96,26 +95,26 @@ int sprd_yuv_denoise_adpt_ctrl(void *handle, sprd_yuv_denoise_cmd_t cmd, void *p
     float r_factor, r_base, r_new;
 
     DENOISE_LOGD("width =%d,height =%d,zoom_ratio =%f, ynr_radius_base %d, cnr_radius_base =%d",
-			denoise_param->width, denoise_param->height, denoise_param->zoom_ratio,
-			denoise_param->ynr_ration_base, denoise_param->cnr_ration_base);
+        denoise_param->width, denoise_param->height, denoise_param->zoom_ratio,
+        denoise_param->ynr_ration_base, denoise_param->cnr_ration_base);
 
     if(paramInfo.ynrParam != NULL)
     {
         paramInfo.ynrParam->ynr_imgCenterX = denoise_param->width / 2;
         paramInfo.ynrParam->ynr_imgCenterY = denoise_param->height / 2;
         DENOISE_LOGD("YNR result :  center X =%d,center Y=%d, radius=%d",
-		paramInfo.ynrParam->ynr_imgCenterX, paramInfo.ynrParam->ynr_imgCenterY,paramInfo.ynrParam->ynr_Radius);
+            paramInfo.ynrParam->ynr_imgCenterX, paramInfo.ynrParam->ynr_imgCenterY,paramInfo.ynrParam->ynr_Radius);
 
-	/* for tuning param compatible */
+        /* for tuning param compatible */
         if (denoise_param->ynr_ration_base != 0) {
-		r_factor = (float)paramInfo.ynrParam->ynr_Radius;
-		r_base = (float)denoise_param->ynr_ration_base;
-		r_new = (r_factor / r_base) * denoise_param->width * denoise_param->zoom_ratio;
-		paramInfo.ynrParam->ynr_Radius = (unsigned short)r_new;
-		if(paramInfo.ynrParam->ynr_Radius > denoise_param->width)
-			paramInfo.ynrParam->ynr_Radius = denoise_param->width;
-		DENOISE_LOGD("YNRS radius:  r_factor %f, r_base %f, r_new %f,  final Radius=%d\n",
-			r_factor, r_base, r_new, paramInfo.ynrParam->ynr_Radius);
+            r_factor = (float)paramInfo.ynrParam->ynr_Radius;
+            r_base = (float)denoise_param->ynr_ration_base;
+            r_new = (r_factor / r_base) * denoise_param->width * denoise_param->zoom_ratio;
+            paramInfo.ynrParam->ynr_Radius = (unsigned short)r_new;
+            if(paramInfo.ynrParam->ynr_Radius > denoise_param->width)
+                paramInfo.ynrParam->ynr_Radius = denoise_param->width;
+            DENOISE_LOGD("YNRS radius:  r_factor %f, r_base %f, r_new %f,  final Radius=%d\n",
+                r_factor, r_base, r_new, paramInfo.ynrParam->ynr_Radius);
         }
     }
 
@@ -126,8 +125,8 @@ int sprd_yuv_denoise_adpt_ctrl(void *handle, sprd_yuv_denoise_cmd_t cmd, void *p
             paramInfo.cnr3Param->paramLayer[i].imgCenterY = (denoise_param->height>>1)/pow(2, (i+1));
             max_radius = (denoise_param->width + denoise_param->height)/pow(2, (i+1));
             DENOISE_LOGD("CNR3 Layer%d, base radius=%d, max_radius=%d, center (%d %d)\n",
-				i, paramInfo.cnr3Param->paramLayer[i].baseRadius, max_radius,
-				paramInfo.cnr3Param->paramLayer[i].imgCenterX, paramInfo.cnr3Param->paramLayer[i].imgCenterY);
+                i, paramInfo.cnr3Param->paramLayer[i].baseRadius, max_radius,
+                paramInfo.cnr3Param->paramLayer[i].imgCenterX, paramInfo.cnr3Param->paramLayer[i].imgCenterY);
 
             r_factor = (float)paramInfo.cnr3Param->paramLayer[i].baseRadius;
             r_base = (float)denoise_param->cnr_ration_base;
@@ -136,7 +135,7 @@ int sprd_yuv_denoise_adpt_ctrl(void *handle, sprd_yuv_denoise_cmd_t cmd, void *p
             if(paramInfo.cnr3Param->paramLayer[i].baseRadius > max_radius)
                 paramInfo.cnr3Param->paramLayer[i].baseRadius = max_radius;
             DENOISE_LOGD("CNR3 Layer%d, r_factor %f, r_base %f, r_new %f,  final Radius=%d",
-				i,  r_factor, r_base, r_new, paramInfo.cnr3Param->paramLayer[i].baseRadius);
+                i,  r_factor, r_base, r_new, paramInfo.cnr3Param->paramLayer[i].baseRadius);
         }
     }
 
@@ -167,7 +166,7 @@ int sprd_yuv_denoise_adpt_ctrl(void *handle, sprd_yuv_denoise_cmd_t cmd, void *p
 int sprd_yuv_denoise_get_devicetype(enum camalg_run_type *type)
 {
     if (!type)
-        return 1;
+    return 1;
 
     *type = g_run_type;
 
@@ -177,7 +176,7 @@ int sprd_yuv_denoise_get_devicetype(enum camalg_run_type *type)
 int sprd_yuv_denoise_set_devicetype(enum camalg_run_type type)
 {
     if (type < SPRD_CAMALG_RUN_TYPE_CPU || type >= SPRD_CAMALG_RUN_TYPE_MAX)
-        return 1;
+    return 1;
     g_run_type = type;
 
     return 0;
@@ -204,7 +203,7 @@ void *sprd_yuv_denoise_adpt_init(void *param)
 
     if (g_run_type == SPRD_CAMALG_RUN_TYPE_CPU)
     {
-        handle=sprd_cnr_init(init_param->width,init_param->height,init_param->runversion);
+        handle=sprd_cnr_init(init_param->width,init_param->height,init_param->runversion, &(init_param->memory_ops));
     }
     else if (g_run_type == SPRD_CAMALG_RUN_TYPE_VDSP)
     {
@@ -293,7 +292,7 @@ int sprd_yuv_denoise_adpt_ctrl(void *handle, sprd_yuv_denoise_cmd_t cmd, void *p
          default:
                 DENOISE_LOGI("unknown cmd: %d\n", cmd);
                 break;
-        }
+    }
     }
     else if (g_run_type == SPRD_CAMALG_RUN_TYPE_VDSP)
     {

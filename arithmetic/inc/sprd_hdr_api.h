@@ -31,11 +31,42 @@ typedef struct _tag_hdr_stat_t
     int         s;                  /*!< image buffer stride */
 } hdr_stat_t;
 
+typedef struct _tag_hdr_exif_info_t{
+    uint32_t       version;
+    uint32_t       gain_ae[3];
+    uint32_t       shutter_ae[3];
+    int            bv;
+    uint32_t       face_num;
+    uint32_t       prop_dark;
+    uint32_t       prop_bright;
+
+    uint32_t       tuning_param_index;
+    uint32_t       sceneChosen;
+    int            ev[2];
+    int            scene_flag;
+
+    uint32_t       thres_mv;           //[0,255]
+    uint32_t       thres_oe;           //[0,255]
+    uint32_t       thres_oe2;          //[0, 255]
+    uint32_t       w_yoe_m;            //[0,255]
+    int            w_yoe_s;            //[0.0, 1.0]
+    uint32_t       w_uv_m;             //[0,255]
+    int            w_uv_s;             //[0.0, 1.0]
+    int            sat_strength;       //[1.0, 5.0]
+    uint32_t       dist_thres;         //[50,255]
+    uint32_t       mv_num_thres;       //[0, 300]
+    uint32_t       mv_border;          //[0, 50]
+    uint32_t       mv_dilate_thres;    //[0,255]
+
+    uint32_t       midV[2];
+} hdr_exif_info_t;
+
 /*! hdr scndet out */
 typedef struct _tag_hdr_callback_t
 {
-    int         tuning_param_index;
-    uint64_t    clock;
+    int              tuning_param_index;
+    uint64_t         clock;
+    hdr_exif_info_t  exif_info;
 } hdr_callback_t;
 
 /*! hdr_detect parameters */
@@ -49,8 +80,9 @@ typedef struct _tag_hdr_detect_t
     uint32_t    iso;
     void*       tuning_param;
     int         tuning_param_size;
-    hdr_callback_t     callback;
+    hdr_callback_t   callback;
 } hdr_detect_t;
+
 
 /*! LDR image data structure */
 typedef struct _tag_ldr_image_t
@@ -117,14 +149,18 @@ typedef struct _tag_hdr_config_t
     int    img_stride;
     int    img_num;
     char*  core_str;
+
     uint8_t    detect_bypass;  //[0,  1]
     uint8_t    align_bypass;   //[0, 1]
+
     hdr_detect_t    scene_param;
     hdr_align_t    align_param;
     hdr_fusion_t    fusion_param;
     hdr_ltm_t    hdr_ltm_param;
-    void*    tuning_param;
-    int      tuning_param_size;
+
+    void*      tuning_param;
+    int        tuning_param_size;
+
     void*    (*malloc)(size_t size, char* type);
     void     (*free)(void* addr);
 } hdr_config_t;
@@ -167,6 +203,7 @@ SPRD_ISP_API int sprd_hdr_config_default(hdr_config_t* cfg);
 SPRD_ISP_API int sprd_hdr_open(hdr_inst_t* inst, hdr_config_t* cfg);
 SPRD_ISP_API int sprd_hdr_detect(hdr_inst_t inst, hdr_stat_t* stat, float ev[2]);
 SPRD_ISP_API int sprd_hdr_process(hdr_inst_t inst, ldr_image_t* input, uint8_t* output);
+SPRD_ISP_API int sprd_hdr_get_exif_info(hdr_inst_t inst, hdr_exif_info_t *exif_info);
 SPRD_ISP_API int sprd_hdr_close(hdr_inst_t inst);
 SPRD_ISP_API int sprd_hdr_fast_stop(hdr_inst_t inst);
 SPRD_ISP_API void sprd_set_buffer_base(hdr_inst_t inst, uint8_t *base);

@@ -31,10 +31,10 @@
 #include "cmr_cvt.h"
 #include "cmr_jpeg.h"
 #include "cmr_watermark.h"
+#include "isp_debug.h"
 #include "swa_ipm_api.h"
 #include "swa_param.h"
 #include "ips_interface.h"
-
 
 enum {
 	IPS_EVT_START,
@@ -68,11 +68,12 @@ struct ipmpro_type {
 };
 
 static struct ipmpro_type ipmproc_list[IPS_TYPE_MAX] = {
+	[IPS_TYPE_UWARP] =       { 1, 0, 0, "uwarp", },
 	[IPS_TYPE_HDR] =         { 1, 0, 0, "hdr", },
 	[IPS_TYPE_MFNR] =        { 1, 0, 0, "mfnr", },
-	[IPS_TYPE_UWARP] =       { 1, 0, 0, "uwarp", },
+	[IPS_TYPE_MFSR] =        { 1, 0, 0, "mfsr", },
 	[IPS_TYPE_CNR] =         { 1, 0, 1, "cnr", },
-	[IPS_TYPE_DRE] =         { 1, 0, 1, "dre", },
+	[IPS_TYPE_SHARP] =       { 1, 0, 1, "sharp", },
 	[IPS_TYPE_DREPRO] =      { 0, 0, 1, "drepro", },
 	[IPS_TYPE_FILTER] =      { 1, 0, 1, "filter", },
 	[IPS_TYPE_FB] =          { 1, 0, 1, "fb", },
@@ -112,6 +113,11 @@ struct ipmpro_node {
 	struct ipmpro_handle_base *ipm_base;
 };
 
+struct ips_debug_info {
+	void *data;
+	cmr_u32 data_size;
+};
+
 struct ips_req_node {
 	struct listnode list;
 	struct ips_request_t req_in;
@@ -127,6 +133,8 @@ struct ips_req_node {
 	struct img_frm frm_middle[10];
 	struct img_frm frm_jpeg;
 	struct img_frm frm_thumb_jpeg;
+
+	struct ips_debug_info dbg_info[IPS_TYPE_MAX];
 
 	uint32_t should_exit; /* force pre-exit if camera closed */
 	enum ips_req_status status;
@@ -164,7 +172,30 @@ struct ips_context {
 };
 
 static int dump_pic;
-static int jpeg_start_delay;
+static int s_dbg_ver;
+
+static const char *MFSR_START = "ISP_MFSR__";
+static const char *MFSR_END = "ISP_MFSR__";
+
+#define COPY_MAGIC(m) \
+{cmr_u32 len; len = strlen(m); memcpy(dst + off, m, len); off += len;}
+
+static void copy_dbg_info(char *dst, const void *log, cmr_u32 size,
+		const char *begin_magic, const char *end_magic, cmr_u32 *offset)
+{
+	cmr_u32 off = 0;
+
+	CMR_LOGD("%p %p  magic %s, %s, off %p, size %d\n",
+		dst, log, begin_magic, end_magic, offset, size);
+	if (!log || !size)
+		return;
+
+	COPY_MAGIC(begin_magic);
+	memcpy(dst + off, log, size);
+	off += size;
+	COPY_MAGIC(end_magic);
+	*offset = off;
+}
 
 static cmr_int init_ipmpro_base(struct ipmpro_type *in, struct ipmpro_handle_base *cur)
 {
@@ -285,22 +316,75 @@ static cmr_int deinit_jpeg_base(struct ips_context *ips_ctx)
 	return ret;
 }
 
+static void swa_jpeg_dbginfo(struct ips_req_node *req, struct ips_jpeg_param_t *pm)
+{
+	cmr_u32 i, total_size, offset, end_tag;
+	char *pstart = (char *)(req->frm_jpeg.addr_vir.addr_y + req->frm_jpeg.buf_size);
+	struct sprd_isp_debug_info hdr;
+	struct _isp_log_info log_info;
+
+	char *ptemp = (char *)(req->frm_jpeg.addr_vir.addr_y);
+
+	CMR_LOGD("start addr 0x%lx, data %02x, %02x, size %d, info ptr %p\n",
+		req->frm_jpeg.addr_vir.addr_y,
+		ptemp[0], ptemp[1], req->frm_jpeg.buf_size, pstart);
+	CMR_LOGD("dbg info %p %d\n",pm->isp_debug_info, pm->isp_debug_info_size);
+
+	memcpy(pstart, pm->isp_debug_info, pm->isp_debug_info_size);
+
+	/* re-pack debug info for post-processing */
+	memcpy(&hdr, pstart, sizeof(struct sprd_isp_debug_info));
+	memcpy(&log_info, pstart + sizeof(struct sprd_isp_debug_info), sizeof(struct sprd_isp_debug_info));
+	total_size = hdr.debug_len - 4;
+	pstart += total_size;
+	CMR_LOGD("new ptr %p, debug info size %d\n", pstart, hdr.debug_len);
+
+	for (i = 0; i < IPS_TYPE_MAX; i++) {
+		if (req->dbg_info[i].data == NULL || req->dbg_info[i].data_size == 0)
+			continue;
+		if (i != IPS_TYPE_MFSR)
+			continue;
+		offset = 0;
+		CMR_LOGD("cpy start, data  %p, size %d\n",
+			req->dbg_info[i].data, req->dbg_info[i].data_size);
+		copy_dbg_info((void *)pstart, req->dbg_info[i].data, req->dbg_info[i].data_size,
+				MFSR_START, MFSR_END, &offset);
+		log_info.mfsr_off = total_size;
+		log_info.mfsr_len = offset;
+		total_size += offset;
+		pstart += offset;
+		CMR_LOGD("size %d, off %d, ptr %p\n", total_size, offset, pstart);
+	}
+	end_tag = SPRD_DEBUG_END_FLAG;
+	memcpy(pstart, &end_tag, sizeof(cmr_u32));
+
+	total_size += sizeof(cmr_u32);
+	hdr.debug_len = total_size;
+
+	pstart = (char *)(req->frm_jpeg.addr_vir.addr_y + req->frm_jpeg.buf_size);
+	memcpy(pstart, &hdr, sizeof(struct sprd_isp_debug_info));
+	pstart += sizeof(struct sprd_isp_debug_info);
+	memcpy(pstart, &log_info, sizeof(struct _isp_log_info));
+
+	req->frm_jpeg.buf_size += total_size;
+	CMR_LOGD("debug info size %d, jpeg size %d\n", total_size, req->frm_jpeg.buf_size);
+}
+
 static cmr_int swa_exif_process(struct ips_context *ips_ctx,
 	struct ips_req_node *req, struct ipmpro_node *cur_proc)
 {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
-	cmr_u32 offset;
 	struct img_frm src, src1, dst;
 	struct ips_jpeg_param_t *pm = (struct ips_jpeg_param_t *)cur_proc->param_ptr;
 	struct jpeg_enc_exif_param enc_exif_param;
 	struct jpeg_wexif_cb_param out_param;
-	void *ptr0, *ptr1, *tmp_buf;
 
 	CMR_LOGD("req_id %d exif start\n", req->req_in.request_id);
 
 	src = req->frm_jpeg;
 	src1 = req->frm_thumb_jpeg;
 	dst = req->frm_jpeg;
+	src.addr_vir.addr_y += EXIF_RESERVED_SIZE;
 
 	if (dump_pic & 2) {
 		FILE *fp;
@@ -319,22 +403,10 @@ static cmr_int swa_exif_process(struct ips_context *ips_ctx,
 		}
 	}
 
-	tmp_buf = malloc(dst.buf_size + 1024);
-	if (tmp_buf == NULL) {
-		CMR_LOGE("fail to malloc tmp jpeg buf, size %d\n", dst.buf_size);
-		return CMR_CAMERA_NO_MEM;
-	}
-	ptr0 = (void *)dst.addr_vir.addr_y;
-	ptr1 = (void *)(dst.addr_vir.addr_y + EXIF_RESERVED_SIZE);
-
-	memcpy(tmp_buf, ptr0, dst.buf_size);
-	memcpy(ptr1, tmp_buf, dst.buf_size);
-	free(tmp_buf);
-
 	memset(&enc_exif_param, 0, sizeof(struct jpeg_enc_exif_param));
 	memset(&out_param, 0, sizeof(struct jpeg_wexif_cb_param));
 	enc_exif_param.jpeg_handle = ips_ctx->other_handles.jpeg_handle;
-	enc_exif_param.src_jpeg_addr_virt = src.addr_vir.addr_y + EXIF_RESERVED_SIZE;
+	enc_exif_param.src_jpeg_addr_virt = src.addr_vir.addr_y;
 	enc_exif_param.thumbnail_addr_virt = src1.addr_vir.addr_y;
 	enc_exif_param.target_addr_virt = dst.addr_vir.addr_y;
 	enc_exif_param.src_jpeg_size = src.buf_size;
@@ -344,9 +416,11 @@ static cmr_int swa_exif_process(struct ips_context *ips_ctx,
 	ret = cmr_jpeg_enc_add_eixf(ips_ctx->other_handles.jpeg_handle,
 			&enc_exif_param, &out_param);
 
-	CMR_LOGD("exif done\n");
 	req->frm_jpeg.addr_vir.addr_y = out_param.output_buf_virt_addr;
 	req->frm_jpeg.buf_size = out_param.output_buf_size;
+
+	if (s_dbg_ver && (pm->isp_debug_info != NULL))
+		swa_jpeg_dbginfo(req, pm);
 
 	src = req->frm_jpeg;
 	if (dump_pic & 2) {
@@ -374,6 +448,7 @@ static cmr_int swa_thumbnail_procss(struct ips_context *ips_ctx,
 {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
 	cmr_u32 offset;
+	int retry_cnt = 100;
 	struct img_frm src, dst, buf;
 	struct cmr_op_mean mean;
 	struct jpeg_enc_cb_param enc_cb_param;
@@ -386,11 +461,15 @@ static cmr_int swa_thumbnail_procss(struct ips_context *ips_ctx,
 		src.addr_phy.addr_y, src.addr_phy.addr_u, src.addr_phy.addr_v,
 		src.size.width, src.size.height,
 		src.rect.start_x, src.rect.start_y, src.rect.width, src.rect.height);
-
+retry:
 	memset(&buf, 0, sizeof(struct img_frm));
 	buf.buf_size = pm->thumb_size.width * pm->thumb_size.height * 3 / 2;
 	ret = req->cb(req->client_data, &req->req_in, IPS_CB_GET_BUF, &buf);
 	if (ret || buf.fd <= 0) {
+		if ((retry_cnt-- > 0) && !req->should_exit) {
+			usleep(20 * 1000);
+			goto retry;
+		}
 		CMR_LOGE("fail to get thumbnail buffer\n");
 		return ret;
 	}
@@ -444,6 +523,10 @@ static cmr_int swa_thumbnail_procss(struct ips_context *ips_ctx,
 	dst.fd = 0;
 	ret = req->cb(req->client_data, &req->req_in, IPS_CB_GET_BUF, &dst);
 	if (ret || dst.fd <= 0) {
+		if ((retry_cnt-- > 0) && !req->should_exit) {
+			usleep(20 * 1000);
+			goto retry;
+		}
 		CMR_LOGE("fail to get thumbnail jpeg buffer\n");
 		req->cb(req->client_data, &req->req_in, IPS_CB_RETURN_BUF, (void *)&src);
 		return ret;
@@ -534,6 +617,7 @@ static cmr_int swa_jpeg_process(struct ips_context *ips_ctx,
 {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
 	cmr_u32 offset;
+	int retry_cnt = 150;
 	struct img_frm *src, *dst, buf;
 	struct ips_jpeg_param_t *pm = (struct ips_jpeg_param_t *)cur_proc->param_ptr;
 
@@ -543,10 +627,15 @@ static cmr_int swa_jpeg_process(struct ips_context *ips_ctx,
 	dst = &req->frm_jpeg;
 
 	if (dst->fd == 0) {
+retry:
 		memset(&buf, 0, sizeof(struct img_frm));
 		buf.buf_size = src->size.width * src->size.height * 3 / 2;
 		ret = req->cb(req->client_data, &req->req_in, IPS_CB_GET_BUF, &buf);
 		if (ret || buf.fd <= 0) {
+			if ((retry_cnt-- > 0) && !req->should_exit) {
+				usleep(20 * 1000);
+				goto retry;
+			}
 			CMR_LOGE("fail to get jpeg buffer\n");
 			return ret;
 		}
@@ -573,22 +662,16 @@ static cmr_int swa_jpeg_process(struct ips_context *ips_ctx,
 		dst->size.width = dst->size.height;
 		dst->size.height = temp;
 	}
+	dst->addr_vir.addr_y += EXIF_RESERVED_SIZE;
+	dst->addr_phy.addr_y = EXIF_RESERVED_SIZE;
+
 	CMR_LOGD("jpeg size %d %d, fd 0x%x, fid %d, vaddr 0x%x, 0x%x, paddr 0x%x, 0x%x\n",
 		dst->size.width, dst->size.height, dst->fd, dst->frame_number,
 		dst->addr_vir.addr_y, dst->addr_vir.addr_u,
 		dst->addr_phy.addr_y, dst->addr_phy.addr_u);
 
-	if (jpeg_start_delay) {
-		CMR_LOGD("req_id %d jpeg start delay %d ms", req->req_in.request_id, jpeg_start_delay);
-		usleep(jpeg_start_delay*1000);
-	}
-
-	CMR_LOGD("req_id %d wait jpeg lock\n", req->req_in.request_id);
-
 	if (cur_proc->ipm_base->multi_support == 0)
 		pthread_mutex_lock(&cur_proc->ipm_base->glock);
-
-	CMR_LOGD("req_id %d wait jpeg lock Done\n", req->req_in.request_id);
 
 	if (req->should_exit) {
 		CMR_LOGD("req_id %d should exit\n", req->req_in.request_id);
@@ -613,6 +696,9 @@ static cmr_int swa_jpeg_process(struct ips_context *ips_ctx,
 	if (ret) {
 		CMR_LOGE("fail to jpeg encode\n");
 	}
+
+	dst->addr_vir.addr_y -= EXIF_RESERVED_SIZE;
+	dst->addr_phy.addr_y = 0;
 
 	ret = swa_thumbnail_procss(ips_ctx, req, cur_proc);
 	if (ret) {
@@ -657,7 +743,7 @@ static cmr_int ipmpro_common(struct ips_context *ips_ctx,
 	struct ips_req_node *req, struct img_frm *frame)
 {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
-	int iret = 0, i, err = 0;
+	int iret = 0, i, err = 0, retry_cnt = 100;
 	struct img_frm *dst, *src, buf;
 	struct ipmpro_node *cur_proc = req->cur_proc;
 	struct ipmpro_handle_base *ipm_base = cur_proc->ipm_base;
@@ -721,9 +807,14 @@ static cmr_int ipmpro_common(struct ips_context *ips_ctx,
 		uint32_t offset;
 		offset = src->size.width * src->size.height;
 		buf.buf_size = src->size.width * src->size.height * 3 / 2;
+retry:
 		buf.fd = 0;
 		ret = req->cb(req->client_data, &req->req_in, IPS_CB_GET_BUF, &buf);
 		if (ret || buf.fd <= 0) {
+			if ((retry_cnt-- > 0) && !req->should_exit) {
+				usleep(20 * 1000);
+				goto retry;
+			}
 			CMR_LOGD("fail to get free buffer\n");
 			goto unlock;
 		}
@@ -748,9 +839,20 @@ static cmr_int ipmpro_common(struct ips_context *ips_ctx,
 	in.frms[0].addr_vir[2] = src->addr_vir.addr_v;
 	in.frms[0].size.width = src->size.width;
 	in.frms[0].size.height = src->size.height;
-
 	CMR_LOGD("in fd=0x%x, ghand %p, vaddr 0x%lx size %d %d\n", src->fd,
 		src->gpu_handle, src->addr_vir.addr_y, src->size.width, src->size.height);
+
+	if (cur_proc->type == IPS_TYPE_SHARP) {
+		src = &req->frm_middle[0];
+		in.frame_num = 2;
+		in.frms[1].fd = src->fd;
+		in.frms[1].gpu_handle = src->gpu_handle;
+		in.frms[1].addr_vir[0] = src->addr_vir.addr_y;
+		in.frms[1].addr_vir[1] = src->addr_vir.addr_u;
+		in.frms[1].addr_vir[2] = src->addr_vir.addr_v;
+		CMR_LOGD("detail fd=0x%x, ghand %p, vaddr 0x%lx size %d %d\n", src->fd,
+		src->gpu_handle, src->addr_vir.addr_y, src->size.width, src->size.height);
+	}
 
 	src = &req->frm_out[req->frame_cnt];
 	out.frame_num = 1;
@@ -783,6 +885,11 @@ proc_done:
 
 	if (cur_proc->ipm_base->need_outbuf)
 		req->cb(req->client_data, &req->req_in, IPS_CB_RETURN_BUF, (void *)&req->frm_in[req->frame_cnt]);
+
+	if (cur_proc->type == IPS_TYPE_SHARP) {
+		req->cb(req->client_data, &req->req_in, IPS_CB_RETURN_BUF, (void *)&req->frm_middle[0]);
+		memset(&req->frm_middle[0], 0, sizeof(req->frm_middle[0]));
+	}
 
 	if (!err  &&  (dump_pic & 1)) {
 		FILE *fp;
@@ -857,6 +964,8 @@ static cmr_int ipmpro_hdr(struct ips_context *ips_ctx,
 	frm_param->hdr_param.pic_w = frame->size.width;
 	frm_param->hdr_param.pic_h = frame->size.height;
 	frm_param->hdr_param.fmt = req->frame_cnt;
+	frm_param->hdr_param.heap_mem_malloc = req->init_param.heap_mem_malloc;
+	frm_param->hdr_param.heap_mem_free = req->init_param.heap_mem_free;
 	CMR_LOGD("hdr open w %d, h %d, param %p, ev %f %f %f\n",
 		hdr_param->pic_w, hdr_param->pic_h, frm_param,
 		hdr_param->ev[0],  hdr_param->ev[1], hdr_param->ev[2]);
@@ -878,7 +987,7 @@ static cmr_int ipmpro_hdr(struct ips_context *ips_ctx,
 		dst->addr_vir[1] = src->addr_vir.addr_u;
 		dst->addr_vir[2] = src->addr_vir.addr_v;
 	}
-	req->frm_out[0] = req->frm_in[2];
+	req->frm_out[0] = req->frm_in[req->frame_cnt - 1];
 	src = &req->frm_out[0];
 	out.frame_num = 1;
 	out.frms[0].fd = src->fd;
@@ -901,12 +1010,11 @@ static cmr_int ipmpro_hdr(struct ips_context *ips_ctx,
 	if (hdr2_base->multi_support == 0)
 		pthread_mutex_unlock(&hdr2_base->glock);
 
-	free(req->frm_in[0].reserved);
-	free(req->frm_in[1].reserved);
-
-	req->cb(req->client_data, &req->req_in, IPS_CB_RETURN_BUF, (void *)&req->frm_in[0]);
-	req->cb(req->client_data, &req->req_in, IPS_CB_RETURN_BUF, (void *)&req->frm_in[1]);
-	memset(&req->frm_in[0], 0, sizeof(req->frm_in));
+	for (i = 0; i < req->frame_cnt - 1; i++) {
+		free(req->frm_in[i].reserved);
+		req->cb(req->client_data, &req->req_in, IPS_CB_RETURN_BUF, (void *)&req->frm_in[i]);
+		memset(&req->frm_in[i], 0, sizeof(struct img_frm));
+	}
 
 	if (dump_pic & 1) {
 		FILE *fp;
@@ -933,13 +1041,12 @@ static cmr_int ipmpro_hdr(struct ips_context *ips_ctx,
 	return ret;
 }
 
-
 static cmr_int ipmpro_mfnr(struct ips_context *ips_ctx,
 	struct ips_req_node *req, struct img_frm *frame)
 {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
 	int iret, i, is_clear = 0;
-	int s_w, s_h, offset;
+	int s_w, s_h, offset, retry_cnt = 100;
 	struct img_frm *dst, *small;
 	struct ipmpro_node *ipm_hdl = req->cur_proc;
 	struct ipmpro_handle_base *ipm_base = ipm_hdl->ipm_base;
@@ -975,6 +1082,13 @@ static cmr_int ipmpro_mfnr(struct ips_context *ips_ctx,
 	init_param.frm_total_num = req->frame_total;
 	init_param.ae_again = frm_param->common_param.again;
 	init_param.pri_data = (void *)&frm_param->mfnr_param;
+	init_param.heap_mem_malloc = req->init_param.heap_mem_malloc;
+	init_param.heap_mem_free = req->init_param.heap_mem_free;
+	init_param.af_ctrl_roi.start_x = frm_param->af_ctrl_roi.start_x;
+	init_param.af_ctrl_roi.start_y = frm_param->af_ctrl_roi.start_y;
+	init_param.af_ctrl_roi.width = frm_param->af_ctrl_roi.width;
+	init_param.af_ctrl_roi.height = frm_param->af_ctrl_roi.height;
+
 	iret = ipm_base->swa_open(ipm_hdl->swa_handle, (void *)&init_param, 4);
 	if (iret) {
 		CMR_LOGE("fail to open mfnr\n");
@@ -986,10 +1100,15 @@ static cmr_int ipmpro_mfnr(struct ips_context *ips_ctx,
 	offset = s_w * s_h;
 	for (i = 0; i < (int)req->frame_total; i++) {
 		struct img_frm buf;
+retry:
 		memset(&buf, 0, sizeof(struct img_frm));
 		buf.buf_size = s_w * s_h * 3 / 2;
 		ret = req->cb(req->client_data, &req->req_in, IPS_CB_GET_BUF, &buf);
 		if (ret || buf.fd <= 0) {
+			if ((retry_cnt-- > 0) && !req->should_exit) {
+				usleep(20 * 1000);
+				goto retry;
+			}
 			CMR_LOGE("fail to get mfnr small buffer\n");
 			goto buf_error;
 		}
@@ -1133,7 +1252,6 @@ open_fail:
 	return CMR_CAMERA_FAIL;
 }
 
-
 static cmr_int ipmpro_jpeg(struct ips_context *ips_ctx,
 	struct ips_req_node *req, struct img_frm *frame)
 {
@@ -1162,12 +1280,13 @@ static cmr_int ipmpro_jpeg(struct ips_context *ips_ctx,
 		frame->fd, frame->size.width, frame->size.height,
 		frame->addr_vir.addr_y, frame->addr_vir.addr_u, frame->addr_vir.addr_v,
 		frame->addr_phy.addr_y, frame->addr_phy.addr_u, frame->addr_phy.addr_v);
-
+#if 0
 	offset = dst->size.width * dst->size.height;
 	if (dst->addr_phy.addr_u == 0)
 		dst->addr_phy.addr_u = dst->addr_phy.addr_y + offset;
 	if (dst->addr_vir.addr_u == 0)
 		dst->addr_vir.addr_u = dst->addr_vir.addr_y + offset;
+#endif
 
 	swa_jpeg_process(ips_ctx, req, req->cur_proc);
 
@@ -1223,6 +1342,227 @@ exit:
 	return ret;
 }
 
+static cmr_int ipmpro_mfsr_mfsr(struct ips_context *ips_ctx,
+	struct ips_req_node *req, struct img_frm *frame)
+{
+	cmr_int ret = CMR_CAMERA_SUCCESS;
+	int iret, i, is_clear = 0;
+	int offset, retry_cnt = 200;
+	struct img_frm *src, *dst[2], buf[2];
+	struct ipmpro_node *ipm_hdl = req->cur_proc;
+	struct ipmpro_handle_base *ipm_base = ipm_hdl->ipm_base;
+	struct swa_frame_param *frm_param;
+	struct swa_frames_inout in, out;
+	struct swa_init_data init_param;
+
+	if (frame == NULL) {
+		CMR_LOGD("mfsr should quick stop\n");
+		is_clear = 1;
+		if (req->frame_cnt == 0)
+			return 0;
+		else
+			goto clear;
+	}
+
+	req->frm_in[req->frame_cnt] = *frame;
+	dst[0] = &req->frm_out[0];
+	dst[1] = &req->frm_middle[0];
+	src = &req->frm_in[req->frame_cnt];
+	frm_param = (struct swa_frame_param *)frame->reserved;
+
+	CMR_LOGD("req_id %d, fno.%d, fd 0x%x, vaddr 0x%lx, gpu %p, fpm %p (%d %d) (%d %d)\n",
+		req->req_in.request_id, req->frame_cnt, src->fd, src->addr_vir.addr_y, src->gpu_handle,
+		frm_param, src->size.width, src->size.height, src->rect.width, src->rect.height);
+
+	if (req->frame_cnt > 0)
+		goto proc_mfsr;
+
+	buf[0].fd = 0;
+	buf[1].fd = 0;
+	for (i = 0; i < 2; i++) {
+retry:
+		memcpy(dst[i], src, sizeof(struct img_frm));
+		offset = src->size.width * src->size.height;
+		buf[i].buf_size = src->size.width * src->size.height * 3 / 2;
+		ret = req->cb(req->client_data, &req->req_in, IPS_CB_GET_BUF, &buf[i]);
+		if (ret || buf[i].fd <= 0) {
+			if ((retry_cnt-- > 0) && !req->should_exit) {
+				usleep(20 * 1000);
+				goto retry;
+			}
+			CMR_LOGD("fail to get free buffer\n");
+			if (i == 1)
+				req->cb(req->client_data, &req->req_in, IPS_CB_RETURN_BUF, (void *)&buf[0]);
+			return CMR_CAMERA_FAIL;
+		}
+		dst[i]->fd = buf[i].fd;
+		dst[i]->gpu_handle = buf[i].gpu_handle;
+		dst[i]->addr_vir.addr_y = buf[i].addr_vir.addr_y;
+		dst[i]->addr_vir.addr_u = buf[i].addr_vir.addr_y + offset;
+		dst[i]->addr_phy.addr_y = 0;
+		dst[i]->addr_phy.addr_u = offset;
+	}
+	dst[1]->reserved = NULL;
+
+	if (ipm_base->multi_support == 0)
+		pthread_mutex_lock(&ipm_base->glock);
+
+	init_param.frame_size = frame->size;
+	init_param.frm_total_num = req->frame_total;
+	init_param.pri_data = frm_param->mfsr_param.data;
+	init_param.pri_data_size = frm_param->mfsr_param.data_size;
+
+	iret = ipm_base->swa_open(ipm_hdl->swa_handle, (void *)&init_param, 4);
+	if (iret) {
+		CMR_LOGE("fail to open mfsr\n");
+		goto open_fail;
+	}
+
+proc_mfsr:
+	memset(&in, 0, sizeof(struct swa_frames_inout));
+	in.frame_num = 1;
+	in.frms[0].fd = src->fd;
+	in.frms[0].gpu_handle = src->gpu_handle;
+	in.frms[0].addr_vir[0] = src->addr_vir.addr_y;
+	in.frms[0].addr_vir[1] = src->addr_vir.addr_u;
+	in.frms[0].rect.start_x = src->rect.start_x;
+	in.frms[0].rect.start_y = src->rect.start_y;
+	in.frms[0].rect.width = src->rect.width;
+	in.frms[0].rect.height = src->rect.height;
+	in.frms[0].size.width = src->size.width;
+	in.frms[0].size.height = src->size.height;
+
+	memset(&out, 0, sizeof(struct swa_frames_inout));
+	out.frame_num = 2;
+	out.frms[0].fd = dst[0]->fd;
+	out.frms[0].gpu_handle = dst[0]->gpu_handle;
+	out.frms[0].addr_vir[0] = dst[0]->addr_vir.addr_y;
+	out.frms[0].addr_vir[1] = dst[0]->addr_vir.addr_u;
+
+	out.frms[1].fd = dst[1]->fd;
+	out.frms[1].gpu_handle = dst[1]->gpu_handle;
+	out.frms[1].addr_vir[0] = dst[1]->addr_vir.addr_y;
+	out.frms[1].addr_vir[1] = dst[1]->addr_vir.addr_u;
+
+	iret = ipm_base->swa_process(ipm_hdl->swa_handle, &in, &out, (void *)frm_param);
+	if (iret)
+		CMR_LOGE("fail to process mfsr\n");
+
+	if (dump_pic & 1) {
+		FILE *fp;
+		char fname[256], fname2[256], fname3[256];
+		int size;
+		struct img_frm src = req->frm_in[req->frame_cnt];
+
+		snprintf(fname, 256, "%sframe%03d_type%d_%d_in.yuv", CAMERA_DUMP_PATH,
+			src.frame_number, ipm_hdl->type, req->frame_cnt);
+		snprintf(fname2, 256, "%sframe%03d_type%d_%d_out.yuv", CAMERA_DUMP_PATH,
+			src.frame_number, ipm_hdl->type, req->frame_cnt);
+
+		fp = fopen(fname, "wb");
+		size = src.size.width * src.size.height * 3 / 2;
+		if (fp) {
+			CMR_LOGD("req_id %d proc %d, fd 0x%x, addr %p, size %d (%d %d) , write to file %s\n",
+				req->req_in.request_id, ipm_hdl->type, src.fd,
+				(void *)src.addr_vir.addr_y, size, src.size.width, src.size.height, fname);
+			fwrite((void *)src.addr_vir.addr_y, 1, size, fp);
+			fclose(fp);
+		} else {
+			CMR_LOGE("fail to open file %s\n", fname);
+		}
+
+		src = req->frm_out[0];
+		fp = fopen(fname2, "wb");
+		size = src.size.width * src.size.height * 3 / 2;
+		if (fp) {
+			CMR_LOGD("req_id %d proc %d, fd 0x%x, addr %p, size %d (%d %d) , write to file %s\n",
+				req->req_in.request_id, ipm_hdl->type, src.fd,
+				(void *)src.addr_vir.addr_y, size, src.size.width, src.size.height, fname2);
+			fwrite((void *)src.addr_vir.addr_y, 1, size, fp);
+			fclose(fp);
+		} else {
+			CMR_LOGE("fail to open file %s\n", fname2);
+		}
+
+		src = req->frm_middle[0];
+		src.size.width = frm_param->mfsr_param.frame_crop.width;
+		src.size.height = frm_param->mfsr_param.frame_crop.height;
+		snprintf(fname3, 256, "%sframe%03d_type%d_%d_detail_%dx%d.y", CAMERA_DUMP_PATH,
+			src.frame_number, ipm_hdl->type, req->frame_cnt, src.size.width, src.size.height);
+		fp = fopen(fname3, "wb");
+		size = src.size.width * src.size.height;
+		if (fp) {
+			CMR_LOGD("req_id %d proc %d, fd 0x%x, addr %p, size %d (%d %d) , write to file %s\n",
+				req->req_in.request_id, ipm_hdl->type, src.fd,
+				(void *)src.addr_vir.addr_y, size, src.size.width, src.size.height, fname2);
+			fwrite((void *)src.addr_vir.addr_y, 1, size, fp);
+			fclose(fp);
+		} else {
+			CMR_LOGE("fail to open file %s\n", fname3);
+		}
+
+	}
+
+	req->frame_cnt++;
+	if (req->frame_cnt < req->frame_total)
+		goto proc_done;
+
+	if (s_dbg_ver && frm_param->mfsr_param.out_exif_ptr && frm_param->mfsr_param.out_exif_size) {
+		req->dbg_info[IPS_TYPE_MFSR].data = malloc(frm_param->mfsr_param.out_exif_size);
+		if (req->dbg_info[IPS_TYPE_MFSR].data) {
+			memcpy(req->dbg_info[IPS_TYPE_MFSR].data,
+					frm_param->mfsr_param.out_exif_ptr,
+					frm_param->mfsr_param.out_exif_size);
+			req->dbg_info[IPS_TYPE_MFSR].data_size = frm_param->mfsr_param.out_exif_size;
+		}
+	}
+
+clear:
+	iret = ipm_base->swa_close(ipm_hdl->swa_handle, NULL);
+	if (iret)
+		CMR_LOGE("fail to close mfsr\n");
+
+	for (i = 0; i < req->frame_total; i++) {
+		if (i > 0) /* input frame 0 param passed to output frame */
+			free(req->frm_in[i].reserved);
+		req->cb(req->client_data, &req->req_in, IPS_CB_RETURN_BUF, (void *)&req->frm_in[i]);
+	}
+	memset(&req->frm_in[0], 0, sizeof(req->frm_in));
+
+	if (ipm_base->multi_support == 0)
+		pthread_mutex_unlock(&ipm_base->glock);
+
+	if (is_clear)
+		return 0;
+
+	req->status = IPS_REQ_PROC_DONE;
+	req->frame_total = 1;
+
+proc_done:
+	if (1) { /* TODO - delete it later. For debug only */
+		char value[PROPERTY_VALUE_MAX];
+		int delay_ms;
+		property_get("debug.camera.mfsr.delay", value, "0");
+		delay_ms = atoi(value);
+		if (delay_ms > 0) {
+			CMR_LOGI("delay %d ms start\n", delay_ms);
+			usleep(delay_ms * 1000);
+			CMR_LOGI("delay %d ms done\n", delay_ms);
+		}
+	}
+
+	CMR_LOGD("Done");
+	return 0;
+
+open_fail:
+	for (i = 0; i < 2; i++)
+		req->cb(req->client_data, &req->req_in, IPS_CB_RETURN_BUF, (void *)&buf[i]);
+
+	if (ipm_base->multi_support == 0)
+		pthread_mutex_unlock(&ipm_base->glock);
+	return CMR_CAMERA_FAIL;
+}
+
 cmr_int ips_thread_proc(struct cmr_msg *message, void *p_data)
 {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -1272,9 +1612,12 @@ cmr_int ips_thread_proc(struct cmr_msg *message, void *p_data)
 		case IPS_TYPE_MFNR:
 			ipmpro_mfnr(ips_ctx, req, frame);
 			break;
+		case IPS_TYPE_MFSR:
+			ipmpro_mfsr_mfsr(ips_ctx, req, frame);
+			break;
 		case IPS_TYPE_UWARP:
+		case IPS_TYPE_SHARP:
 		case IPS_TYPE_CNR:
-		case IPS_TYPE_DRE:
 		case IPS_TYPE_DREPRO:
 		case IPS_TYPE_FILTER:
 		case IPS_TYPE_FB:
@@ -1317,9 +1660,17 @@ cmr_int ips_thread_proc(struct cmr_msg *message, void *p_data)
 			req->cb(req->client_data, &req->req_in, IPS_CB_RETURN_BUF, (void *)&req->frm_out[i]);
 			memset(&req->frm_out[i], 0, sizeof(struct img_frm));
 		}
+		for (i = 0; i < req->frame_total; i++) {
+			if (req->frm_middle[i].fd == 0)
+				continue;
+			req->cb(req->client_data, &req->req_in, IPS_CB_RETURN_BUF, (void *)&req->frm_middle[i]);
+			memset(&req->frm_middle[i], 0, sizeof(struct img_frm));
+		}
 
 		if (cur_proc->type == IPS_TYPE_MFNR)
 			ipmpro_mfnr(ips_ctx, req, NULL);
+		if (cur_proc->type == IPS_TYPE_MFSR)
+			ipmpro_mfsr_mfsr(ips_ctx, req, NULL);
 
 		req->frame_total = 0;
 
@@ -1349,7 +1700,8 @@ cmr_int ips_thread_proc(struct cmr_msg *message, void *p_data)
 			}
 		}
 	}
-
+	CMR_LOGD("Done. req id %d, req %p, cur_proc %p status %d\n",
+		req->req_in.request_id, req, req->cur_proc, req->status);
 	return ret;
 }
 
@@ -1545,8 +1897,8 @@ cmr_int cmr_ips_post(cmr_handle ips_handle,
 	CMR_MSG_INIT(message);
 
 	req = container_of(src, struct ips_req_node, req_in);
-
-	CMR_LOGD("start req %p %p\n", req, src);
+	CMR_LOGD("req id %d, req %p %p, cur_proc %p, frame %p\n",
+		req->req_in.request_id, src, req, req->cur_proc, frame);
 
 	if (req->thrd == NULL) {
 		int loop = 0;
@@ -1641,6 +1993,7 @@ cmr_int cmr_ips_destroy_req(cmr_handle ips_handle,
 	struct ips_request_t **dst)
 {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
+	cmr_u32 i;
 	struct ips_req_node *req;
 	struct ips_context *ips_ctx = (struct ips_context *)ips_handle;
 	struct ips_thread_context *ips_thread;
@@ -1683,6 +2036,11 @@ cmr_int cmr_ips_destroy_req(cmr_handle ips_handle,
 		}
 		list_remove(&ipm_hdl->list);
 		free(ipm_hdl);
+	}
+
+	for (i = 0; i < IPS_TYPE_MAX; i++) {
+		if (req->dbg_info[i].data)
+			free(req->dbg_info[i].data);
 	}
 
 	CMR_LOGD("request id %d freed\n", req->req_in.request_id);
@@ -1763,7 +2121,6 @@ cmr_int cmr_ips_init_req(cmr_handle ips_handle,
 
 	/* set to first proc node */
 	req->cur_proc = node_to_item(req->ipm_head.next, struct ipmpro_node, list);
-
 	return ret;
 }
 
@@ -1792,8 +2149,8 @@ cmr_int cmr_ips_init(cmr_handle *handle, cmr_handle client_data)
 	char value[PROPERTY_VALUE_MAX];
 	property_get("debug.camera.save.snpfile", value, "0");
 	dump_pic = atoi(value);
-	property_get("debug.camera.ips.jpeg.delay.start", value, "0");
-	jpeg_start_delay = atoi(value);
+	property_get("ro.debuggable", value, "0");
+	s_dbg_ver = !!atoi(value);
 
 	ips_ctx = (struct ips_context *)malloc(sizeof(struct ips_context));
 	if (ips_ctx == NULL) {

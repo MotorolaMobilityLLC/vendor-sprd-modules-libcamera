@@ -1101,7 +1101,7 @@ static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 {
 	ISP_LOGV("-----ae_update_result_to_sensor start----, cameraId:%d", cxt->camera_id);
 	cmr_s32 ret = ISP_SUCCESS;
-	struct ae_exposure_param write_param = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0};
+	struct ae_exposure_param write_param = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	struct q_item write_item = { 0, 0, 0, 0, 0, 0, 0};
 	struct q_item actual_item;
 
@@ -1679,7 +1679,10 @@ static cmr_s32 ae_get_iso(struct ae_ctrl_cxt *cxt, cmr_u32 * real_iso)
 			calc_iso = 16000;
 		}
 	} else {
-		calc_iso = (1 << (iso - 1)) * 100;
+		if(cxt->cur_status.adv_param.iso_data_type == 0)
+			calc_iso = (1 << (iso - 1)) * 100;
+		else
+			calc_iso = cxt->cur_status.adv_param.iso;
 	}
 
 	*real_iso = calc_iso;
@@ -2260,6 +2263,9 @@ static cmr_s32 ae_set_fd_param(struct ae_ctrl_cxt *cxt, cmr_handle param)
 				cxt->cur_status.adv_param.face_data.face_data[i].angle = fd->face_area[i].angle;
 				cxt->cur_status.adv_param.face_data.face_data[i].yaw_angle = fd->face_area[i].yaw_angle;
 				cxt->cur_status.adv_param.face_data.face_data[i].roll_angle = fd->face_area[i].roll_angle;
+				memcpy(&(cxt->cur_status.adv_param.face_data.face_data[i].data), &(fd->face_area[i].data),
+				sizeof(fd->face_area[i].data));
+				cxt->cur_status.adv_param.face_data.face_data[i].fascore = fd->face_area[i].fascore;
 			}
 		} else {
 			cxt->cur_status.adv_param.face_data.face_num = 0;
@@ -2273,6 +2279,8 @@ static cmr_s32 ae_set_fd_param(struct ae_ctrl_cxt *cxt, cmr_handle param)
 				cxt->cur_status.adv_param.face_data.face_data[i].angle = 0;
 				cxt->cur_status.adv_param.face_data.face_data[i].yaw_angle = 0;
 				cxt->cur_status.adv_param.face_data.face_data[i].roll_angle = 0;
+				memset(&(cxt->cur_status.adv_param.face_data.face_data[i].data), 0, sizeof(cxt->cur_status.adv_param.face_data.face_data[i].data));
+				cxt->cur_status.adv_param.face_data.face_data[i].fascore = 0;
 			}
 		}
 	} else {
@@ -2314,7 +2322,7 @@ static cmr_s32 ae_set_mode_params(struct ae_ctrl_cxt *cxt, cmr_handle param)
 		if (20==count){
 			ISP_LOGD("the q is full maybe params not effect");
 		}
-		ISP_LOGD("count %d ae_mode %d exp_time %d sensitivity %d frame_number %d",count,ae_set_mode->ae_mode,ae_set_mode->exp_time,ae_set_mode->sensitivity,ae_set_mode->frame_number);
+		ISP_LOGD("count %d ae_mode %d exp_time %lld sensitivity %d frame_number %d",count,ae_set_mode->ae_mode,ae_set_mode->exp_time,ae_set_mode->sensitivity,ae_set_mode->frame_number);
 
 	}else {
 		ISP_LOGE("fail to set mode params, param %p", param);
@@ -3668,7 +3676,6 @@ static cmr_s32 ae_get_hdr_exp_gain_infor(struct ae_ctrl_cxt *cxt, void *result)
 	return rtn;
 }
 
-
 static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 {
 	UNUSED(param);
@@ -3676,6 +3683,7 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 	cmr_u32 up_exposure = 0;
 	cmr_u32 down_exposure = 0;
 	cmr_u16 base_gain = 0;
+	cmr_u16 down_gain = 0;
 	cmr_u32 max_frame_line = 0;
 	cmr_u32 min_frame_line = 0;
 	cmr_u32 exp_line = 0;
@@ -3683,6 +3691,7 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 	cmr_s32 counts = 0;
 	cmr_u32 skip_num = 0;
 	cmr_s8 hdr_callback_flag = 0;
+	float ev_shutter = 0.0;
 #ifdef CONFIG_SUPPROT_AUTO_HDR
 	float ev_result[2] = {0, 0};
 	ev_result[0] = -cxt->hdr_calc_result.ev[0];
@@ -3696,7 +3705,8 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 #ifdef CONFIG_SUPPROT_AUTO_HDR
 		ae_get_hdr_exp_gain_infor(cxt,&cxt->hdr_exp_gain);
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_START, (void *)ev_result);
-		memcpy(&cxt->hdr_callback_backup,&cxt->hdr_callback,sizeof(hdr_callback_t));
+		memcpy(&cxt->hdr_callback_backup,&cxt->hdr_callback,sizeof(sprd_hdr_detect_out_t));
+		ISP_LOGD("hdr_callback_backup : %d, %"PRIu64"",cxt->hdr_callback_backup.tuning_param_index,cxt->hdr_callback_backup.clock);
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_TUNING_PARAM_INDEX, &cxt->hdr_callback_backup);
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_EXP_GAIN, &cxt->hdr_exp_gain);
 		if (cxt->is_multi_mode && cxt->isp_ops.ae_bokeh_hdr_cb) {
@@ -3719,9 +3729,15 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 		if (3 == cxt->hdr_flag) {
 			base_exposure_line = cxt->hdr_exp_line;
 			base_gain = cxt->hdr_gain;
-			down_exposure = (cmr_u32)(1.0 / pow(2, cxt->hdr_calc_result.ev[0]) * base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time);
-			ISP_LOGD("down_exp %d, pow2 %f\n", down_exposure, pow(2, cxt->hdr_calc_result.ev[0]));
-			ae_hdr_calculation(cxt, max_frame_line, min_frame_line, down_exposure, base_exposure_line, base_gain, &gain, &exp_line);
+			down_exposure =  (cmr_u32)(base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time);
+			down_gain = pow(2,ev_result[0]) * base_gain;
+			if(down_gain < 128) {
+				down_gain = 128;
+				ev_shutter = 1.0 * pow(2,ev_result[0]) * base_gain / 128;
+				down_exposure = (cmr_u32)(ev_shutter *  base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time);
+			}
+			ISP_LOGD("down_exp %d, down_gain %d ev0 %f\n", down_exposure, down_gain,ev_result[0]);
+			ae_hdr_calculation(cxt, max_frame_line, min_frame_line, down_exposure, base_exposure_line, down_gain, &gain, &exp_line);
 			ISP_LOGV("base_exposure: %d, base_gain: %d, down_exposure: %d, exp_line: %d", base_exposure_line, base_gain, down_exposure, exp_line);
 			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = (cmr_u64)(exp_line * cxt->cur_status.adv_param.cur_ev_setting.line_time);
 			cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = gain;
@@ -3966,12 +3982,9 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			cxt->last_exp_param.target_luma = cxt->ae_tbl_param.target_lum;
 			cxt->last_cur_lum = cxt->cur_result.cur_lum;
 			cxt->last_index = cxt->ae_tbl_param.def_index;
-			if (0 != cxt->cur_result.cur_bv)
-				cxt->last_exp_param.bv = cxt->cur_result.cur_bv;
-			else
-				cxt->last_exp_param.bv = 1;
+			cxt->last_exp_param.bv = cxt->cur_result.cur_bv ? cxt->cur_result.cur_bv : 1;
 		} else {
-			cxt->last_exp_param.exp_line = cxt->sync_cur_result.ev_setting.exp_line;
+			cxt->last_exp_param.exp_line = cxt->sync_cur_result.ev_setting.exp_line ? cxt->sync_cur_result.ev_setting.exp_line : 1;
 			cxt->last_exp_param.exp_time = cxt->sync_cur_result.ev_setting.exp_time;
 			cxt->last_exp_param.dummy = cxt->sync_cur_result.ev_setting.dmy_line;
 			cxt->last_exp_param.gain = cxt->sync_cur_result.ev_setting.ae_gain;
@@ -3980,10 +3993,7 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			cxt->last_exp_param.target_luma = cxt->sync_cur_result.target_lum;
 			cxt->last_cur_lum = cxt->sync_cur_result.cur_lum;
 			cxt->last_index = cxt->sync_cur_result.ev_setting.ae_idx;
-			if (0 != cxt->cur_result.cur_bv)
-				cxt->last_exp_param.bv = cxt->cur_result.cur_bv;
-			else
-				cxt->last_exp_param.bv = 1;
+			cxt->last_exp_param.bv = cxt->cur_result.cur_bv ? cxt->cur_result.cur_bv : 1;
 		}
 
 		cxt->last_exp_param.target_offset = 0; // manual mode without target_offset
@@ -4292,6 +4302,10 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			cxt->cur_status.adv_param.comp_param.value.ev_index = 0;			//(AE_EV_MOD_OFFSET): EV setting in professial mode
 		}
 	}
+	if(cxt->cur_status.adv_param.iso_data_type == 0)
+		scene_param_in.iso_mod = cxt->cur_status.adv_param.iso;
+	else
+		scene_param_in.iso_mod = AE_ISO_AUTO;
 
 	if(CAMERA_MODE_TIMELAPSE == cxt->app_mode)
 		cxt->cur_status.adv_param.special_fps_mode = 1;
@@ -4299,7 +4313,6 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		cxt->cur_status.adv_param.special_fps_mode = 0;
 
 	scene_param_in.scene_mod = cxt->cur_status.adv_param.scene_mode;
-	scene_param_in.iso_mod = cxt->cur_status.adv_param.iso;
 	scene_param_in.flicker_mod = cxt->cur_status.adv_param.flicker;
 
 	ae_lib_ioctrl(cxt->misc_handle, AE_LIB_GET_SCENE_PARAM, &scene_param_in, &cxt->ae_tbl_param);
@@ -4432,6 +4445,8 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			&& (0 != s_bakup_exp_param[cxt->camera_id].gain)
 			&& (0 != s_bakup_exp_param[cxt->camera_id].bv)) {
 			src_exp.exp_line = (cmr_u32)s_bakup_exp_param[cxt->camera_id].exp_time / cxt->cur_status.adv_param.cur_ev_setting.line_time;
+			if(0 == src_exp.exp_line)
+				src_exp.exp_line = s_bakup_exp_param[cxt->camera_id].exp_line;
 			src_exp.exp_time = s_bakup_exp_param[cxt->camera_id].exp_time;
 			src_exp.gain = s_bakup_exp_param[cxt->camera_id].gain;
 			src_exp.cur_index = s_bakup_exp_param[cxt->camera_id].cur_index;
@@ -4621,12 +4636,13 @@ static cmr_s32 ae_set_iso(struct ae_ctrl_cxt *cxt, void *param)
 		struct ae_set_iso *iso = param;
 		struct ae_scene_param_in scene_param_in;
 		if (iso->mode < AE_ISO_MAX) {
-			if(cxt->cur_status.adv_param.iso == iso->mode){
-				ISP_LOGD("iso mode no change,no need to set");
+			if((cxt->cur_status.adv_param.iso == iso->mode)||(1 == cxt->cur_status.adv_param.iso_data_type)){
+				ISP_LOGD("iso mode no change or iso_data_type=1 ,no need to set");
 				return AE_SUCCESS;
 			}
 			cxt->cur_status.adv_param.iso = iso->mode;
 		}
+		cxt->cur_status.adv_param.iso_data_type = 0;
 		switch (iso->mode) {
 		case AE_ISO_100:
 			cxt->manual_iso_value = 256;
@@ -4642,6 +4658,12 @@ static cmr_s32 ae_set_iso(struct ae_ctrl_cxt *cxt, void *param)
 			break;
 		case AE_ISO_1600:
 			cxt->manual_iso_value = 4096;
+			break;
+		case AE_ISO_3200:
+			cxt->manual_iso_value = 8192;
+			break;
+		case AE_ISO_6400:
+			cxt->manual_iso_value = 16384;
 			break;
 		case AE_ISO_AUTO:
 		case AE_ISO_MAX:
@@ -4675,6 +4697,46 @@ static cmr_s32 ae_set_iso(struct ae_ctrl_cxt *cxt, void *param)
 		scene_param_in.scene_mod = cxt->cur_status.adv_param.scene_mode ;
 		scene_param_in.flicker_mod = cxt->cur_status.adv_param.flicker ;
 		ae_lib_ioctrl(cxt->misc_handle, AE_LIB_GET_SCENE_PARAM, &scene_param_in, &cxt->ae_tbl_param);
+		ISP_LOGD("manual_exp_time %"PRIu64", manual_iso_value %d, exp %"PRIu64", mode %d",cxt->manual_exp_time,cxt->manual_iso_value,(cmr_u64) cxt->cur_status.adv_param.mode_param.value.exp_gain[0], cxt->cur_status.adv_param.mode_param.mode);
+	}
+	return AE_SUCCESS;
+}
+
+static cmr_s32 ae_set_iso_value(struct ae_ctrl_cxt *cxt, void *param)
+{
+	cmr_u32 iso_value = 0;
+	if (param) {
+		iso_value = *(cmr_u32 *) param;
+
+		if(cxt->cur_status.adv_param.iso == iso_value ){
+			ISP_LOGD("iso mode no change,no need to set");
+			return AE_SUCCESS;
+		}
+		cxt->cur_status.adv_param.iso = iso_value ;
+		cxt->cur_status.adv_param.iso_data_type = 1;
+		cxt->manual_iso_value = (cmr_u32)(1.0 * iso_value / 50 * 128 + 0.5);
+
+		if(cxt->manual_exp_time){
+			if(cxt->manual_iso_value){
+				ae_set_force_pause(cxt, 1, 8);
+				cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = cxt->manual_iso_value;
+				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
+			}else{
+				ae_set_force_pause(cxt, 0, 9);
+				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO_SHUTTER_PRI;
+			}
+			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->manual_exp_time;
+		} else {
+			if(cxt->manual_iso_value){
+				ae_set_force_pause(cxt, 0, 10);
+				cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = cxt->manual_iso_value;
+				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO_ISO_PRI;
+
+			}else{
+				ae_set_force_pause(cxt, 0, 11);
+				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO;
+			}
+		}
 		ISP_LOGD("manual_exp_time %"PRIu64", manual_iso_value %d, exp %"PRIu64", mode %d",cxt->manual_exp_time,cxt->manual_iso_value,(cmr_u64) cxt->cur_status.adv_param.mode_param.value.exp_gain[0], cxt->cur_status.adv_param.mode_param.mode);
 	}
 	return AE_SUCCESS;
@@ -4977,6 +5039,18 @@ static cmr_s32 ae_set_fps_info(struct ae_ctrl_cxt *cxt, void *param)
 	return AE_SUCCESS;
 }
 
+static cmr_s32 ae_set_af_start(struct ae_ctrl_cxt *cxt, cmr_u32 *param)
+{
+	if (1 == *param) {
+		cxt->cur_status.adv_param.af_start_flag = 1;
+	}else{
+		cxt->cur_status.adv_param.af_start_flag = 0;
+	}
+	ISP_LOGV("ae_set_af_status %d param %d", cxt->cur_status.adv_param.af_start_flag, *param);
+
+	return AE_SUCCESS;
+}
+
 static cmr_s32 ae_get_fdr_param(struct ae_ctrl_cxt *cxt, void *result)
 {
 	cmr_s32 rtn = AE_SUCCESS;
@@ -5166,6 +5240,70 @@ static cmr_s32 ae_set_fdr_start(struct ae_ctrl_cxt *cxt, void *param)
 	}
 
 	return AE_SUCCESS;
+}
+
+static cmr_s32 ae_set_exp_gain_cap_start(struct ae_ctrl_cxt *cxt, void *param)
+{
+	if((ISP_ALG_DUAL_C_C == cxt->is_multi_mode) && (CAM_SENSOR_MASTER != cxt->sensor_role)){
+		ISP_LOGD("[EXP_GAIN]is_multi_mode=%d",cxt->is_multi_mode);
+	}
+	else if (param) {
+		struct ae_exp_gain_cap_param *cap_param = (struct ae_exp_gain_cap_param *)param;
+		cxt->exp_gain_cap_enable = cap_param->enable;
+		cxt->exp_gain_cap_cb_num = cap_param->effect_valid_num;
+		cxt->exp_gain_cap_adjust_cnt = cap_param->adjust_cnt;
+		cxt->set_exp_time = cap_param->exp_time;
+		cxt->set_gain = (cmr_u32)(1.0 * cap_param->iso / 50 * 128 + 0.5);
+		cxt->exp_gain_cap_frame_cnt = 0;
+
+		if (cxt->exp_gain_cap_enable) {
+			cxt->exp_gain_cap_flag = 1;
+			cxt->base_exp_line = cxt->sync_cur_result.ev_setting.exp_line;
+			cxt->base_gain = cxt->sync_cur_result.ev_setting.ae_gain;
+			ae_set_force_pause(cxt, 1, 16);
+		} else {
+			ae_set_force_pause(cxt, 0, 17);
+			cxt->exp_gain_cap_flag = 0;
+			cxt->cur_status.adv_param.prof_mode = 0;
+			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO;
+			cxt->cur_status.adv_param.cur_ev_setting.exp_line = cxt->base_exp_line ;
+			cxt->cur_status.adv_param.cur_ev_setting.ae_gain = cxt->base_gain;
+		}
+		ISP_LOGD("exp_gain_cap:enable %d, expl %d, gain %d, lock_ae_state %d",
+			cxt->exp_gain_cap_enable,
+			cxt->base_exp_line,
+			cxt->base_gain,
+			cxt->cur_status.adv_param.lock);
+	}
+
+	return AE_SUCCESS;
+}
+
+static void ae_set_exp_gain_capture_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
+{
+	UNUSED(param);;
+
+	cxt->exp_gain_cap_frame_cnt++;
+	if (cxt->exp_gain_cap_frame_cnt == cxt->exp_gain_cap_cb_num) {
+		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_EXP_GAIN_CAP_START, NULL);
+		ISP_LOGD("_isp_callback do-capture!\r\n");
+	}
+
+	//if ( cxt->exp_gain_cap_flag <= cxt->exp_gain_cap_adjust_cnt ){
+	if (cxt->exp_gain_cap_enable) {
+		cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->set_exp_time;
+		cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = cxt->set_gain;
+		cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
+		cxt->cur_status.adv_param.prof_mode = 1;
+		cxt->exp_gain_cap_flag++;
+		ISP_LOGD("isp_set_exp: exp %d, gain %d\n", cxt->set_exp_time, cxt->set_gain);
+	}else {
+		cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = (cmr_u64)cxt->base_exp_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
+		cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = cxt->base_gain;
+		cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
+		cxt->cur_status.adv_param.prof_mode = 1;
+		ISP_LOGD("isp_normal_exp: exp_line %d, gain %d\n", cxt->base_exp_line, cxt->base_gain);
+	}
 }
 
 static cmr_s32 ae_get_flash_effect(struct ae_ctrl_cxt *cxt, void *result)
@@ -5369,6 +5507,42 @@ static cmr_s32 ae_set_ev_adjust_start(struct ae_ctrl_cxt *cxt, void *param)
 	}
 
 	return AE_SUCCESS;
+}
+
+struct flash_cali_result {
+	void *data;
+	uint32 size;
+};
+
+static cmr_s32 ae_set_flash_calibration(struct ae_ctrl_cxt *cxt, void *inparam, void *outparam)
+{
+	UNUSED(inparam);
+	cmr_s32 rtn = AE_SUCCESS;
+	if (outparam == NULL) {
+		ISP_LOGE("The storage of flash cali output is NULL!\n");
+		rtn = AE_ERROR;
+		return rtn;
+	}
+	struct flash_cali_stat *stat = (struct flash_cali_stat *)outparam;
+
+	static struct flash_cali_result result;
+ 	result.data = (void *)&cxt->flash_cali_data;
+ 	result.size = (uint32)sizeof(struct flash_correct_info);
+	//af_status DCAM is long
+	//AE status stb
+	flash_calibration(cxt, stat);
+
+	if (stat->result == 0) {
+		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_FLASH_CALIBRATION, (void *)&result);
+		ISP_LOGD("FLASH_CALI>flash calibration is success\n");
+		rtn = AE_SUCCESS;
+	} else if(stat->result != 0 && stat->result != 1) {	//flash cali error
+		stat->enable = 1;
+		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_FLASH_CALIBRATION, NULL);
+		ISP_LOGD("FLASH_CALI>flash calibration is fail\n");
+		rtn = AE_ERROR;
+	}
+	return rtn;
 }
 
 static cmr_s32 ae_get_flash_wb_gain(struct ae_ctrl_cxt *cxt, void *result)
@@ -6165,9 +6339,8 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	cmr_s32 aem_type = 0;
 	cmr_u32 sensor_num = 0;//aem static data ready sensor num
 #ifdef CONFIG_SUPPROT_AUTO_HDR
-	struct _tag_hdr_detect_t hdr_param;
-	struct _tag_hdr_stat_t hdr_stat;
-	float ev_result[2] = {0,0};
+	sprd_hdr_detect_in_t hdr_param_in = {0};
+	sprd_hdr_detect_out_t hdr_result = {0};
 	cmr_s8 auto_hdr_enable = 0;
 	cmr_s8 mfnr_en = 0;
 #endif
@@ -6230,7 +6403,44 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	cxt->cur_status.frm_id = calc_in->info.frame_id;
 
 	/*send multi_mode to lib*/
-	cxt->cur_status.is_multi_mode = cxt->is_multi_mode;
+	switch(cxt->is_multi_mode) 
+		{
+			case ISP_ALG_SINGLE:
+				cxt->cur_status.is_multi_mode = AEC_SINGLE;
+				break;
+
+			case ISP_ALG_DUAL_C_C:
+				cxt->cur_status.is_multi_mode = AEC_DUAL;
+				break;
+
+			case ISP_ALG_DUAL_SBS:
+				cxt->cur_status.is_multi_mode = AEC_DUAL;
+				break;
+
+			case ISP_ALG_BLUR_REAR:
+				cxt->cur_status.is_multi_mode = AEC_BLUR;
+				break;
+
+			case ISP_ALG_DUAL_W_T:
+				cxt->cur_status.is_multi_mode = AEC_DUAL;
+				break;
+
+			case ISP_ALG_DUAL_C_M:
+				cxt->cur_status.is_multi_mode = AEC_DUAL;
+				break;
+
+			case ISP_ALG_TRIBLE_W_T_UW:
+				cxt->cur_status.is_multi_mode = AEC_TRIBLE_W_T_UW;
+				break;
+
+			case ISP_ALG_TRIBLE_W_T_UW_SYNC:
+				cxt->cur_status.is_multi_mode = AEC_TRIBLE_W_T_UW_SYNC;
+				break;
+
+			default:
+				cxt->cur_status.is_multi_mode = AEC_SINGLE;
+				break;		
+		}
 
 	/*get bayserhist stat*/
 	memcpy(&cxt->cur_status.adv_param.bhist_data[0].hist_data, &calc_in->bayerhist_stats[0].value, 256 * sizeof(cmr_u32));
@@ -6453,54 +6663,71 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	cxt->effect_index[cxt->effect_index_index] = cxt->sync_cur_result.ev_setting.ae_idx;
 
 	rtn = ae_pre_process(cxt);
+	
+	//ISP_LOGD("FLASH_CALI>ae_set_flash_calibration: %d\n", cxt->frameid);
+	char str[PROPERTY_VALUE_MAX] = {0};
+	property_get("persist.vendor.cam.isp.ae.flash_calibration", str, "");		//on/off
+	static struct flash_cali_stat output = {0};
+	void *inparam = NULL;
+	if (!strcmp(str, "on")){	//&& result->calistat == 0
+		ISP_LOGD("FLASH_CALI>before!");
+		ae_set_flash_calibration(cxt, inparam, (void*)&output);
+		ISP_LOGD("FLASH_CALI>after!");
+	}
+	
 	flash_calibration_script((cmr_handle) cxt);/*for flash calibration*/
 	ae_set_led(cxt);
 
 #ifdef CONFIG_SUPPROT_AUTO_HDR
 	if(!cxt->is_snapshot) {
 		struct ae_size hdr_stat_size;
-		hdr_stat.hist256 = calc_in->hist_stats.value;
+		hdr_param_in.hist = calc_in->hist_stats.value;
 		hdr_stat_size.w = 0;
 		hdr_stat_size.h = 0;
 		if (cxt->isp_ops.callback) {
 			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_STATIS_SIZE, &hdr_stat_size);
 		}
 		if(hdr_stat_size.w && hdr_stat_size.h) {
-			hdr_stat.w = hdr_stat_size.w;
-			hdr_stat.h = hdr_stat_size.h;
+			hdr_param_in.w = hdr_stat_size.w;
+			hdr_param_in.h = hdr_stat_size.h;
 		} else {
-			hdr_stat.w = cxt->snr_info.frame_size.w;
-			hdr_stat.h = cxt->snr_info.frame_size.h;
+			hdr_param_in.w = cxt->snr_info.frame_size.w;
+			hdr_param_in.h = cxt->snr_info.frame_size.h;
 		}
-		memset(&hdr_param, 0 ,sizeof(struct _tag_hdr_detect_t));
-		hdr_param.thres_bright = 250;
-		hdr_param.thres_dark = 20;
-		hdr_param.tuning_param = cxt->hdr_tuning_param;
-		hdr_param.tuning_param_size = cxt->hdr_tuning_size;
-		hdr_param.abl_weight = cxt->calc_results.ae_output.abl_weight;
-		hdr_param.bv = cxt->calc_results.ae_output.cur_bv;
-		hdr_param.face_num = (cxt->cur_status.adv_param.face_data.face_num > 0) ? 1 : 0;
-		hdr_param.iso = cxt->calc_results.ae_output.cur_iso;
-		ISP_LOGV("hdr input param abl:%d bv:%d,face_num:%d iso:%d \n",hdr_param.abl_weight,hdr_param.bv,hdr_param.face_num,hdr_param.iso);
-		property_get("persist.vendor.cam.isptool.mode.enable", value, "false");
-		if(strcmp(value, "true"))
-			auto_hdr_enable = (cmr_s8)sprd_hdr_scndet_multi_inst(&hdr_param, &hdr_stat, ev_result,&cxt->smooth_flag,&cxt->frameid);
-		cxt->hdr_calc_result.ev[0] = fabs(ev_result[0]);
-		cxt->hdr_calc_result.ev[1] = ev_result[1];
-		memcpy(&cxt->hdr_callback,&hdr_param.callback,sizeof(hdr_callback_t));
+		hdr_param_in.tuning_param = cxt->hdr_tuning_param;
+		hdr_param_in.tuning_size = cxt->hdr_tuning_size;
+		hdr_param_in.abl_weight = cxt->calc_results.ae_output.abl_weight;
+		hdr_param_in.bv = cxt->calc_results.ae_output.cur_bv;
+		hdr_param_in.face_num = (cxt->cur_status.adv_param.face_data.face_num > 0) ? 1 : 0;
+		hdr_param_in.iso = cxt->calc_results.ae_output.cur_iso;
+		ISP_LOGV("hdr input param abl:%d bv:%d,face_num:%d iso:%d \n",hdr_param_in.abl_weight,hdr_param_in.bv,hdr_param_in.face_num,hdr_param_in.iso);
 
-		cxt->cur_status.adv_param.hist_data.img_size.w = hdr_stat.w;
-		cxt->cur_status.adv_param.hist_data.img_size.h = hdr_stat.h;
+		property_get("persist.vendor.cam.isptool.mode.enable", value, "false");
+		if(strcmp(value, "true")) {
+			auto_hdr_enable = (cmr_s8)sprd_hdr_adpt_detect(&hdr_param_in, &hdr_result,&cxt->hdr_status);
+		}
+		cxt->hdr_calc_result.ev[0] = fabs(hdr_result.ev[0]);
+		cxt->hdr_calc_result.ev[1] = hdr_result.ev[1];
+		memcpy(&cxt->hdr_callback,&hdr_result,sizeof(sprd_hdr_detect_out_t));
+
+		cxt->cur_status.adv_param.hist_data.img_size.w = hdr_param_in.w;
+		cxt->cur_status.adv_param.hist_data.img_size.h = hdr_param_in.h;
 		cxt->cur_status.adv_param.hist_data.hist_bin = 256;
-		memcpy(cxt->cur_status.adv_param.hist_data.hist_data, hdr_stat.hist256 ,cxt->cur_status.adv_param.hist_data.hist_bin * sizeof(cmr_u32));
+		memcpy(cxt->cur_status.adv_param.hist_data.hist_data, hdr_param_in.hist,cxt->cur_status.adv_param.hist_data.hist_bin * sizeof(cmr_u32));
 		ISP_LOGV("cam id %d auto_hdr_enable %d",cxt->camera_id,auto_hdr_enable);
-		ISP_LOGV("auto_hdr bright %d dark %d w %d h %d ev[0] %f ev[1] %f", hdr_param.thres_bright, hdr_param.thres_dark, hdr_stat.w, hdr_stat.h, ev_result[0], ev_result[1]);
+		ISP_LOGV("auto_hdr w %d h %d ev[0] %f ev[1] %f", hdr_param_in.w, hdr_param_in.h, hdr_result.ev[0], hdr_result.ev[1]);
 	}
 	if (cxt->hdr_menu_ctrl) {
-		if(-1 == auto_hdr_enable)
+		if((-1 == auto_hdr_enable)||((1 == cxt->threednr_mode_flag)&&(AE_3DNR_AUTO == cxt->threednr_mode)))//if 3dnr on,hdr should be off
 			auto_hdr_enable = 0;
 
 		cxt->hdr_calc_result.auto_hdr_enable = auto_hdr_enable;
+		if(cxt->isp_ops.callback) {
+			(*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, AE_CB_HDR_STATUS, &auto_hdr_enable);
+		} else {
+			ISP_LOGE("isp_ops.callback is NULL");
+		}
+		ISP_LOGV("auto_hdr_enable %d",auto_hdr_enable);
 		if(auto_hdr_enable) {
 			if(cxt->calc_results.ae_output.cur_bv > cxt->mfnr_hdr_thrd.thd_up) {
 				mfnr_en = 0;
@@ -6688,6 +6915,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 		}
 	}else if(cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW_SYNC) {
 		if(cxt->cur_status.adv_param.lock == AE_STATE_LOCKED) {
+			ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
 			cxt->sync_stable = 1;
 			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_SYNC_STABLE, &cxt->sync_stable);
 		} else if((0 == cxt->sync_state.sync_flag)&&(cxt->sync_state.ref_id == cxt->camera_id)) {
@@ -6938,7 +7166,7 @@ static cmr_s32 ae_io_ctrl_direct(cmr_handle handle, cmr_s32 cmd, cmr_handle para
 
 	case AE_GET_EXP_TIME:
 		if (result) {
-			*(cmr_u32 *) result = (cmr_u32) (cxt->cur_result.ev_setting.exp_time / 100);
+			*(cmr_u32 *) result = (cmr_u32)cxt->cur_result.ev_setting.exp_time;
 		}
 		break;
 
@@ -7033,6 +7261,10 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 		rtn = ae_set_iso(cxt, param);
 		break;
 
+	case AE_SET_ISO_VALUE:
+		rtn = ae_set_iso_value(cxt, param);
+		break;
+
 	case AE_SET_MANUAL_ISO:
 		rtn = ae_set_manual_iso(cxt, param);
 		break;
@@ -7052,6 +7284,10 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 	case AE_SET_FPS:
 		rtn = ae_set_fps_info(cxt, param);
 		break;
+
+	case AE_SET_AF_START:
+			rtn = ae_set_af_start(cxt, param);
+			break;
 
 	case AE_SET_PAUSE:
 		rtn = ae_set_pause(cxt,3);
@@ -7150,6 +7386,10 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 		rtn = ae_set_fdr_start(cxt, param);
 		break;
 
+	case AE_SET_EXP_GAIN_CAP_START:
+		rtn = ae_set_exp_gain_cap_start(cxt, param);
+		break;
+
 	case AE_SET_AUTO_FDR:
 		rtn = ae_set_auto_fdr(cxt, param);
 		break;
@@ -7208,6 +7448,10 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 
 	case AE_SET_PROF_MODE:
 		rtn = ae_set_prof_mode(cxt, param);
+		break;
+	
+	case  AE_SET_FLASH_CALIBRATION:
+		rtn = ae_set_flash_calibration(cxt, param, result);
 		break;
 
 	case AE_SET_MULTI_SWITCH_INFO:
@@ -7429,6 +7673,96 @@ static void ae_set_ae_init_param(struct ae_ctrl_cxt *cxt, struct ae_lib_init_out
 	ISP_LOGD("cam_id %d mfnr_hdr_thrd_down %d mfnr_hdr_thrd_up %d",cxt->camera_id,cxt->mfnr_hdr_thrd.thd_down,cxt->mfnr_hdr_thrd.thd_up);
 }
 
+static void write2flashcali1(cmr_s8 camID, struct flash_correct_info *result)
+{
+	FILE *fp = NULL;
+	char filename[128] = {"\0"};
+	sprintf(filename, "%s%d%s", "/data/vendor/cameraserver/flash_cali_out_", camID, ".txt");
+	ISP_LOGD("FLASH_CALI>%s\n", filename);
+	fp = fopen(filename, "wt");
+	if(fp){
+		uint32 i = 0;
+		uint32 j = 0;
+		//flash config
+		//LED1 pre
+		fprintf(fp, "%d\n", result->numP1_hwSample);
+		for (i = 0; i < result->numP1_hwSample; i++)
+			fprintf(fp, "%d\t", result->indP1_hwSample[i]);
+		fprintf(fp, "\n");
+		for (i = 0; i < result->numP1_hwSample; i++)
+			fprintf(fp, "%f\t", result->maP1_hwSample[i]);
+		fprintf(fp, "\n");
+		//LED2 pre
+		fprintf(fp, "%d\n", result->numP2_hwSample);
+		for (i = 0; i < result->numP2_hwSample; i++)
+			fprintf(fp, "%d\t", result->indP2_hwSample[i]);
+		fprintf(fp, "\n");
+		for (i = 0; i < result->numP2_hwSample; i++)
+			fprintf(fp, "%f\t", result->maP2_hwSample[i]);
+		fprintf(fp, "\n");
+		//LED1 main
+		fprintf(fp, "%d\n", result->numM1_hwSample);
+		for (i = 0; i < result->numM1_hwSample; i++)
+			fprintf(fp, "%d\t", result->indM1_hwSample[i]);
+		fprintf(fp, "\n");
+		for (i = 0; i < result->numM1_hwSample; i++)
+			fprintf(fp, "%f\t", result->maM1_hwSample[i]);
+		fprintf(fp, "\n");
+		//LED2 main
+		fprintf(fp, "%d\n", result->numM2_hwSample);
+		for (i = 0; i < result->numM2_hwSample; i++)
+			fprintf(fp, "%d\t", result->indM2_hwSample[i]);
+		fprintf(fp, "\n");
+		for (i = 0; i < result->numM2_hwSample; i++)
+			fprintf(fp, "%f\t", result->maM2_hwSample[i]);
+		fprintf(fp, "\n");
+		
+		//flash cali out
+		//LED1+pre:
+		//fprintf(fp, "%d\n", result->numP1_hwSample);
+		for (i = 0; i < result->numP1_hwSample; i++){
+			//fprintf(fp, "ID:%d\t", i);
+			for(j = 0; j < 3; j++)
+				fprintf(fp, "%f\t", result->P1rgbData[i][j]);
+			fprintf(fp, "%d\t", result->P1expgain[i][0]);
+			fprintf(fp, "%d\n", result->P1expgain[i][1]);
+		}
+
+		//LED2+pre:
+		//fprintf(fp, "%d\n", result->numP2_hwSample);
+		for (i = 0; i < result->numP2_hwSample; i++){
+			//fprintf(fp, "ID:%d\t", i);
+			for(j = 0; j < 3; j++)
+				fprintf(fp, "%f\t", result->P2rgbData[i][j]);
+			fprintf(fp, "%d\t", result->P2expgain[i][0]);
+			fprintf(fp, "%d\n", result->P2expgain[i][1]);
+		}
+		fprintf(fp, "\n");
+
+		//LED1+main:
+		//fprintf(fp, "%d\n", result->numM1_hwSample);
+		for (i = 0; i < result->numM1_hwSample; i++){
+			//fprintf(fp, "ID:%d\t", i);
+			for(j = 0; j < 3; j++)
+				fprintf(fp, "%f\t", result->M1rgbData[i][j]);
+			fprintf(fp, "%d\t", result->M1expgain[i][0]);
+			fprintf(fp, "%d\n", result->M1expgain[i][1]);
+		}
+		//LED2+main:
+		//fprintf(fp, "%d\n", result->numM2_hwSample);
+		for (i = 0; i < result->numM2_hwSample; i++){
+			//fprintf(fp, "ID:%d\t", i);
+			for(j = 0; j < 3; j++)
+				fprintf(fp, "%f\t", result->M2rgbData[i][j]);
+			fprintf(fp, "%d\t", result->M2expgain[i][0]);
+			fprintf(fp, "%d\n", result->M2expgain[i][1]);
+		}
+		fclose(fp);
+	}
+	fp = NULL;
+}
+
+
 cmr_handle ae_sprd_init_v1(cmr_handle param, cmr_handle in_param)
 {
 	cmr_s32 rtn = AE_SUCCESS;
@@ -7443,11 +7777,6 @@ cmr_handle ae_sprd_init_v1(cmr_handle param, cmr_handle in_param)
 	struct Flash_initInput flash_in;
 	struct Flash_initOut flash_out;
 
-#ifdef CONFIG_SUPPROT_AUTO_HDR
-	struct _tag_hdr_version_t hdr_version;
-	sprd_hdr_version(&hdr_version);
-	ISP_LOGD("HDR_version :%s", hdr_version.built_rev);
-#endif
 
 	cxt = (struct ae_ctrl_cxt *)calloc(1,sizeof(struct ae_ctrl_cxt));
 
@@ -7500,12 +7829,36 @@ cmr_handle ae_sprd_init_v1(cmr_handle param, cmr_handle in_param)
 	/* HJW_S: dual flash algorithm init */
 	cmr_u32 size = (init_param->flash_tuning[0].size > sizeof(struct flash_tune_param)) ? sizeof(struct flash_tune_param) : init_param->flash_tuning[0].size;
 	memcpy(&cxt->dflash_param[0], init_param->flash_tuning[0].param, size);
+
+	if (init_param->flash_cali_data != NULL) {
+		memcpy(&cxt->flash_cali_data, (struct flash_correct_info *)init_param->flash_cali_data, init_param->flash_cali_size);
+	}
+	/*
+	FILE *fp1 = fopen("/data/vendor/cameraserver/Dflash_cxt_INIT.bin", "wb");
+	if(fp1){
+		fwrite(&cxt->dflash_param[0], 1, sizeof(struct flash_tune_param), fp1);
+		fclose(fp1);
+		fp1 = NULL;
+	}*/
 	ISP_LOGD("multiColorLcdEn = %d", cxt->dflash_param[0].multiColorLcdEn);
 	flash_in.debug_level = 1;	/*it will be removed in the future, and get it from dual flash tuning parameters */
 	flash_in.tune_info = &cxt->dflash_param[0];
+	flash_in.flash_correct_nv = cxt->flash_cali_data;
+	/*
+	ISP_LOGD("FLASH_CALI>flash cali data from NV\n");
+	cmr_s8 cam = 10;
+	write2flashcali1(cam, &flash_in.flash_correct_nv);
+	*/
 	flash_in.statH = 32;
 	flash_in.statW = 32;
 	cxt->flash_alg_handle = flash_init(&flash_in, &flash_out);
+	/*
+	fp1 = fopen("/data/vendor/cameraserver/Dflash_cxt_INIT_1.bin", "wb");
+	if(fp1){
+		fwrite(&cxt->dflash_param[0], 1, sizeof(struct flash_tune_param), fp1);
+		fclose(fp1);
+		fp1 = NULL;
+	}*/
 	flash_out.version = 1;		//remove later
 	cxt->flash_ver = flash_out.version;
 	ae_init_out->flash_ver = cxt->flash_ver;
@@ -7704,8 +8057,8 @@ static cmr_s32 ae_if_cts_params(struct ae_ctrl_cxt *cxt)
 	cmr_s32 rtn = AE_SUCCESS;
 	cmr_u32 j;
 	cmr_u32 temp_index = 20;
-	ISP_LOGD("adv:mode:%d gain:%d exp %d",cxt->cur_status.adv_param.mode_param.mode,cxt->cur_status.adv_param.mode_param.value.exp_gain[1],cxt->cur_status.adv_param.mode_param.value.exp_gain[0]);
-	ISP_LOGD("ae_q_pars[0]mode: %d cxt->ae_q_pars[0]gain: %d exp_time:%d effect:gain:%d exp_time:%d",cxt->ae_q_pars[0].ae_up_params.ae_mode,cxt->ae_q_pars[0].ae_up_params.sensitivity * 128 / 50,cxt->ae_q_pars[0].ae_up_params.exp_time,cxt->cur_status.adv_param.cur_ev_setting.ae_gain,cxt->cur_status.adv_param.cur_ev_setting.exp_time);
+	ISP_LOGD("adv:mode:%d gain:%"PRIu64" exp %"PRIu64"",cxt->cur_status.adv_param.mode_param.mode,cxt->cur_status.adv_param.mode_param.value.exp_gain[1],cxt->cur_status.adv_param.mode_param.value.exp_gain[0]);
+	ISP_LOGD("ae_q_pars[0]mode: %d cxt->ae_q_pars[0]gain: %d exp_time:%"PRIu64" effect:gain:%d exp_time:%"PRIu64"",cxt->ae_q_pars[0].ae_up_params.ae_mode,cxt->ae_q_pars[0].ae_up_params.sensitivity * 128 / 50,cxt->ae_q_pars[0].ae_up_params.exp_time,cxt->cur_status.adv_param.cur_ev_setting.ae_gain,cxt->cur_status.adv_param.cur_ev_setting.exp_time);
 	for(j = 0; j <10 ; j++) {
 		if (2 == cxt->ae_q_pars[j].ae_qout_flag) {//which not out
 			temp_index = j;
@@ -7721,10 +8074,12 @@ static cmr_s32 ae_if_cts_params(struct ae_ctrl_cxt *cxt)
 				ae_set_force_pause(cxt, 0, 5);
 				cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = (cmr_u64)cxt->ae_q_pars[temp_index].ae_up_params.sensitivity * 128 / 50;
 			} else if ((0 == cxt->ae_q_pars[temp_index].ae_up_params.sensitivity) && cxt->ae_q_pars[temp_index].ae_up_params.exp_time) {
+				cxt->manual_exp_time = cxt->ae_q_pars[temp_index].ae_up_params.exp_time;
 				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO_SHUTTER_PRI;
 				ae_set_force_pause(cxt, 0, 4);
 				cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->ae_q_pars[temp_index].ae_up_params.exp_time;
 			} else if (cxt->ae_q_pars[temp_index].ae_up_params.exp_time && cxt->ae_q_pars[temp_index].ae_up_params.sensitivity) {
+				cxt->manual_exp_time = cxt->ae_q_pars[temp_index].ae_up_params.exp_time;
 				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
 				ae_set_force_pause(cxt, 1, 3);
 				cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->ae_q_pars[temp_index].ae_up_params.exp_time;
@@ -7746,7 +8101,7 @@ static cmr_s32 ae_if_cts_params(struct ae_ctrl_cxt *cxt)
 		ISP_LOGD("check2");
 	}
 		/* if effect?*/
-	ISP_LOGD("check1:cxt->ae_q_pars[0]gain: %d exp_time:%d effect:gain:%d exp_time:%d",cxt->ae_q_pars[0].ae_up_params.sensitivity * 128 / 50,cxt->ae_q_pars[0].ae_up_params.exp_time,cxt->cur_status.adv_param.cur_ev_setting.ae_gain,cxt->cur_status.adv_param.cur_ev_setting.exp_time);
+	ISP_LOGD("check1:cxt->ae_q_pars[0]gain: %d exp_time:%"PRIu64" effect:gain:%d exp_time:%"PRIu64"",cxt->ae_q_pars[0].ae_up_params.sensitivity * 128 / 50,cxt->ae_q_pars[0].ae_up_params.exp_time,cxt->cur_status.adv_param.cur_ev_setting.ae_gain,cxt->cur_status.adv_param.cur_ev_setting.exp_time);
 
 	if (1 == cxt->ae_q_pars[0].ae_qout_flag) {
 		bool fix_exp_gain = (cxt->ae_q_pars[0].ae_up_params.exp_time && cxt->ae_q_pars[0].ae_up_params.sensitivity);

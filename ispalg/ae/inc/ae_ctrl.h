@@ -69,6 +69,8 @@ extern "C" {
 		cmr_u32 y_gamma_num;
 		void *hdr_tuning_param;
 		cmr_s32 hdr_tuning_size;
+		void *flash_cali_data;
+		cmr_u32 flash_cali_size;
 	};
 
 	struct ae_init_out {

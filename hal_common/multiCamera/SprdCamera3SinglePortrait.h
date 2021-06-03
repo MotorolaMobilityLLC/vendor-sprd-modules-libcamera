@@ -304,6 +304,8 @@ class SprdCamera3SinglePortrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBas
                                const camera3_capture_result_t *result);
     static void notifyAux(const struct camera3_callback_ops *ops,
                           const camera3_notify_msg_t *msg);
+    static void* heap_malloc(size_t size, char* type);
+    static void heap_free(void* addr);
     static camera3_callback_ops callback_ops_aux;
 
   private:
@@ -476,6 +478,7 @@ class SprdCamera3SinglePortrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBas
         lpt_options lptOptions_prev;
         lpt_options lptOptions_cap;
         int32_t fd_score[FD_SCORE_SIZE];
+        sprd_portrait_memory_ops mportrait_ops;
 
 //        unsigned short *mOutWeightMap;
 

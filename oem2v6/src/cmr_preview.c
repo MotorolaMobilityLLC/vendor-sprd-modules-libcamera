@@ -248,7 +248,7 @@ typedef struct channel2 {
     cmr_u32 skip_mode;
     unsigned long frm_cnt;
     struct img_data_end endian;
-    struct img_frm frm[CHANNEL2_BUF_CNT];
+    struct img_frm frm[CHANNEL2_BUF_CNT*2];
     struct img_frm frm_reserved;
     cmr_u32 frm_valid;
 
@@ -563,7 +563,7 @@ struct prev_context {
     cmr_s32 auto_tracking_frame_id;
     /* face detect */
     cmr_s32 auto_tracking_last_frame;
-    cmr_u32 ae_stab[AE_CB_MAX_INDEX];
+    cmr_u32 fd_ae_info[FD_AE_MAX_INDEX];
     cmr_u32 hist[CAMERA_ISP_HIST_ITEMS];
     cmr_u32 af_status;
     cmr_uint threednr_cap_smallwidth;
@@ -1681,8 +1681,10 @@ cmr_int cmr_preview_update_zoom(cmr_handle preview_handle, cmr_u32 camera_id,
     if (ZOOM_LEVEL == param->mode) {
         CMR_LOGD("update zoom, zoom_level %ld", param->zoom_level);
     } else {
-        CMR_LOGD("update zoom, zoom_ratio=%f prev=%f, video=%f, cap=%f",
+        CMR_LOGD("zoom_ratio=%f, crop (%d %d %d %d), prev=%f, video=%f, cap=%f",
                  param->zoom_info.zoom_ratio,
+                 param->zoom_info.crop_region.start_x, param->zoom_info.crop_region.start_y,
+                 param->zoom_info.crop_region.width, param->zoom_info.crop_region.height,
                  param->zoom_info.prev_aspect_ratio,
                  param->zoom_info.video_aspect_ratio,
                  param->zoom_info.capture_aspect_ratio);
@@ -1781,8 +1783,8 @@ cmr_int cmr_preview_facedetect_set_ae_stab(cmr_handle preview_handle,
         CMR_LOGE("ae_stab is NULL");
         return CMR_CAMERA_FAIL;
     }
-    for (int i = 0; i < AE_CB_MAX_INDEX; i++) {
-        prev_cxt->ae_stab[i] = ae_stab[i];
+    for (int i = 0; i < FD_AE_MAX_INDEX; i++) {
+        prev_cxt->fd_ae_info[i] = ae_stab[i];
     }
 
     return ret;
@@ -2606,8 +2608,10 @@ cmr_int prev_thread_proc(struct cmr_msg *message, void *p_data) {
         if (ZOOM_LEVEL == zoom_param->mode) {
             CMR_LOGD("update zoom, zoom_level %ld", zoom_param->zoom_level);
         } else {
-            CMR_LOGD("update zoom, zoom_ratio=%f, prev=%f, video=%f, cap=%f",
+            CMR_LOGD("zoom_ratio=%f, crop (%d %d %d %d), prev=%f, video=%f, cap=%f",
                      zoom_param->zoom_info.zoom_ratio,
+                     zoom_param->zoom_info.crop_region.start_x, zoom_param->zoom_info.crop_region.start_y,
+                     zoom_param->zoom_info.crop_region.width, zoom_param->zoom_info.crop_region.height,
                      zoom_param->zoom_info.prev_aspect_ratio,
                      zoom_param->zoom_info.video_aspect_ratio,
                      zoom_param->zoom_info.capture_aspect_ratio);
@@ -7657,7 +7661,7 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle, cmr_u32 camera_id,
                 strcat(tag_name, cameraId);
                 dump_image(tag_name, CAM_IMG_FMT_YUV420_NV21,
                            frame_type->width, frame_type->height,
-                           prev_cxt->prev_frm_cnt,
+                           info->frame_real_id,
                            &prev_cxt->cap_zsl_frm[frm_id].addr_vir,
                            frame_type->width * frame_type->height * 3 / 2);
                 g_zsl_frame_dump_cnt++;
@@ -15943,9 +15947,9 @@ cmr_int prev_fd_send_data(struct prev_handle *handle, cmr_u32 camera_id,
     }
     CMR_LOGV("sensorOrientation = %d, orientation = %d",
 		private_data.sensorOrientation, private_data.orientation);
-    private_data.bright_value = prev_cxt->ae_stab[AE_CB_BV_INDEX];
-    private_data.ae_stable = prev_cxt->ae_stab[AE_CB_STABLE_INDEX];
-    private_data.backlight_pro = prev_cxt->ae_stab[AE_CB_BLS_INDEX];
+    private_data.bright_value = prev_cxt->fd_ae_info[FD_AE_BV_INDEX];
+    private_data.ae_stable = prev_cxt->fd_ae_info[FD_AE_STABLE_INDEX];
+    private_data.backlight_pro = prev_cxt->fd_ae_info[FD_AE_BLS_INDEX];
     info = (struct frm_info *)frm->reserved;
     private_data.zoom_ratio = info ? info->zoom_ratio : (cmr_u32)(-1);
     memcpy(&private_data.hist, prev_cxt->hist, sizeof(private_data.hist));
@@ -16012,6 +16016,7 @@ cmr_int prev_fd_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
     CMR_LOGV("face_num %d", frame_type.face_num);
     for (i = 0; i < frame_type.face_num; i++) {
         frame_type.face_info[i].face_id = cb_param->face_area.range[i].face_id;
+        frame_type.face_info[i].flag_square = cb_param->face_area.range[i].flag_square;
         //fd info
         frame_type.face_info[i].fd_cb_ptr.sx = cb_param->face_area.range[i].fd_ptr.sx;
         frame_type.face_info[i].fd_cb_ptr.sy = cb_param->face_area.range[i].fd_ptr.sy;
@@ -16021,11 +16026,12 @@ cmr_int prev_fd_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
         frame_type.face_info[i].fd_cb_ptr.ey = cb_param->face_area.range[i].fd_ptr.ey;
         frame_type.face_info[i].fd_cb_ptr.elx = cb_param->face_area.range[i].fd_ptr.elx;
         frame_type.face_info[i].fd_cb_ptr.ely = cb_param->face_area.range[i].fd_ptr.ely;
-        CMR_LOGV("s %d %d, sr %d %d, e %d %d, el %d %d",
+        CMR_LOGV("s %d %d, sr %d %d, e %d %d, el %d %d flag_square %d",
                  frame_type.face_info[i].fd_cb_ptr.sx, frame_type.face_info[i].fd_cb_ptr.sy,
                  frame_type.face_info[i].fd_cb_ptr.srx, frame_type.face_info[i].fd_cb_ptr.sry,
                  frame_type.face_info[i].fd_cb_ptr.ex, frame_type.face_info[i].fd_cb_ptr.ey,
-                 frame_type.face_info[i].fd_cb_ptr.elx, frame_type.face_info[i].fd_cb_ptr.ely);
+                 frame_type.face_info[i].fd_cb_ptr.elx, frame_type.face_info[i].fd_cb_ptr.ely,
+                 frame_type.face_info[i].flag_square);
 
         //fd smooth info
         frame_type.face_info[i].sx = cb_param->face_area.range[i].sx;

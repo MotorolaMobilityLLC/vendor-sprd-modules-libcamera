@@ -732,7 +732,7 @@ typedef struct phySensorInfo {
     char sensor_name[SENSOR_NAME_LEN];
     cmr_u8 mono_sensor;
     cmr_u32 long_expose_supported;
-    double long_expose_modes[12];
+    double long_expose_modes[64];
     cmr_int long_expose_modes_size;
     cmr_u32 longExp_need_switch_setting;
     cmr_u32 long_exposure_setting[12];

@@ -145,6 +145,8 @@ struct img_size {
 #endif
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
+#define TOUCH_AE_CANCEL 0xff
+
 typedef cmr_int (*cmr_malloc)(cmr_u32 mem_type, cmr_handle oem_handle,
                               cmr_u32 *size, cmr_u32 *sum, cmr_uint *phy_addr,
                               cmr_uint *vir_addr, cmr_s32 *fd);

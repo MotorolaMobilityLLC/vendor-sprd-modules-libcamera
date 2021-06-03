@@ -1468,6 +1468,15 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		}
 		break;
 	case AF_CB_CMD_SET_END_NOTICE:
+	{
+		struct isp_af_notice afctrl_param = *(struct isp_af_notice *)param0;
+		ISP_LOGV("focus_type: %d", afctrl_param.focus_type);
+		if (afctrl_param.focus_type == AF_FOCUS_CAF) {
+			cmr_u32 fast_fps = 0;
+			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_AF_START, &fast_fps, NULL);
+			ISP_LOGV("make AE end to adjust fps");
+		}
+
 		if (ISP_ZERO == cxt->commn_cxt.isp_callback_bypass) {
 			struct isp_af_notice *isp_af = (struct isp_af_notice *)param0;
 
@@ -1478,6 +1487,7 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 				isp_af, sizeof(struct isp_af_notice));
 		}
 		break;
+	}
 	case AF_CB_CMD_SET_MOTOR_POS:
 		val = *(cmr_u16 *)param0;
 		pos = (cmr_u32)val;
@@ -1511,10 +1521,19 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		}
 		break;
 	case AF_CB_CMD_SET_START_NOTICE:
+	{
+		struct isp_af_notice afctrl_param = *(struct isp_af_notice *)param0;
+		ISP_LOGV("focus_type: %d", afctrl_param.focus_type);
+		if (afctrl_param.focus_type == AF_FOCUS_CAF) {
+			cmr_u32 fast_fps = 1;
+			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_AF_START, &fast_fps, NULL);
+			ISP_LOGV("make AE start to adjust fps");
+		}
 		ret = cxt->commn_cxt.callback(cxt->commn_cxt.caller_id,
 				ISP_CALLBACK_EVT | ISP_AF_NOTICE_CALLBACK,
 				param0, sizeof(struct isp_af_notice));
 		break;
+	}
 	case ISP_AF_AE_AWB_LOCK:
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_PAUSE, NULL, param1);
@@ -4964,6 +4983,7 @@ static cmr_int ispalg_afl_init(struct isp_alg_fw_context *cxt)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct afl_ctrl_init_in afl_input;
+	struct isp_pm_ioctl_output y_afl_output = { NULL, 0 };
 
 	/*0:afl_old mode, 1:afl_new mode*/
 	cxt->afl_cxt.version = 1;
@@ -4974,6 +4994,20 @@ static cmr_int ispalg_afl_init(struct isp_alg_fw_context *cxt)
 	afl_input.caller_handle = (cmr_handle) cxt;
 	afl_input.afl_set_cb = ispalg_afl_set_cb;
 	afl_input.version = cxt->afl_cxt.version;
+
+	pthread_mutex_lock(&cxt->pm_getting_lock);
+	memset((void *)&y_afl_output, 0, sizeof(y_afl_output));
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_Y_AFL, NULL, &y_afl_output);
+	if (ret == ISP_SUCCESS && y_afl_output.param_data != NULL) {
+		cxt->afl_cxt.sw_bypass = y_afl_output.param_data[0].user_data[0];
+		ISP_LOGD("cxt->afl_cxt.sw_bypass %d\n", cxt->afl_cxt.sw_bypass);
+
+		afl_input.afl_reg_param = y_afl_output.param_data->data_ptr;
+		afl_input.reg_param_size = y_afl_output.param_data->data_size;
+	}
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
+	ISP_LOGV("param addr is %p size %d", afl_input.afl_reg_param, afl_input.reg_param_size);
+
 	if (cxt->ops.afl_ops.init)
 		ret = cxt->ops.afl_ops.init(&cxt->afl_cxt.handle, &afl_input);
 exit:

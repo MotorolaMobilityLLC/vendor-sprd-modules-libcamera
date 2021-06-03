@@ -143,6 +143,12 @@ typedef int64_t nsecs_t;
 #define MAXSENSITIVITY 3328
 
 typedef struct {
+    top_app_id id;
+    char PackageName[50];
+} TopAppS;
+
+
+typedef struct {
     uint8_t correction_mode;
     uint8_t aberration_mode;
     uint8_t available_aberration_modes[3];
@@ -274,7 +280,7 @@ typedef struct {
     int32_t white_level;
     int32_t sensitivity_range[2];
     uint8_t timestamp_source;
-    double exposupre_long_time[12];
+    double exposupre_long_time[64];
     int32_t exposupre_long_time_size;
 } SENSOR_INFO_Tag;
 
@@ -423,12 +429,13 @@ typedef struct {
     uint8_t sprd_ai_scene_type_current;
     uint8_t availabe_sensor_type;
     int32_t device_orietation;
-    int32_t ae_info[AE_CB_MAX_INDEX];
+    int32_t fd_ae_info[FD_AE_MAX_INDEX];
     uint8_t availabe_gender_race_age_enable;
     uint8_t gender_race_age_enable;
     int32_t ultrawide_id;
     uint8_t sprd_flash_lcd_mode;
     int32_t top_app_id;
+    char mTopID[50];
     uint8_t availabe_auto_3dnr;
     uint8_t sprd_is_3dnr_scene;
     uint8_t sprd_is_lowev_scene;
@@ -887,6 +894,7 @@ class SprdCamera3Setting {
     static float calculateHyperFocalDistance (int32_t cameraId);
     static cmr_u32 getMinFocusDistance(uint8_t cameraId);
     static int64_t getStartOffsetTime(uint8_t cameraId);
+    static int getMaxDigitalZoom(uint32_t cameraId);
 };
 
 }; // namespace sprdcamera
