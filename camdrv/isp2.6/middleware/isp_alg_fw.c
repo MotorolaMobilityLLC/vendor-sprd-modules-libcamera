@@ -30,6 +30,7 @@
 #include "isp_pm.h"
 #include "awb.h"
 #include "awblib.h"
+#include "awblib3v2.h"
 #include "af_ctrl.h"
 #include "ae_ctrl.h"
 #include "afl_ctrl.h"
@@ -4962,15 +4963,17 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	ISP_LOGI("AWB VERSION = %x", *((int *)output.param_data->data_ptr +1));
 
 	/* get awb version for HWSIM */
-	if (*((int *)output.param_data->data_ptr +1) == 0x000c0007)
-            sprintf(awb_ver, "%s\n", "awb2.x");
-	else
-            sprintf(awb_ver, "%s\n", "awb3.x");
-
+    if (*((int *)output.param_data->data_ptr +1) == 0x000c0007){
+		sprintf(awb_ver, "%s\n", "awb2.x");
+	} else if (*((int *)output.param_data->data_ptr +1) == 0x00030002){
+		sprintf(awb_ver, "%s\n", "awb3.2");
+	} else if (*((int *)output.param_data->data_ptr +1) == 0x00030000){
+		sprintf(awb_ver, "%s\n", "awb3.x");
+	} else {
+		ISP_LOGD("get awb version fail");
+	}
 	/* ispctl_calc_awb wil use it to load diffrent lib */
 	property_set("persist.vendor.cam.isp.awb", awb_ver);
-
-
 	switch (cxt->is_multi_mode) {
 	case ISP_SINGLE:
 		cxt->awb_cxt.param.is_multi_mode = ISP_ALG_SINGLE;

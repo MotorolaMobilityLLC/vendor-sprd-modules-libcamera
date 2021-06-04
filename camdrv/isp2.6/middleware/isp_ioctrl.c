@@ -75,11 +75,16 @@ struct isp_awbsprd_lib_ops {
 	void *(*awb_init_v1) (struct awb_init_param *init_param, struct awb_rgb_gain *gain);
 	cmr_s32(*awb_calc_v1) (void *awb_handle, struct awb_calc_param *calc_param, struct awb_calc_result *calc_result);
 	cmr_s32(*awb_deinit_v1) (void *awb_handle);
-	//awblib_3.x port
-	void *(*awb_init_v3) (struct awb_init_param_3_0 *init_param, struct awb_rgb_gain_3_0 *gain);
-	cmr_s32(*awb_calc_v3) (void *awb_handle, struct awb_calc_param_3_0 * calc_param, struct awb_calc_result_3_0 * calc_result);
-	cmr_s32(*awb_ioctrl_v3) (void *awb_handle, cmr_s32 cmd, void *param, void *out);
-	cmr_s32(*awb_deinit_v3) (void *awb_handle);
+    //awblib_3.2 port
+	void *(*awb_init_v3_2) (struct awb_init_param_3_0 *init_param, struct awb_rgb_gain_3_0 *gain);
+	cmr_s32(*awb_calc_v3_2) (void *awb_handle, struct awb_calc_param_3_0 * calc_param, struct awb_calc_result_3_0 * calc_result);
+	cmr_s32(*awb_ioctrl_v3_2) (void *awb_handle, cmr_s32 cmd, void *param, void *out);
+	cmr_s32(*awb_deinit_v3_2) (void *awb_handle);
+   //awblib_3.x port
+  	void *(*awb_init_v3) (struct awb_init_param_3_0 *init_param, struct awb_rgb_gain_3_0 *gain);
+  	cmr_s32(*awb_calc_v3) (void *awb_handle, struct awb_calc_param_3_0 * calc_param, struct awb_calc_result_3_0 * calc_result);
+  	cmr_s32(*awb_ioctrl_v3) (void *awb_handle, cmr_s32 cmd, void *param, void *out);
+  	cmr_s32(*awb_deinit_v3) (void *awb_handle);
 };
 
 
@@ -3515,15 +3520,15 @@ static cmr_int isp_sim_dump_awb_info(unsigned char *awb_param, struct awb_init_p
 
 
 static cmr_int ispctl_calc_awb(cmr_handle isp_alg_handle,
-			       cmr_u32 width, cmr_u32 height,
-			       cmr_u32 stat_w, cmr_u32 stat_h,
-			       struct isp_awb_statistic_info *awb_statis,
-			       cmr_s32 bv,
-			       cmr_s32 *p_matrix,
-			       unsigned char *awb_param,
-			       struct awb_ctrl_opt_info *opt_info,
-			       struct isp_awbc_cfg *awbc_cfg,
-			       cmr_u32* ct, cmr_u32 iso)
+                               cmr_u32 width, cmr_u32 height,
+                               cmr_u32 stat_w, cmr_u32 stat_h,
+                               struct isp_awb_statistic_info *awb_statis,
+                               cmr_s32 bv,
+                               cmr_s32 *p_matrix,
+                               unsigned char *awb_param,
+                               struct awb_ctrl_opt_info *opt_info,
+                               struct isp_awbc_cfg *awbc_cfg,
+                               cmr_u32* ct, cmr_u32 iso)
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -3556,11 +3561,8 @@ static cmr_int ispctl_calc_awb(cmr_handle isp_alg_handle,
 	memset(&rgb_gain_3_0, 0, sizeof(rgb_gain_3_0));
 
 	property_get("persist.vendor.cam.isp.awb", awb_ver, "awb2.x");
-
-	ISP_LOGI("awb version %s, %d", awb_ver, strcmp(awb_ver, "awb3.x"));
-
 	if (!strncmp(awb_ver, "awb2.x", 6)) {
-        ISP_LOGD("awb2.x");
+	ISP_LOGD("awb2.x");
 	lib_handle = dlopen("libawb1.so", RTLD_NOW);
 	if (!lib_handle) {
 		ISP_LOGE("fail to dlopen awb lib");
@@ -3581,7 +3583,6 @@ static cmr_int ispctl_calc_awb(cmr_handle isp_alg_handle,
 		ret = ISP_ERROR;
 		goto load_error;
 	}
-
 	lib_ops.awb_deinit_v1 = dlsym(lib_handle, "awb_deinit_v1");
 	if (!lib_ops.awb_deinit_v1) {
 		ISP_LOGE("fail to dlsym awb_deinit");
@@ -3620,32 +3621,32 @@ static cmr_int ispctl_calc_awb(cmr_handle isp_alg_handle,
 	*ct = calc_result.awb_gain[0].ct;
 	memcpy(awb_log_buff, calc_result.log_buffer, calc_result.log_size);
 	cxt->awb_cxt.log_awb_size = calc_result.log_size;
-	} else if(!strncmp(awb_ver, "awb3.x", 6)){
+	}  else if (!strncmp(awb_ver, "awb3.2", 6)) {
 
-		ISP_LOGD("awb3.x");
-		lib_handle = dlopen("libawb.so", RTLD_NOW);
+		ISP_LOGD("awb3.2");
+		lib_handle = dlopen("libawb3.2.so", RTLD_NOW);
 		if (!lib_handle) {
 			ISP_LOGE("fail to dlopen awb lib");
 			ret = ISP_ERROR;
 			goto exit;
 		}
 
-		lib_ops.awb_init_v3 = dlsym(lib_handle, "awb_init");
-		if (!lib_ops.awb_init_v3) {
-			ISP_LOGE("fail to dlsym awb_init_v3");
+		lib_ops.awb_init_v3_2 = dlsym(lib_handle, "awb_init");
+		if (!lib_ops.awb_init_v3_2) {
+			ISP_LOGE("fail to dlsym awb_init_v3_2");
 			ret = ISP_ERROR;
 			goto load_error;
 		}
 
-		lib_ops.awb_calc_v3 = dlsym(lib_handle, "awb_calc");
-		if (!lib_ops.awb_calc_v3) {
-			ISP_LOGE("fail to dlsym awb_calculation v3");
+		lib_ops.awb_calc_v3_2 = dlsym(lib_handle, "awb_calc");
+		if (!lib_ops.awb_calc_v3_2) {
+			ISP_LOGE("fail to dlsym awb_calculation v3_2");
 			ret = ISP_ERROR;
 			goto load_error;
 		}
 
-		lib_ops.awb_deinit_v3 = dlsym(lib_handle, "awb_deinit");
-		if (!lib_ops.awb_deinit_v3) {
+		lib_ops.awb_deinit_v3_2 = dlsym(lib_handle, "awb_deinit");
+		if (!lib_ops.awb_deinit_v3_2) {
 			ISP_LOGE("fail to dlsym awb_deinit_v3");
 			ret = ISP_ERROR;
 			goto load_error;
@@ -3657,7 +3658,7 @@ static cmr_int ispctl_calc_awb(cmr_handle isp_alg_handle,
 		init_param_3_0.otp_unit_b = opt_info->rdm_stat_info.b;
 		init_param_3_0.tool_param = (void *)awb_param;
 
-		awb_handle = lib_ops.awb_init_v3(&init_param_3_0, &rgb_gain_3_0);
+		awb_handle = lib_ops.awb_init_v3_2(&init_param_3_0, &rgb_gain_3_0);
 
 		calc_param_3_0.bv = bv;
 		calc_param_3_0.iso = iso;//iso;
@@ -3670,7 +3671,7 @@ static cmr_int ispctl_calc_awb(cmr_handle isp_alg_handle,
 		calc_param_3_0.stat_img_3_0.g_pixel_cnt = ((width / stat_w) / 2 * 2) * ((height / stat_h) / 2 * 2) / 4;
 		calc_param_3_0.stat_img_3_0.b_pixel_cnt = ((width / stat_w) / 2 * 2) * ((height / stat_h) / 2 * 2) / 4;
 
-		#if 1
+               #if 1
 		ISP_LOGD("Get pm param");
 		BLOCK_PARAM_CFG(input, pm_param, ISP_PM_BLK_GAMMA, ISP_BLK_RGB_GAMC, 0, 0);
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
@@ -3692,21 +3693,21 @@ static cmr_int ispctl_calc_awb(cmr_handle isp_alg_handle,
 
 		if (cxt->awb_cxt.color_support) {
 			/*if (cxt->ioctrl_ptr->sns_ioctl) {
-			cxt->ioctrl_ptr->sns_ioctl(cxt->ioctrl_ptr->caller_handler,
-						CMD_SNS_IC_GET_CCT_DATA,
-						&p_awb->xyz_info);
-			}*/
+			  cxt->ioctrl_ptr->sns_ioctl(cxt->ioctrl_ptr->caller_handler,
+			  CMD_SNS_IC_GET_CCT_DATA,
+			  &p_awb->xyz_info);
+			  }*/
 			ISP_LOGD("%d, %d, %d", p_awb.xyz_info.x_raw, p_awb.xyz_info.y_raw, p_awb.xyz_info.z_raw);
 			ISP_LOGD("%d, %d, %d", p_awb.xyz_info.x_data, p_awb.xyz_info.y_data, p_awb.xyz_info.z_data);
 			calc_param_3_0.colorsensor_info = &p_awb.xyz_info;
 		} else{
 			ISP_LOGD("get color_support error");
 		}
-		#endif
+                #endif
 
 		memcpy(calc_param_3_0.matrix, (int *)p_matrix, 9 * sizeof(cmr_s32));
 
-		lib_ops.awb_calc_v3(awb_handle, &calc_param_3_0, &calc_result_3_0);
+		lib_ops.awb_calc_v3_2(awb_handle, &calc_param_3_0, &calc_result_3_0);
 		awbc_cfg->r_gain = calc_result_3_0.awb_gain.r_gain;
 		awbc_cfg->g_gain = calc_result_3_0.awb_gain.g_gain;
 		awbc_cfg->b_gain = calc_result_3_0.awb_gain.b_gain;
@@ -3716,8 +3717,94 @@ static cmr_int ispctl_calc_awb(cmr_handle isp_alg_handle,
 
 		property_get("persist.vendor.cam.debug.simulation", value, "false");
 		if (!strcmp(value, "true")) {
-	           isp_sim_dump_awb_info(awb_param,&init_param_3_0, &calc_param_3_0, &calc_result_3_0.awb_gain);
+		isp_sim_dump_awb_info(awb_param,&init_param_3_0, &calc_param_3_0, &calc_result_3_0.awb_gain);
 		}
+	} else if (!strncmp(awb_ver, "awb3.x", 6)) {
+		ISP_LOGD("awb3.x");
+		lib_handle = dlopen("libawb.so", RTLD_NOW);
+		if (!lib_handle) {
+			ISP_LOGE("fail to dlopen awb lib");
+			ret = ISP_ERROR;
+			goto exit;
+		}
+		lib_ops.awb_init_v3 = dlsym(lib_handle, "awb_init");
+		if (!lib_ops.awb_init_v3) {
+			ISP_LOGE("fail to dlsym awb_init_v3");
+			ret = ISP_ERROR;
+			goto load_error;
+		}
+		lib_ops.awb_calc_v3 = dlsym(lib_handle, "awb_calc");
+		if (!lib_ops.awb_calc_v3) {
+			ISP_LOGE("fail to dlsym awb_calculation v3");
+			ret = ISP_ERROR;
+			goto load_error;
+		}
+		lib_ops.awb_deinit_v3 = dlsym(lib_handle, "awb_deinit");
+		if (!lib_ops.awb_deinit_v3) {
+			ISP_LOGE("fail to dlsym awb_deinit_v3");
+			ret = ISP_ERROR;
+			goto load_error;
+		}
+		init_param_3_0.camera_id = cxt->camera_id;
+		init_param_3_0.otp_unit_r = opt_info->rdm_stat_info.r;
+		init_param_3_0.otp_unit_g = opt_info->rdm_stat_info.g;
+		init_param_3_0.otp_unit_b = opt_info->rdm_stat_info.b;
+		init_param_3_0.tool_param = (void *)awb_param;
+		awb_handle = lib_ops.awb_init_v3(&init_param_3_0, &rgb_gain_3_0);
+		calc_param_3_0.bv = bv;
+		calc_param_3_0.iso = iso;//iso;
+		calc_param_3_0.stat_img_3_0.r_stat = (cmr_u32*)awb_statis->r_info;
+		calc_param_3_0.stat_img_3_0.g_stat = (cmr_u32*)awb_statis->g_info;
+		calc_param_3_0.stat_img_3_0.b_stat = (cmr_u32*)awb_statis->b_info;
+		calc_param_3_0.stat_img_3_0.width_stat = stat_w;
+		calc_param_3_0.stat_img_3_0.height_stat = stat_h;
+		calc_param_3_0.stat_img_3_0.r_pixel_cnt = ((width / stat_w) / 2 * 2) * ((height / stat_h) / 2 * 2) / 4;
+		calc_param_3_0.stat_img_3_0.g_pixel_cnt = ((width / stat_w) / 2 * 2) * ((height / stat_h) / 2 * 2) / 4;
+		calc_param_3_0.stat_img_3_0.b_pixel_cnt = ((width / stat_w) / 2 * 2) * ((height / stat_h) / 2 * 2) / 4;
+        #if 1
+		ISP_LOGD("Get pm param");
+		BLOCK_PARAM_CFG(input, pm_param, ISP_PM_BLK_GAMMA, ISP_BLK_RGB_GAMC, 0, 0);
+		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+		if (output.param_data != NULL && ISP_SUCCESS == ret) {
+			struct isp_dev_gamma_info *gamc_nodes =
+				(struct isp_dev_gamma_info *)output.param_data->data_ptr;
+			if (gamc_nodes != NULL) {
+				for (i = 0; i < 256; i++) {
+					calc_param_3_0.gamma[i] = (gamc_nodes->gain_r[i] + gamc_nodes->gain_r[i + 1]) / 2;
+				}
+				for (i=0; i<10; i++)
+					ISP_LOGV("i:%d, gamma:%d", i, calc_param_3_0.gamma[i]);
+			}
+		} else {
+			ISP_LOGD("get ISP_PM_BLK_GAMMA error");
+		}
+		if (cxt->awb_cxt.color_support) {
+			/*if (cxt->ioctrl_ptr->sns_ioctl) {
+			  cxt->ioctrl_ptr->sns_ioctl(cxt->ioctrl_ptr->caller_handler,
+			  CMD_SNS_IC_GET_CCT_DATA,
+			  &p_awb->xyz_info);
+			  }*/
+			ISP_LOGD("%d, %d, %d", p_awb.xyz_info.x_raw, p_awb.xyz_info.y_raw, p_awb.xyz_info.z_raw);
+			ISP_LOGD("%d, %d, %d", p_awb.xyz_info.x_data, p_awb.xyz_info.y_data, p_awb.xyz_info.z_data);
+			calc_param_3_0.colorsensor_info = &p_awb.xyz_info;
+		} else{
+			ISP_LOGD("get color_support error");
+		}
+        #endif
+		memcpy(calc_param_3_0.matrix, (int *)p_matrix, 9 * sizeof(cmr_s32));
+		lib_ops.awb_calc_v3(awb_handle, &calc_param_3_0, &calc_result_3_0);
+		awbc_cfg->r_gain = calc_result_3_0.awb_gain.r_gain;
+		awbc_cfg->g_gain = calc_result_3_0.awb_gain.g_gain;
+		awbc_cfg->b_gain = calc_result_3_0.awb_gain.b_gain;
+		*ct = calc_result_3_0.awb_gain.ct;
+		memcpy(awb_log_buff, calc_result_3_0.log_buffer, calc_result_3_0.log_size);
+		cxt->awb_cxt.log_awb_size = calc_result_3_0.log_size;
+		property_get("persist.vendor.cam.debug.simulation", value, "false");
+		if (!strcmp(value, "true")) {
+			isp_sim_dump_awb_info(awb_param,&init_param_3_0, &calc_param_3_0, &calc_result_3_0.awb_gain);
+		}
+	} else {
+		ISP_LOGD("get awb version fail");
 	}
 
 	ISP_LOGD("end");
@@ -3732,15 +3819,22 @@ static cmr_int ispctl_calc_awb(cmr_handle isp_alg_handle,
 		pthread_mutex_unlock(&cxt->debuginfo_queue_lock);
 	}
 
-	if (!strcmp(awb_ver, "awb2.x"))
-	    lib_ops.awb_deinit_v1(awb_handle);
-	else if (!strcmp(awb_ver, "awb3.x"))
-            lib_ops.awb_deinit_v3(awb_handle);
+	if (!strncmp(awb_ver, "awb2.x", 6)) {
+		lib_ops.awb_deinit_v1(awb_handle);
+	} else if (!strncmp(awb_ver, "awb3.2", 6)) {
+		lib_ops.awb_deinit_v3_2(awb_handle);
+	} else if (!strncmp(awb_ver, "awb3.x", 6)) {
+		lib_ops.awb_deinit_v3(awb_handle);
+	} else {
+		ISP_LOGD("get awb version fail");
+	}
+
+
 	ret = ISP_SUCCESS;
 load_error:
 	if (lib_handle) {
-           dlclose(lib_handle);
-           lib_handle = NULL;
+	   dlclose(lib_handle);
+	   lib_handle = NULL;
 	}
 exit:
 	return ret;
