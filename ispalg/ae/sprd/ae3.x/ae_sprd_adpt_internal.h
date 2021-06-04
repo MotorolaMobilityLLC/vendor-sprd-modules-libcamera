@@ -167,6 +167,7 @@ extern "C" {
 		cmr_u32 capture_skip_num;
 		struct ae_flash_timing_param flash_timing_param;
 		cmr_u32 zsl_flag;
+		cmr_u8 nzl_cap_flag;
 		cmr_u32 skip_update_param_flag;
 		cmr_u32 skip_update_param_cnt;
 		cmr_u32 delay_cnt;

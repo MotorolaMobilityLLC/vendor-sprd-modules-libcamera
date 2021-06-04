@@ -6823,6 +6823,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	if (0 == cxt->skip_update_param_flag) {
 		rtn = ae_lib_calculation(cxt->misc_handle, misc_calc_in, misc_calc_out);
 	}
+	cxt->nzl_cap_flag = misc_calc_out->nzl_cap_flag;
 	ISP_LOGV("misc_calc_out: cameraId:%d, ae_idx:%d, ae_gain:%d, exp_time:%"PRIu64"", cxt->camera_id, cxt->cur_result.ev_setting.ae_idx, cxt->cur_result.ev_setting.ae_gain, cxt->cur_result.ev_setting.exp_time);
 
 	cmr_u64 ae_time1 = systemTime(CLOCK_MONOTONIC);
@@ -8121,7 +8122,7 @@ static cmr_s32 ae_if_cts_params(struct ae_ctrl_cxt *cxt)
 		//bool gainfir_gainequa = ae_abtain_2and_flag(gain_first,gain_equa);
 		//bool man_mode_effect = ae_abtain_or_flag(fix_and_allequa,expfir_expequa,gainfir_gainequa);
 
-		if (((0 == cxt->ae_q_pars[0].ae_up_params.ae_mode) && (fix_and_allequa||exp_first||gain_first))||(1 == cxt->ae_q_pars[0].ae_up_params.ae_mode)){
+		if (((0 == cxt->ae_q_pars[0].ae_up_params.ae_mode) && (fix_and_allequa||exp_first||gain_first || (1 == cxt->nzl_cap_flag)))||(1 == cxt->ae_q_pars[0].ae_up_params.ae_mode)){
 				cxt->frame_number = cxt->ae_q_pars[0].ae_up_params.frame_number;
 				cmr_u32 i;
 				for(i = 0; i <9 ; i++){
