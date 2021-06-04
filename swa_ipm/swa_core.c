@@ -19,6 +19,7 @@
 #include "sprd_camalg_adapter.h"
 #include "sprd_hdr_adapter.h"
 #include "sprd_img_warp.h"
+#include "mfsr_adapter.h"
 #include "mfnr_adapt_interface.h"
 #include "sprd_yuv_denoise_adapter.h"
 #include "sprd_dre_adapter_pro.h"
@@ -762,7 +763,7 @@ int swa_mfsr_process(void * ipmpro_hanlde,
 	if (ret )
 		SWA_LOGE("Fail to call mfsr get exif, ret =%d",ret);
 
-	SWA_LOGD("exif %d, %d %d, (%d %d) (%d %d), gain %f ex time %f, ratio %f %f\n",
+	SWA_LOGD("exif 0x%x, %d %d, (%d %d) (%d %d), gain %d ex time %d, ratio %d %d\n",
 		cxt->exif_info.version,
 		cxt->exif_info.merge_num, cxt->exif_info.sharpen_field,
 		cxt->exif_info.im_input_w, cxt->exif_info.im_input_h,

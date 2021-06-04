@@ -2261,12 +2261,6 @@ static cmr_int camera_ips_proc(struct camera_context *cxt, struct frm_info *frm)
 						SETTING_CLEAR_HDR, &setting_param);
 			if (ret)
 				CMR_LOGD("failt to clear HDR setting\n");
-		} else if (threednr_flag == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
-			threednr_flag == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
-			threednr_flag == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {
-			ret = camera_3dnr_set_ev((cmr_handle)cxt, 0);
-			if (ret)
-				CMR_LOGE("fail to set 3dnr ev stop\n");
 		} else if (cxt->snp_cxt.is_mfsr) {
 			cmr_u32 isp_scene = ISP_AUTO;
 			struct img_rect crop_x;
@@ -2294,6 +2288,12 @@ static cmr_int camera_ips_proc(struct camera_context *cxt, struct frm_info *frm)
 			ret = cmr_grab_cfg_ch_crop(cxt->grab_cxt.grab_handle, cxt->snp_cxt.channel_id, &crop_x);
 			if (ret)
 				CMR_LOGE("fail to cmr_grab_cfg_ch_crop\n");
+		} else if (threednr_flag == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
+			threednr_flag == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
+			threednr_flag == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {
+			ret = camera_3dnr_set_ev((cmr_handle)cxt, 0);
+			if (ret)
+				CMR_LOGE("fail to set 3dnr ev stop\n");
 		}
 
 		if (cxt->skipframe) {
@@ -12716,7 +12716,28 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
         out_ptr->is_fdr = 0;
     }
 
-    if (!is_need_flash && out_ptr->is_fdr == 0 && out_ptr->is_hdr == 0) {
+	out_ptr->is_mfsr = 0;
+	cxt->snp_cxt.is_mfsr = 0;
+	if ((s_mfsr_force_off == 0) && !is_need_flash &&
+		(out_ptr->is_fdr == 0) && (out_ptr->is_hdr == 0)) {
+		struct cmr_zoom zoom_factor;
+		float zoom_ratio;
+
+		cmr_preview_get_zoom_factor(cxt->prev_cxt.preview_handle,
+				cxt->camera_id, &zoom_factor);
+		out_ptr->zoom_param = zoom_factor.zoom_setting;
+		zoom_ratio = zoom_factor.zoom_setting.zoom_info.capture_aspect_ratio;
+		cxt->snp_cxt.zoom_param = out_ptr->zoom_param;
+
+		if ((zoom_ratio > s_mfsr_ratiol) && (zoom_ratio < s_mfsr_ratioh)) {
+			out_ptr->is_mfsr = 1;
+			cxt->snp_cxt.is_mfsr = 1;
+		}
+		CMR_LOGD("set ratio range (%f ~ %f), cur_ratio %f, is_mfsr %d",
+				s_mfsr_ratiol, s_mfsr_ratioh, zoom_ratio, out_ptr->is_mfsr);
+	}
+
+    if (!is_need_flash && out_ptr->is_fdr == 0 && out_ptr->is_hdr == 0 && !out_ptr->is_mfsr) {
         ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_3DNR_TYPE,
                             &setting_param);
         if (ret) {
@@ -12729,45 +12750,6 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
         camera_set_3dnr_flag(cxt, 0);
         out_ptr->is_3dnr = 0;
     }
-
-	out_ptr->is_mfsr = 0;
-	cxt->snp_cxt.is_mfsr = 0;
-	if ((s_mfsr_force_off == 0) && !is_need_flash &&
-		(out_ptr->is_fdr == 0) && (out_ptr->is_hdr == 0) && (out_ptr->is_3dnr == 0)) {
-		struct cmr_zoom zoom_factor;
-		float zoom_ratio;
-
-		cmr_preview_get_zoom_factor(cxt->prev_cxt.preview_handle,
-				cxt->camera_id, &zoom_factor);
-		out_ptr->zoom_param = zoom_factor.zoom_setting;
-		zoom_ratio = zoom_factor.zoom_setting.zoom_info.capture_aspect_ratio;
-
-		if (1) { /* TODO - delete it later. For DEBUG/TEST only */
-			char value[PROPERTY_VALUE_MAX];
-			static int cap_count, force_zoom = 0;
-			property_get("debug.camera.mfsr.force.zoom", value, "0");
-			force_zoom = atoi(value);
-			if (force_zoom && (zoom_ratio < s_mfsr_ratiol)) {
-				if ((cap_count % 3) == 0) {
-					out_ptr->zoom_param.zoom_info.zoom_ratio = zoom_ratio * 2.22222;
-					out_ptr->zoom_param.zoom_info.capture_aspect_ratio = zoom_ratio * 2.22222;
-					out_ptr->zoom_param.zoom_info.prev_aspect_ratio = zoom_ratio * 2.22222;
-					CMR_LOGD("zoom_ratio %f, new %f\n", zoom_ratio, out_ptr->zoom_param.zoom_info.capture_aspect_ratio);
-					zoom_ratio = out_ptr->zoom_param.zoom_info.capture_aspect_ratio;
-				}
-				cap_count++;
-			}
-		}
-
-		cxt->snp_cxt.zoom_param = out_ptr->zoom_param;
-
-		if ((zoom_ratio > s_mfsr_ratiol) && (zoom_ratio < s_mfsr_ratioh)) {
-			out_ptr->is_mfsr = 1;
-			cxt->snp_cxt.is_mfsr = 1;
-		}
-		CMR_LOGD("set ratio range (%f ~ %f), cur_ratio %f, is_mfsr %d",
-				s_mfsr_ratiol, s_mfsr_ratioh, zoom_ratio, out_ptr->is_mfsr);
-	}
 
     ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                             SETTING_GET_SHOT_NUMBER, &setting_param);
@@ -13776,6 +13758,7 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     s_mfsr_force_off = 1;
 #ifdef CONFIG_CAMERA_MFSR_CAPTURE
     if (cxt->zsl_ips_en && (app_mode == CAMERA_MODE_AUTO_PHOTO)) {
+        s_mfsr_force_off = 0;
         ret = camera_isp_ioctl(cxt, COM_ISP_GET_MFSR_PARAM, &isp_param);
         if (ret || isp_param.isp_blk_param.param_ptr == NULL) {
             CMR_LOGE("fail to get mfsr param\n");
@@ -15188,6 +15171,8 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
         if (ret) {
             CMR_LOGE("failed to get app mode %ld", ret);
         }
+
+#ifndef CONFIG_CAMERA_MFSR_CAPTURE
         if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO){
             if (cxt->need_sr) {
                     isp_cmd_parm.cmd_value = ISP_SPORT;
@@ -15195,13 +15180,13 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
                     if (ret)
                         CMR_LOGE("isp set MFSR  failed");
             } else {
-                if (cxt->zoom_ratio - 1.0f > 0.0001f){
+                if (cxt->zoom_ratio - s_mfsr_ratiol > 0.0001f){
                     isp_cmd_parm.cmd_value = ISP_ZOOM;
                     ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_ZOOM_SCENE, &isp_cmd_parm);
                     if (ret)
                         CMR_LOGE("isp set ISP_ZOOM  failed");
                 }
-                if (cxt->zoom_ratio - 1.0f <= 0.0001f){
+                if (cxt->zoom_ratio - s_mfsr_ratiol <= 0.0001f){
                     isp_cmd_parm.cmd_value = ISP_AUTO;
                     ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_ZOOM_SCENE, &isp_cmd_parm);
                     if (ret)
@@ -15209,7 +15194,7 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
                 }
             }
         }
-
+#endif
 
         ret = camera_set_setting(oem_handle, id, (cmr_uint)zoom_param);
         if (ret) {
@@ -16454,6 +16439,10 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
             capture_param.cap_cnt = 3;
         }
         capture_param.cap_scene = CAPTURE_HDR;
+    } else if (cxt->snp_cxt.is_mfsr) {
+        capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
+        capture_param.cap_cnt = cxt->snp_cxt.total_num;
+        capture_param.cap_scene = CAPTURE_COMMON;
     } else if (CAMERA_3DNR_TYPE_PREV_HW_CAP_SW == camera_get_3dnr_flag(cxt) ||
         CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW == camera_get_3dnr_flag(cxt)) {
         // 5 continuous frames start from next sof interrupt
@@ -16478,10 +16467,6 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         } else {
             return ret;
         }
-    } else if (cxt->snp_cxt.is_mfsr) {
-        capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
-        capture_param.cap_cnt = cxt->snp_cxt.total_num;
-        capture_param.cap_scene = CAPTURE_COMMON;
     } else if (cxt->skipframe == 1) {
         // need get 1 frame start from next sof interrupt
         capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;

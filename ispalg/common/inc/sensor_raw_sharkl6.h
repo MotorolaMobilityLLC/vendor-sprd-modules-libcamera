@@ -2370,6 +2370,50 @@ struct alsc_alg0_turn_param {
 	float threshold_grad;
 };
 
+//mfsr
+struct sensor_mfsr_k {
+	cmr_u8 align_size[4];
+	float noise_k[2];
+	float noise_b[3];
+	float k_dtl;
+	float k_dne;
+	float k_dth;
+	float k_sth;
+	float k_shk;
+};
+
+struct sensor_mfsr_component {
+	cmr_u8 merge_num;
+	cmr_u8 sharpen_field;
+	cmr_u8 sg_contrast_pos;
+	cmr_u8 clip_contrast_min;
+	cmr_u8 clip_contrast_max;
+	cmr_u8 denoise_field[2];
+	cmr_u8 reserved;
+	float sharpen_level;
+	float sharpen_threshold[2];
+	float detail_threshold;
+	float deghost_scale;
+	float deghost_threshold;
+	float deghost_maxscale;
+	float deghost_shift;
+	float sg_contrast_bw[2];
+	float clip_contrast_bw[2];
+	float saturation_scale[3];
+	float denoise_level[2];
+};
+
+struct sensor_mfsr_param {
+	cmr_u8 version_major;
+	cmr_u8 version_minor;
+	cmr_u8 version_micro;
+	cmr_u8 enable;
+	float zoom_opt[8];
+	float gain_opt[10];
+	struct sensor_mfsr_k mfsr_k;
+	struct sensor_mfsr_component mfsr_component[8][10];
+};
+
 /* sw 3DNR tuning param */
 struct sensor_sw3dnr_level {
 	cmr_s32 threshold[4];
