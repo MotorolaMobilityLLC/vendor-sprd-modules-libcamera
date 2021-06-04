@@ -3117,6 +3117,7 @@ int SprdCamera3PortraitScene::_flush(const struct camera3_device *device) {
         sprd_portrait_scene_adpt_deinit(mPbrp->mPrevT->mApiSegHandle,
                                         SPRD_PORTRAIT_SCENE_PREVIEW);
         mPbrp->mPrevT->mApiSegHandle = NULL;
+        mPrevT->mPrevInitParams.mask_size = 0;
     }
     HAL_LOGI("X");
 
