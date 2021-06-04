@@ -865,7 +865,6 @@ cmr_int sensor_write_calibration_otp(struct sensor_drv_context *sensor_cxt,
 cmr_int sensor_pdaf_format_convertor(void *buffer_handle, cmr_int pdaf_supported,
                                      cmr_u32 *param);
 cmr_int sensor_set_HD_mode(cmr_u32 is_HD_mode) ;
-cmr_int sensor_set_manual_cmei(bool type);
 cmr_int sensor_set_longExp_enable(struct sensor_drv_context *sensor_cxt,
                            cmr_u32 long_expo_enable);
 cmr_int sensor_get_otp_tag(cmr_s32 *otp_ptr, cmr_int id);

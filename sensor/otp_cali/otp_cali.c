@@ -67,6 +67,7 @@ cmr_u16 read_calibration_cmei(cmr_u8 dual_flag, cmr_u8 *cmei_buf) {
 
     // 1 read origin file
     memset(header, 0x00, CALI_OTP_HEAD_SIZE);
+    memset(cmei_buf, 0x00, CMEI_OTP_CMEI_SIZE);
     do {
         if (NULL == OtpDataPath) {
             SENSOR_LOGE("OtpDataPath is NULL !");
@@ -118,6 +119,7 @@ cmr_u16 read_calibration_cmei(cmr_u8 dual_flag, cmr_u8 *cmei_buf) {
     // 2 read backup file
     memset(header, 0x00, CALI_OTP_HEAD_SIZE);
     memset(otp_buf, 0x00, SPRD_DUAL_OTP_SIZE);
+    memset(cmei_buf, 0x00, CMEI_OTP_CMEI_SIZE);
     do {
         if (NULL == OtpBkDataPath) {
             SENSOR_LOGE("OtpBkDataPath is NULL !");
