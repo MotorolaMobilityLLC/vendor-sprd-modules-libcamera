@@ -3737,7 +3737,7 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 			base_exposure_line = cxt->hdr_exp_line;
 			base_gain = cxt->hdr_gain;
 			down_exposure =  (cmr_u32)(base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time);
-			down_gain = pow(2,ev_result[0]) * base_gain;
+			down_gain = (cmr_u16)(pow(2,ev_result[0]) * base_gain);
 			if(down_gain < 128) {
 				down_gain = 128;
 				ev_shutter = 1.0 * pow(2,ev_result[0]) * base_gain / 128;
