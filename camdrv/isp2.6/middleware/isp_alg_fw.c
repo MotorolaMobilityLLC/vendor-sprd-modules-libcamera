@@ -3640,8 +3640,8 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 		pthread_mutex_lock(&cxt->smart_lock);
 		smart_proc_in.cal_para.bv = ae_in->ae_output.cur_bv;
 		smart_proc_in.cal_para.bv_gain = ae_in->ae_output.cur_again;
-		smart_proc_in.cal_para.flash_ratio = ae_in->flash_param.captureFlashEnvRatio * 256;
-		smart_proc_in.cal_para.flash_ratio1 = ae_in->flash_param.captureFlash1ofALLRatio * 256;
+		smart_proc_in.cal_para.flash_ratio = (cmr_s32)(ae_in->flash_param.captureFlashEnvRatio * 256);
+		smart_proc_in.cal_para.flash_ratio1 = (cmr_s32)(ae_in->flash_param.captureFlash1ofALLRatio * 256);
 		smart_proc_in.cal_para.ct = awb_output->ct;
 		smart_proc_in.cal_para.abl_weight = ae_in->ae_output.abl_weight;
 		smart_proc_in.cal_para.fps = ae_in->ae_output.fps;
