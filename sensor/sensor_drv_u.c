@@ -4645,11 +4645,10 @@ static cmr_int sensor_drv_create_cmei_list(void)
 static cmr_int sensor_drv_check_cmei(cmr_u8 dual_flag) {
     cmr_u32 ret = SENSOR_FAIL;
     cmr_u16 cmei_size = 0;
-    cmr_u8 bokeh_manual_cmei_size = 1;
-    cmr_u8 bokeh_manual_cmei_buf[bokeh_manual_cmei_size];
+    cmr_u8 bokeh_cmei_buf[bokeh_cmei_size];
     cmr_u8 oz1_cmei_buf[oz1_cmei_size];
     cmr_u8 oz2_cmei_buf[oz2_cmei_size];
-    memset(bokeh_manual_cmei_buf, 0, bokeh_manual_cmei_size);
+    memset(bokeh_cmei_buf, 0, bokeh_cmei_size);
     memset(oz1_cmei_buf, 0, oz1_cmei_size);
     memset(oz2_cmei_buf, 0, oz2_cmei_size);
     SENSOR_LOGI("E");
@@ -4657,9 +4656,10 @@ static cmr_int sensor_drv_check_cmei(cmr_u8 dual_flag) {
     switch (dual_flag) {
 
     case CALIBRATION_FLAG_BOKEH:
-        cmei_size = read_calibration_cmei(CALIBRATION_FLAG_BOKEH, bokeh_manual_cmei_buf);
-        if(bokeh_manual_cmei_size == cmei_size) {
-            if(0 == bokeh_manual_cmei_buf[0]) {
+        cmei_size = read_calibration_cmei(CALIBRATION_FLAG_BOKEH, bokeh_cmei_buf);
+        if(bokeh_cmei_size == cmei_size) {
+            ret = memcmp(bokeh_cmei_buf, bokeh_cmei, bokeh_cmei_size);
+            if(0 == ret) {
                 SENSOR_LOGI("bokeh module hasnot changed, use calibraton data");
                 return SENSOR_SUCCESS;
             } else{
@@ -5212,19 +5212,14 @@ cmr_int sensor_write_calibration_otp(struct sensor_drv_context *sensor_cxt,
     pthread_mutex_lock(&cali_otp_mutex);
 
     switch(dual_flag) {
-    case CALIBRATION_FLAG_BOKEH:{
+    case CALIBRATION_FLAG_BOKEH:
 #if defined(BOKEH_CALIBRATION_VERSION2) || defined(BOKEH_CALIBRATION_VERSION3)
-        cmr_u8 bokeh_manual_cmei_size = 1;
-        cmr_u8 bokeh_manual_cmei[bokeh_manual_cmei_size];
-        bokeh_manual_cmei[0] = 0;
-
         ret = write_calibration_otp_with_cmei
-                (dual_flag, buf, otp_size, bokeh_manual_cmei, bokeh_manual_cmei_size);
+                (dual_flag, buf, otp_size, bokeh_cmei, bokeh_cmei_size);
 #else
         ret = write_calibration_otp_no_cmei(dual_flag, buf, otp_size);
 #endif
         break;
-        }
 
     case CALIBRATION_FLAG_OZ1:
 #if defined(OZ_CALIBRATION_VERSION2)
@@ -5265,21 +5260,6 @@ cmr_int sensor_set_HD_mode(cmr_u32 is_HD_mode) {
 
     sensor_is_HD_mode = is_HD_mode;
     SENSOR_LOGI("is_HD_mode:%d", is_HD_mode);
-    return ret;
-}
-
-cmr_int sensor_set_manual_cmei(bool type) {
-    int ret = SENSOR_SUCCESS;
-
-    SENSOR_LOGI("manual_cmei:%d", type);
-
-    cmr_u8 bokeh_manual_cmei_size = 1;
-    cmr_u8 bokeh_manual_cmei[bokeh_manual_cmei_size];
-    bokeh_manual_cmei[0] = type;
-
-    write_calibration_otp_with_cmei
-                (CALIBRATION_FLAG_BOKEH, NULL, 0, bokeh_manual_cmei, bokeh_manual_cmei_size);
-
     return ret;
 }
 
