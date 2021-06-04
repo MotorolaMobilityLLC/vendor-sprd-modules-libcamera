@@ -1356,9 +1356,15 @@ int SprdCamera3SinglePortrait::CaptureThread::blurProcessVer1(
             //for get fbcap_param
             SprdCamera3HWI *hwiMain = mSinglePortrait->m_pPhyCamera[CAM_TYPE_MAIN].hwi;
             ret = hwiMain->camera_ioctrl(CAMERA_IOCTRL_GET_FB_CAP_PARAM, &Ptr_fb_param_cap, NULL);
-            ret = doFaceBeauty(lptMask, output_buff_addr, mCaptureInitParams.width,
-                        mCaptureInitParams.height, 1, &mSinglePortrait->fbLevels_cap,
-                        lightportrait_flag, &Ptr_fb_param_cap);
+            if(ret == 0){
+                ret = doFaceBeauty(lptMask, output_buff_addr, mCaptureInitParams.width,
+                            mCaptureInitParams.height, 1, &mSinglePortrait->fbLevels_cap,
+                            lightportrait_flag, &Ptr_fb_param_cap);
+            }else{
+                ret = doFaceBeauty(lptMask, output_buff_addr, mCaptureInitParams.width,
+                            mCaptureInitParams.height, 1, &mSinglePortrait->fbLevels_cap,
+                            lightportrait_flag, NULL);
+            }
         }
         if(lightportrait_flag != 0) {
             if(!portrait_flag && (!facebeauty_flag)){
@@ -3940,10 +3946,17 @@ void SprdCamera3SinglePortrait::processCaptureResultMain(
                                     SprdCamera3HWI *hwiMain = mSinglePortrait->m_pPhyCamera[CAM_TYPE_MAIN].hwi;
                                     rc = hwiMain->camera_ioctrl(CAMERA_IOCTRL_GET_FB_PREV_PARAM,
                                         &Ptr_fb_param_prev, NULL);
-                                    rc = mCaptureThread->doFaceBeauty(NULL, buffer_addr,
-                                    mCaptureThread->mPreviewInitParams.width,
-                                    mCaptureThread->mPreviewInitParams.height,
-                                    0, &mSinglePortrait->fbLevels, lightportrait_flag, &Ptr_fb_param_prev);
+                                    if(rc == 0){
+                                        rc = mCaptureThread->doFaceBeauty(NULL, buffer_addr,
+                                                mCaptureThread->mPreviewInitParams.width,
+                                                mCaptureThread->mPreviewInitParams.height,
+                                                0, &mSinglePortrait->fbLevels, lightportrait_flag, &Ptr_fb_param_prev);
+                                    }else{
+                                        rc = mCaptureThread->doFaceBeauty(NULL, buffer_addr,
+                                                mCaptureThread->mPreviewInitParams.width,
+                                                mCaptureThread->mPreviewInitParams.height,
+                                                0, &mSinglePortrait->fbLevels, lightportrait_flag, NULL);
+                                    }
                                 }
                                 if(lightportrait_flag != 0){
                                     rc = mCaptureThread->prevLPT(buffer_addr,
@@ -4555,7 +4568,7 @@ int SprdCamera3SinglePortrait::CaptureThread::doFaceBeauty(unsigned char *mask, 
         face_beauty_set_devicetype(&mSinglePortrait->fb_cap, SPRD_CAMALG_RUN_TYPE_CPU);
         face_beauty_init(&mSinglePortrait->fb_cap, 0, 2, SHARKL5PRO);
 
-        if (rc == 0) {
+        if (FaceMap != NULL) {
             for (int i = 0; i < ISP_FB_SKINTONE_NUM; i++) {
                 HAL_LOGV("cap i %d blemishSizeThrCoeff %d removeBlemishFlag %d "
                                             "lipColorType %d skinColorType %d", i,
@@ -4576,6 +4589,7 @@ int SprdCamera3SinglePortrait::CaptureThread::doFaceBeauty(unsigned char *mask, 
                             FaceMap->cur.fb_param[i].fb_layer.skinSmoothRadiusCoeff[j]);
                 }
             }
+            rc = face_beauty_ctrl(&mSinglePortrait->fb_cap, FB_BEAUTY_CONSTRUCT_FACEMAP_CMD,FaceMap);
         }
         int index = faceDetectionInfo.face_num;
         for (int j = 0; j < index; j++) {
@@ -4641,8 +4655,7 @@ int SprdCamera3SinglePortrait::CaptureThread::doFaceBeauty(unsigned char *mask, 
         HAL_LOGD("facebeautylevel %d %d %d %d %d",mSinglePortrait->fbLevels.blemishLevel,
             mSinglePortrait->fbLevels.smoothLevel,mSinglePortrait->fbLevels.skinColor,
             mSinglePortrait->fbLevels.skinLevel,mSinglePortrait->fbLevels.brightLevel);
-        rc = face_beauty_ctrl(&mSinglePortrait->fb_cap, FB_BEAUTY_CONSTRUCT_FACEMAP_CMD,
-                              FaceMap);
+
         rc = face_beauty_ctrl(&mSinglePortrait->fb_cap, FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
                               &mSinglePortrait->beauty_image);
         rc = face_beauty_ctrl(&mSinglePortrait->fb_cap, FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
@@ -4663,7 +4676,7 @@ int SprdCamera3SinglePortrait::CaptureThread::doFaceBeauty(unsigned char *mask, 
         HAL_LOGD("cap dofacebeauty X");
     } else {
         int index = faceDetectionInfo.face_num;
-        if (rc == 0) {
+        if (FaceMap != NULL) {
             for (int i = 0; i < ISP_FB_SKINTONE_NUM; i++) {
                 HAL_LOGV("pre i %d blemishSizeThrCoeff %d removeBlemishFlag %d "
                                             "lipColorType %d skinColorType %d", i,
@@ -4684,8 +4697,9 @@ int SprdCamera3SinglePortrait::CaptureThread::doFaceBeauty(unsigned char *mask, 
                             FaceMap->cur.fb_param[i].fb_layer.skinSmoothRadiusCoeff[j]);
                 }
             }
+            rc = face_beauty_ctrl(&mSinglePortrait->fb_prev, FB_BEAUTY_CONSTRUCT_FACEMAP_CMD, FaceMap);
         }
-        rc = face_beauty_ctrl(&mSinglePortrait->fb_prev, FB_BEAUTY_CONSTRUCT_FACEMAP_CMD, FaceMap);
+
         int faceCount = faceDetectionInfo.face_num;
         for(int j = 0;j < index;j++) {
             mSinglePortrait->beauty_face.idx = j;
