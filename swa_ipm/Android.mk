@@ -22,6 +22,7 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/ \
     $(LIBCAMERA_DIR)/arithmetic/sprd_warp/inc \
     $(LIBCAMERA_DIR)/arithmetic/sprd_filter/inc \
     $(LIBCAMERA_DIR)/arithmetic/sprd_easy_hdr/inc \
+    $(LIBCAMERA_DIR)/arithmetic/sprd_mfsr/inc \
     $(LIBCAMERA_DIR)/arithmetic/sprd_fdr/inc \
     $(LIBCAMERA_DIR)/arithmetic/sprd_ee/inc
 
@@ -70,6 +71,10 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_SUPPORT_ULTRA_WIDE)),true)
 LOCAL_SHARED_LIBRARIES += libsprdwarp libsprdwarpadapter
+endif
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_MFSR_CAPTURE)),true)
+LOCAL_SHARED_LIBRARIES += libsprd_mfsr libsprdmfsradapter
 endif
 
 LOCAL_MODULE := libcam_ipmpro
