@@ -1368,7 +1368,7 @@ bool SprdCamera3Portrait::PreviewMuxerThread::threadLoop() {
                         //for get fbpre_param
                         SprdCamera3HWI *hwiMain = mPortrait->m_pPhyCamera[CAM_TYPE_MAIN].hwi;
                         rc = hwiMain->camera_ioctrl(CAMERA_IOCTRL_GET_FB_PREV_PARAM, &Ptr_fb_param_prev, NULL);
-                        if (rc == ISP_SUCCESS) {
+                        if (rc == 0) {
                             for (int i = 0; i < ISP_FB_SKINTONE_NUM; i++) {
                                 HAL_LOGV("i %d blemishSizeThrCoeff %d removeBlemishFlag %d "
                                                                     "lipColorType %d skinColorType %d",
@@ -1389,12 +1389,19 @@ bool SprdCamera3Portrait::PreviewMuxerThread::threadLoop() {
                                             Ptr_fb_param_prev.cur.fb_param[i].fb_layer.skinSmoothRadiusCoeff[j]);
                                 }
                             }
+                            rc = mPortrait->mBokehAlgo->doFaceBeauty(
+                                NULL, output_buf_addr,
+                                mPortrait->mBokehSize.preview_w,
+                                mPortrait->mBokehSize.preview_h, 0,
+                                &mPortrait->facebeautylevel, &Ptr_fb_param_prev);
+                        }else{
+                            HAL_LOGD("cant get fb tuning param and use default param!");
+                            rc = mPortrait->mBokehAlgo->doFaceBeauty(
+                                NULL, output_buf_addr,
+                                mPortrait->mBokehSize.preview_w,
+                                mPortrait->mBokehSize.preview_h, 0,
+                                &mPortrait->facebeautylevel, NULL);
                         }
-                        rc = mPortrait->mBokehAlgo->doFaceBeauty(
-                            NULL, output_buf_addr,
-                            mPortrait->mBokehSize.preview_w,
-                            mPortrait->mBokehSize.preview_h, 0,
-                            &mPortrait->facebeautylevel, &Ptr_fb_param_prev);
                         if (mBokehMode == CAM_COMMON_MODE) {
                             mPortrait->unmap(muxer_msg.combo_frame.buffer1);
                         }
