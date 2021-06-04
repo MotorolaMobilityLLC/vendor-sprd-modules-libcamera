@@ -1109,7 +1109,7 @@ static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 	cmr_s32 ret = ISP_SUCCESS;
 	struct ae_exposure_param write_param = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	struct q_item write_item = { 0, 0, 0, 0, 0, 0, 0};
-	struct q_item actual_item;
+	struct q_item actual_item = {0};
 
 	if (0 == cxt) {
 		ISP_LOGE("cxt invalid, cxt: %p\n", cxt);
@@ -1770,14 +1770,14 @@ static cmr_s32 ae_cfg_monitor_block(struct ae_ctrl_cxt *cxt)
 	info.low_region_thrd = cxt->monitor_cfg.low_region_thrd;
 
 	if (CAM_SENSOR_MASTER == cxt->sensor_role) {
-		rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_AE_BLOCK_SIZE, &info.win_size, NULL);
-		rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_AE_WINDOW_RECT, &info.trim, NULL);
+		rtn = (cmr_s32)(cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_AE_BLOCK_SIZE, &info.win_size, NULL));
+		rtn = (cmr_s32)(cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_AE_WINDOW_RECT, &info.trim, NULL));
 	} else if (CAM_SENSOR_SLAVE0 == cxt->sensor_role) {
-		rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_AE_BLOCK_SIZE, &info.win_size, NULL);
-		rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_AE_WINDOW_RECT, &info.trim, NULL);
+		rtn = (cmr_s32)(cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_AE_BLOCK_SIZE, &info.win_size, NULL));
+		rtn = (cmr_s32)(cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_AE_WINDOW_RECT, &info.trim, NULL));
 	} else if (CAM_SENSOR_SLAVE1 == cxt->sensor_role) {
-		rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, SET_AE_BLOCK_SIZE, &info.win_size, NULL);
-		rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, SET_AE_WINDOW_RECT, &info.trim, NULL);
+		rtn = (cmr_s32)(cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, SET_AE_BLOCK_SIZE, &info.win_size, NULL));
+		rtn = (cmr_s32)(cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, SET_AE_WINDOW_RECT, &info.trim, NULL));
 	}
 
 	if (cxt->isp_ops.set_statistics_mode) {
@@ -4228,7 +4228,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		flag_CAM_MODE = ae_abtain_or_flag(flag_CAM_SENSOR1,flag_CAM_SENSOR2,flag_CAM_SENSOR3);
 
 		if (flag_CAM_MODE) {
-			rtn = cxt->ptr_isp_br_ioctrl(cxt->sensor_role, SET_MODULE_INFO, &sensor_info, NULL);
+			rtn = (cmr_s32)(cxt->ptr_isp_br_ioctrl(cxt->sensor_role, SET_MODULE_INFO, &sensor_info, NULL));
 
 		}
 	}
@@ -4291,7 +4291,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			slave_aem_info.aem_stat_win_w = cxt->monitor_cfg.blk_num.w;
 			slave_aem_info.aem_stat_win_h = cxt->monitor_cfg.blk_num.h;
 
-			rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_SLAVE_AEM_INFO, &slave_aem_info, NULL);
+			rtn = (cmr_s32)(cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_SLAVE_AEM_INFO, &slave_aem_info, NULL));
 			ISP_LOGD("sync:slave0, SET_SLAVE_AEM_INFO : %d\n", rtn);
 		}
 	}
@@ -5730,11 +5730,11 @@ static cmr_s32 ae_parser_otp_info(struct ae_init_in *init_param)
 					    (int)info.gain_1x_exp,(int)info.gain_2x_exp,(int)info.gain_4x_exp,(int)info.gain_8x_exp);
 
 			if (CAM_SENSOR_MASTER == init_param->sensor_role) {
-				rtn = init_param->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_OTP_AE, &info, NULL);
+				rtn = (cmr_s32)(init_param->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_OTP_AE, &info, NULL));
 			} else if (CAM_SENSOR_SLAVE0 == init_param->sensor_role) {
-				rtn = init_param->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_OTP_AE, &info, NULL);
+				rtn = (cmr_s32)(init_param->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_OTP_AE, &info, NULL));
 			} else if (CAM_SENSOR_SLAVE1 == init_param->sensor_role) {
-				rtn = init_param->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, SET_OTP_AE, &info, NULL);
+				rtn = (cmr_s32)(init_param->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, SET_OTP_AE, &info, NULL));
 			}
 			//ISP_LOGV("lum=%" PRIu16 ", 1x=%" PRIu64 ", 2x=%" PRIu64 ", 4x=%" PRIu64 ", 8x=%" PRIu64, info.ae_target_lum,info.gain_1x_exp,info.gain_2x_exp,info.gain_4x_exp,info.gain_8x_exp);
 		} else {
@@ -7044,11 +7044,11 @@ cmr_s32 ae_sprd_calculation_v1(cmr_handle handle, cmr_handle param, cmr_handle r
 				ISP_LOGV("sync:SET_USER_COUNT");
 				cmr_u32 in = 1;
 				if (CAM_SENSOR_MASTER == cxt->sensor_role) {
-					rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_USER_COUNT, &in, NULL);
+					rtn = (cmr_s32)(cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_USER_COUNT, &in, NULL));
 				} else if (CAM_SENSOR_SLAVE0 == cxt->sensor_role) {
-					rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_USER_COUNT, &in, NULL);
+					rtn = (cmr_s32)(cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_USER_COUNT, &in, NULL));
 				} else if (CAM_SENSOR_SLAVE1 == cxt->sensor_role) {
-					rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, SET_USER_COUNT, &in, NULL);
+					rtn = (cmr_s32)(cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, SET_USER_COUNT, &in, NULL));
 				}
 				cxt->calcFirstFlag = 1;
 			}
@@ -7075,11 +7075,11 @@ cmr_s32 ae_sprd_calculation_v1(cmr_handle handle, cmr_handle param, cmr_handle r
 				ISP_LOGV("sync:SET_USER_COUNT");
 				cmr_u32 in = 1;
 				if (CAM_SENSOR_MASTER == cxt->sensor_role) {
-					rtn |= cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_USER_COUNT, &in, NULL);
+					rtn |= (cmr_s32)(cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_USER_COUNT, &in, NULL));
 				} else if (CAM_SENSOR_SLAVE0 == cxt->sensor_role) {
-					rtn |= cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_USER_COUNT, &in, NULL);
+					rtn |= (cmr_s32)(cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_USER_COUNT, &in, NULL));
 				} else if (CAM_SENSOR_SLAVE1 == cxt->sensor_role) {
-					rtn |= cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, SET_USER_COUNT, &in, NULL);
+					rtn |= (cmr_s32)(cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, SET_USER_COUNT, &in, NULL));
 				}
 				cxt->calcFirstFlag = 1;
 			}
