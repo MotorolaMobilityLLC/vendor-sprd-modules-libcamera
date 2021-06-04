@@ -5195,34 +5195,25 @@ int SprdCamera3Setting::updateWorkParameters(
     }
 
     if (frame_settings.exists(ANDROID_SPRD_CALIBRATION_OTP_DATA)) {
-        cmr_u32 ret = 0;
-        ret = memcmp("Otp Init Golden Data",
-            frame_settings.find(ANDROID_SPRD_CALIBRATION_OTP_DATA).data.u8,
-                sizeof("Otp Init Golden Data")-1);
-        if(0 == ret) {
-            sensor_set_manual_cmei(1);
-            s_setting[mCameraId].calOtpInfo.cal_otp_result = 1;
-        } else {
-            s_setting[mCameraId].calOtpInfo.dual_otp_flag =
-                frame_settings.find(ANDROID_SPRD_CALIBRATION_OTP_DATA).data.u8[20];
-            s_setting[mCameraId].calOtpInfo.cal_otp_result = 0;
-            s_setting[mCameraId].calOtpInfo.otp_size =
-                frame_settings.find(ANDROID_SPRD_CALIBRATION_OTP_DATA).data.u8[30] +
-                ((frame_settings.find(ANDROID_SPRD_CALIBRATION_OTP_DATA)
-                      .data.u8[31] &
-                  0x00ff)
-                 << 8);
-            for (int i = 0; i < s_setting[mCameraId].calOtpInfo.otp_size; i++) {
-                s_setting[mCameraId].calOtpInfo.otp_data[i] =
-                    frame_settings.find(ANDROID_SPRD_CALIBRATION_OTP_DATA)
-                        .data.u8[i + 32];
-            }
-            HAL_LOGD(
-                "s_setting[mCameraId].calOtpInfo.dual_otp_flag %d, otp_size %d",
-                s_setting[mCameraId].calOtpInfo.dual_otp_flag,
-                s_setting[mCameraId].calOtpInfo.otp_size);
-            pushAndroidParaTag(ANDROID_SPRD_CALIBRATION_OTP_DATA);
+        s_setting[mCameraId].calOtpInfo.dual_otp_flag =
+            frame_settings.find(ANDROID_SPRD_CALIBRATION_OTP_DATA).data.u8[20];
+        s_setting[mCameraId].calOtpInfo.cal_otp_result = 0;
+        s_setting[mCameraId].calOtpInfo.otp_size =
+            frame_settings.find(ANDROID_SPRD_CALIBRATION_OTP_DATA).data.u8[30] +
+            ((frame_settings.find(ANDROID_SPRD_CALIBRATION_OTP_DATA)
+                  .data.u8[31] &
+              0x00ff)
+             << 8);
+        for (int i = 0; i < s_setting[mCameraId].calOtpInfo.otp_size; i++) {
+            s_setting[mCameraId].calOtpInfo.otp_data[i] =
+                frame_settings.find(ANDROID_SPRD_CALIBRATION_OTP_DATA)
+                    .data.u8[i + 32];
         }
+        HAL_LOGD(
+            "s_setting[mCameraId].calOtpInfo.dual_otp_flag %d, otp_size %d",
+            s_setting[mCameraId].calOtpInfo.dual_otp_flag,
+            s_setting[mCameraId].calOtpInfo.otp_size);
+        pushAndroidParaTag(ANDROID_SPRD_CALIBRATION_OTP_DATA);
     }
 
     if (frame_settings.exists(ANDROID_SPRD_ZSL_ENABLED)) {
