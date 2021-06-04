@@ -1488,7 +1488,7 @@ proc_mfsr:
 		src.size.width = frm_param->mfsr_param.frame_crop.width;
 		src.size.height = frm_param->mfsr_param.frame_crop.height;
 		snprintf(fname3, 256, "%sframe%03d_type%d_%d_detail_%dx%d.y", CAMERA_DUMP_PATH,
-			src.frame_number, ipm_hdl->type, req->frame_cnt, src.size.width, src.size.height);
+			frame->frame_number, ipm_hdl->type, req->frame_cnt, src.size.width, src.size.height);
 		fp = fopen(fname3, "wb");
 		size = src.size.width * src.size.height;
 		if (fp) {
@@ -1539,18 +1539,6 @@ clear:
 	req->frame_total = 1;
 
 proc_done:
-	if (1) { /* TODO - delete it later. For debug only */
-		char value[PROPERTY_VALUE_MAX];
-		int delay_ms;
-		property_get("debug.camera.mfsr.delay", value, "0");
-		delay_ms = atoi(value);
-		if (delay_ms > 0) {
-			CMR_LOGI("delay %d ms start\n", delay_ms);
-			usleep(delay_ms * 1000);
-			CMR_LOGI("delay %d ms done\n", delay_ms);
-		}
-	}
-
 	CMR_LOGD("Done");
 	return 0;
 

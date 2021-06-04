@@ -64,6 +64,8 @@ static const char *AI_START = "ISP_AI__";
 static const char *AI_END = "ISP_AI__";
 static const char *FDR_START = "ISP_FDR__";
 static const char *FDR_END = "ISP_FDR__";
+static const char *MFSR_START = "ISP_MFSR__";
+static const char *MFSR_END = "ISP_MFSR__";
 static const char *OTP_START = "ISP_OTP_";
 static const char *OTP_END = "ISP_OTP_";
 static cmr_u8 awb_log_buff[256 * 1024] = {0};
@@ -5648,6 +5650,51 @@ exit:
 	return 0;
 }
 
+static cmr_int ispctl_get_mfsr_param(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 i;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_blkpm_t *out_ptr = (struct isp_blkpm_t *)param_ptr;
+	struct isp_pm_param_data param_data, *dst;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+
+	if (param_ptr == NULL) {
+		ISP_LOGE("fail to get ptr %p\n", param_ptr);
+		return -ISP_PARAM_NULL;
+	}
+
+	out_ptr->param_ptr = NULL;
+	out_ptr->param_size = 0;
+	memset(&param_data, 0, sizeof(param_data));
+
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING,
+				ISP_BLK_MFSR, NULL, 0);
+	pthread_mutex_lock(&cxt->pm_getting_lock);
+	ret = isp_pm_ioctl(cxt->handle_pm,
+				ISP_PM_CMD_GET_BLK_PARAM, &input, &output);
+	if (ret || output.param_num == 0 || output.param_data == NULL) {
+		CMR_LOGW("warning: no mfsr param\n");
+		goto unlock;
+	}
+
+	dst = output.param_data;
+	for (i = 0; i < output.param_num; i++, dst++) {
+		ISP_LOGD("i=%d, mode %d, blkid=0x%x, datap %p, size %d\n", i,
+			dst->mode_id, dst->id, dst->data_ptr, dst->data_size);
+		if ((i == 0) || (dst->mode_id == cxt->commn_cxt.isp_pm_mode[PARAM_SET1])) {
+			out_ptr->param_ptr = output.param_data->data_ptr;
+			out_ptr->param_size = output.param_data->data_size;
+		}
+	}
+
+unlock:
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
+	ISP_LOGD("cam%ld param ptr %p, size %d\n",
+		cxt->camera_id, out_ptr->param_ptr, out_ptr->param_size);
+	return ret;
+}
 
 static cmr_int ispctl_ev_adj(cmr_handle isp_alg_handle, void *param_ptr)
 {
@@ -5919,6 +5966,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_CNR3_PARAM, ispctl_get_cnr3_param},
 	{ISP_CTRL_GET_YNRS_PARAM, ispctl_get_ynrs_param},
 	{ISP_CTRL_GET_SW3DNR_PARAM, ispctl_get_sw3dnr_param},
+	{ISP_CTRL_GET_MFSR_PARAM, ispctl_get_mfsr_param},
 	{ISP_CTRL_GET_HDR_PARAM, ispctl_get_hdr_param},
 
 	{ISP_CTRL_GET_FLASH_SKIP_FRAME_NUM, ispctl_get_flash_skip_num},
