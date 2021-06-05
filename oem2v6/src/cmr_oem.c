@@ -951,6 +951,9 @@ static cmr_int camera_fdr_handle_postv1rgb(struct camera_context *cxt,
 		        frame->fd, pic_size.width, pic_size.height, vir_addr.addr_y);
 
 		vir_addr.addr_y = buf_cfg->addr_vir[1].addr_y;
+		// 20210605: dcam don't crop this image, so save file as sensor size
+		pic_size.width = cxt->sn_cxt.cur_sn_size.width;
+		pic_size.height = cxt->sn_cxt.cur_sn_size.height;
 		buf_size = pic_size.width * pic_size.height * 2;
 		camera_invalidate_buf(cxt, buf_cfg->fd[1], buf_size, buf_cfg->addr[1].addr_y, buf_cfg->addr_vir[1].addr_y);
 		dump_image_tags(cxt->dbg_cxt.tags, "low",
