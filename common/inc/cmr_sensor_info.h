@@ -110,6 +110,12 @@ struct sensor_ex_info {
     cmr_s64 sensor_max_exp;
 };
 
+#define SNSOTP_PID_MAX_SIZE 256
+struct snsotp_pid_info {
+  cmr_u8 snsotp_pid[SNSOTP_PID_MAX_SIZE];
+  cmr_u8 snsotp_pid_size;
+};
+
 #define SNSPID_SIZE 32
 
 #define BOKEH_SNSPID_SIZE 64
