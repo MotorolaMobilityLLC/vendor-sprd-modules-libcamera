@@ -3880,7 +3880,7 @@ cmr_s32 pd_otp_info_parser(af_ctrl_t * af, struct afctrl_init_in * in_p)
 			    || (module_info[4] == 5 && module_info[5] == 0)) {
 				af->pdaf_rdm_otp_data = (cmr_u8 *) pdaf_otp_info_ptr->rdm_info.data_addr;
 				ISP_LOGV("type1 pdaf otp map v0.4 or v0.5, Addr:%p", af->pdaf_rdm_otp_data);
-			} else if (module_info[4] == 1 && module_info[5] == 0 && module_info[0] == 0x53 && module_info[1] == 0x50 && module_info[2] == 0x52
+			} else if (module_info[4] == 1 && (module_info[5] == 0 || module_info[5] == 1) && module_info[0] == 0x53 && module_info[1] == 0x50 && module_info[2] == 0x52
 				   && module_info[3] == 0x44) {
 				af->pdaf_rdm_otp_data = (cmr_u8 *) pdaf_otp_info_ptr->rdm_info.data_addr + 1;
 				ISP_LOGV("type1 pdaf otp map v1.0, Addr:%p, 0:[%d]1:[%d]", af->pdaf_rdm_otp_data, *(af->pdaf_rdm_otp_data + 0), *(af->pdaf_rdm_otp_data + 1));

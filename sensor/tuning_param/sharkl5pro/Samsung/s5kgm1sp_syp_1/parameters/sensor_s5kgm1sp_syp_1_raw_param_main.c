@@ -36,6 +36,7 @@
 #include "sensor_s5kgm1sp_syp_1_raw_param_cap_1.c"
 #include "sensor_s5kgm1sp_syp_1_raw_param_video_0.c"
 #include "sensor_s5kgm1sp_syp_1_raw_param_video_1.c"
+#include "sensor_s5kgm1sp_syp_1_raw_param_video_2.c"
 
 /* End Include */
 
@@ -49,7 +50,7 @@
 
 
 /* Capture Sizes:
-	8000x6000,4000x3000
+	4000x3000,2000x1500,1280x720
 */
 
 
@@ -106,7 +107,6 @@ static struct sensor_raw_ioctrl s_s5kgm1sp_syp_1_ioctrl=
  * then the Param[2]/ Param[3] are changed accordingly.
  * NO modifying manually.
 ********************************************************************************/
-
 
 static struct sensor_version_info s_s5kgm1sp_syp_1_version_info=
 {
@@ -171,7 +171,7 @@ static struct sensor_raw_info s_s5kgm1sp_syp_1_mipi_raw_info=
 		{NULL, 0},
 		{s_s5kgm1sp_syp_1_tune_info_video_0, sizeof(s_s5kgm1sp_syp_1_tune_info_video_0)},
 		{s_s5kgm1sp_syp_1_tune_info_video_1, sizeof(s_s5kgm1sp_syp_1_tune_info_video_1)},
-		{NULL, 0},
+		{s_s5kgm1sp_syp_1_tune_info_video_2, sizeof(s_s5kgm1sp_syp_1_tune_info_video_2)},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
@@ -192,7 +192,7 @@ static struct sensor_raw_info s_s5kgm1sp_syp_1_mipi_raw_info=
 		NULL,
 		&s_s5kgm1sp_syp_1_fix_info_video_0,
 		&s_s5kgm1sp_syp_1_fix_info_video_1,
-		NULL,
+		&s_s5kgm1sp_syp_1_fix_info_video_2,
 		NULL,
 		NULL,
 		NULL,
@@ -210,7 +210,7 @@ static struct sensor_raw_info s_s5kgm1sp_syp_1_mipi_raw_info=
 		{NULL, 0},
 		{s_s5kgm1sp_syp_1_video_0_tool_ui_input, sizeof(s_s5kgm1sp_syp_1_video_0_tool_ui_input)},
 		{s_s5kgm1sp_syp_1_video_1_tool_ui_input, sizeof(s_s5kgm1sp_syp_1_video_1_tool_ui_input)},
-		{NULL, 0},
+		{s_s5kgm1sp_syp_1_video_2_tool_ui_input, sizeof(s_s5kgm1sp_syp_1_video_2_tool_ui_input)},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
