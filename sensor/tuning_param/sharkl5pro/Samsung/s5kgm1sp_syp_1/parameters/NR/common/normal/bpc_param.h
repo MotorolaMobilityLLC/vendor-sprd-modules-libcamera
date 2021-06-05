@@ -103,13 +103,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x0000,
+		0x0010,
 		/*block_start_row*/
-		0x0000,
+		0x003C,
 		/*block_end_col*/
-		0x0000,
+		0x0F90,
 		/*block_end_row*/
-		0x0000,
+		0x0B7C,
 
 	},
 	/*bpc_result_en*/
@@ -221,13 +221,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x0000,
+		0x0010,
 		/*block_start_row*/
-		0x0000,
+		0x003C,
 		/*block_end_col*/
-		0x0000,
+		0x0F90,
 		/*block_end_row*/
-		0x0000,
+		0x0B7C,
 
 	},
 	/*bpc_result_en*/
@@ -339,13 +339,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x0000,
+		0x0010,
 		/*block_start_row*/
-		0x0000,
+		0x003C,
 		/*block_end_col*/
-		0x0000,
+		0x0F90,
 		/*block_end_row*/
-		0x0000,
+		0x0B7C,
 
 	},
 	/*bpc_result_en*/
@@ -457,13 +457,13 @@
 		/*ppi_en*/
 		0x00000001,
 		/*block_start_col*/
-		0x0000,
+		0x0010,
 		/*block_start_row*/
-		0x0000,
+		0x003C,
 		/*block_end_col*/
-		0x0000,
+		0x0F90,
 		/*block_end_row*/
-		0x0000,
+		0x0B7C,
 
 	},
 	/*bpc_result_en*/

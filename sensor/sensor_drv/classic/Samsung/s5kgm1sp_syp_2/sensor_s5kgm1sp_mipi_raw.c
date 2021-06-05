@@ -76,51 +76,54 @@ static cmr_int s5kgm1sp_drv_init_fps_info(cmr_handle handle) {
  */
 
 static const cmr_u16 s5kgm1sp_pd_is_right[] = {
-    0, 0,
-    1, 1,
-    1, 1,
-    0, 0,
-    1, 1,
-    0, 0,
-    0, 0,
-    1, 1,
+0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,
 };
 
 static const cmr_u16 s5kgm1sp_pd_row[] = {
-    1, 1,
-    5, 5,
-    9, 9,
-    13, 13,
-    17, 17,
-    21, 21,
-    25, 25,
-    29, 29,
+1,1,1,1,5,5,5,5,9,9,9,9,13,13,13,13,17,17,17,17,21,21,21,21,25,25,25,25,29,29,29,29,
 };
 
 static const cmr_u16 s5kgm1sp_pd_col[] = {
-    2, 18,
-    2, 18,
-    14, 30,
-    14, 30,
-    2, 18,
-    2, 18,
-    14, 30,
-    14, 30,
+2,10,18,26,2,10,18,26,6,14,22,30,6,14,22,30,2,10,18,26,2,10,18,26,6,14,22,30,6,14,22,30,
 };
 
 
 static const struct pd_pos_info _s5kgm1sp_pd_pos_l[] = {
-    {2, 1}, {18, 1},
-    {14, 13}, {30, 13},
-    {2, 21}, {18, 21},
-    {14, 25}, {30, 25},
+{2,1},
+{10,1},
+{18,1},
+{26,1},
+{6,13},
+{14,13},
+{22,13},
+{30,13},
+{2,21},
+{10,21},
+{18,21},
+{26,21},
+{6,25},
+{14,25},
+{22,25},
+{30,25},
 };
 
 static const struct pd_pos_info _s5kgm1sp_pd_pos_r[] = {
-    {2, 5}, {18, 5},
-    {14, 9}, {30, 9},
-    {2, 17}, {18, 17},
-    {14, 29}, {30, 29},
+{2,5},
+{10,5},
+{18,5},
+{26,5},
+{6,9},
+{14,9},
+{22,9},
+{30,9},
+{2,17},
+{10,17},
+{18,17},
+{26,17},
+{6,29},
+{14,29},
+{22,29},
+{30,29},
 };
 
 struct pdaf_coordinate_tab s5kgm1sp_pd_coordinate_table[] = {
@@ -149,7 +152,7 @@ struct pdaf_block_descriptor s5kgm1sp_pd_seprator_helper = {
     .pd_line_coordinate = NULL,
 };
 
-static const cmr_u32 pd_sns_mode[] = {0, 0, 0, 1};
+static const cmr_u32 pd_sns_mode[] = {0, 0, 1, 1};
 
 cmr_int s5kgm1sp_drv_pdaf_data_process(void *buffer_handle);
 
@@ -199,7 +202,7 @@ static cmr_int s5kgm1sp_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     pdaf_info->pd_block_h = 2;
     pdaf_info->pd_pitch_x = 32;
     pdaf_info->pd_pitch_y = 32;
-    pdaf_info->pd_density_x = 16;
+    pdaf_info->pd_density_x = 8;
     pdaf_info->pd_density_y = 8;
 
     pdaf_info->vendor_type = SENSOR_VENDOR_S5KGM1SP;
@@ -962,10 +965,11 @@ static cmr_int s5kgm1sp_drv_access_val(cmr_handle handle, cmr_int param) {
     case SENSOR_VAL_TYPE_4IN1_DEINIT:
         rtn = s5kgm1sp_drv_4in1_deinit(handle, param_ptr->pval);
         break;
+#endif
     case SENSOR_VAL_TYPE_GET_PDAF_INFO:
         rtn = s5kgm1sp_drv_get_pdaf_info(handle, param_ptr->pval);
         break;
-#endif
+
     default:
         break;
     }
