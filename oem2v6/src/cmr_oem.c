@@ -16574,9 +16574,13 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
     cmr_u32 flash_status = 0;
     struct sprd_img_capture_param capture_param;
     struct common_isp_cmd_param isp_param;
-
     struct sensor_exp_info sensor_info;
+    int is_isptool = 0;
+    char value[PROPERTY_VALUE_MAX];
 
+    property_get("persist.vendor.cam.isptool.mode.enable", value, "false");
+    if (strcmp(value, "true") == 0)
+        is_isptool = 1;
     ret = camera_get_sensor_info(cxt, cxt->camera_id, &sensor_info);
 
     cmr_bzero(&capture_param, sizeof(capture_param));
@@ -16626,7 +16630,7 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         } else {
             return ret;
         }
-    } else if (cxt->skipframe == 1) {
+    } else if (cxt->skipframe == 1 && is_isptool == 0) {
         // need get 1 frame start from next sof interrupt
         capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
         capture_param.cap_cnt = 1;
