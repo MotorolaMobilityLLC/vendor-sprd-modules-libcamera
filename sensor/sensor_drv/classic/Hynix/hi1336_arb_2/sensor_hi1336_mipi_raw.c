@@ -567,6 +567,30 @@ static void get_back_cam_efuse_id(cmr_handle handle)
 
     }
 
+static cmr_u8 hi1336_snspid_is_init = 0;
+
+static cmr_int hi1336_drv_save_snspid(cmr_handle handle) {
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    cmr_u8 snspid_size = 32;
+    cmr_u8 snspid[32] = {0};
+
+    SENSOR_LOGI("E");
+    //现在客户sensor读不出序列号,需要暂时强制写固定值32个8;
+    //后面客户需要参考售后标定文档示例,将sensor序列号调试读取成功,最终替换掉下面的固定值;
+    for (int i = 0; i < 32; i++) {
+        snspid[i] = 8;
+    }
+    if (sns_drv_cxt->ops_cb.set_snspid) {
+        sns_drv_cxt->ops_cb.set_snspid(
+            sns_drv_cxt->caller_handle, sns_drv_cxt->sensor_id, snspid, snspid_size);
+    }
+
+    hi1336_snspid_is_init = 1;
+    return SENSOR_SUCCESS;
+}
+
+
 /*==============================================================================
  * Description:
  * identify sensor id
@@ -596,6 +620,9 @@ static cmr_int hi1336_drv_identify(cmr_handle handle, cmr_uint param) {
                     ver_value, mid_value);
 
         if (hi1336_VER_VALUE == ver_value && 0x26 == mid_value) {
+		     if (!hi1336_snspid_is_init) {
+                hi1336_drv_save_snspid(handle);
+            }
             if(!identify_success){
                 sensor_rid_save_sensor_name(SENSOR_HWINFOR_BACK_CAM_NAME, "0_hi1336_arb_2");
                 get_back_cam_efuse_id(handle);
