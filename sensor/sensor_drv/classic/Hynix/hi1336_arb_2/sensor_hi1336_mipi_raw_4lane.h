@@ -1346,6 +1346,10 @@ static SENSOR_REG_T hi1336_shutter_reg[] = {
     {0x020A, 0x0000},
 };
 
+static struct sensor_i2c_reg_tab hi1336_init_tab = {
+    .settings = hi1336_init_setting, .size = ARRAY_SIZE(hi1336_init_setting),
+};
+
 static struct sensor_i2c_reg_tab hi1336_shutter_tab = {
     .settings = hi1336_shutter_reg, .size = ARRAY_SIZE(hi1336_shutter_reg),
 };
