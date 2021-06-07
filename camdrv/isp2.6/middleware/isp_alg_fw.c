@@ -310,6 +310,9 @@ struct mfsr_info {
 struct hdr_info {
 	cmr_s32 tuning_param_size;
 	void *tuning_param_ptr;
+	
+	cmr_u8 *log_hdr;
+	cmr_u32 log_hdr_size;
 };
 
 struct ai_info {
