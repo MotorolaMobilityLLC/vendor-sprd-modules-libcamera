@@ -29,7 +29,6 @@
 #include "swa_param.h"
 #include "swa_ipm_api.h"
 
-
 static long s_swa_log_level = 4;
 
 #ifdef ANDROID_LOG
@@ -147,6 +146,8 @@ int swa_hdr_process(void * ipmpro_hanlde,
 	struct swa_frame_param *frm_param;
 	struct swa_hdr_param *hdr_param;
 	sprd_hdr_param_t alg_param;
+	sprd_hdr_get_exif_size_param_t get_exif_size;
+	sprd_hdr_get_exif_info_param_t get_exif_param;
 
 	if (ipmpro_hanlde == NULL || in == NULL || out == NULL || param == NULL) {
 		SWA_LOGE("fail to get input %p %p %p %p\n", ipmpro_hanlde, in, out, param);
@@ -215,6 +216,33 @@ int swa_hdr_process(void * ipmpro_hanlde,
 		SWA_LOGE("fail to process HDR\n");
 	else
 		SWA_LOGD("Done success\n");
+
+	memset(&get_exif_size, 0, sizeof(sprd_hdr_get_exif_size_param_t));
+	ret = sprd_hdr_adpt_ctrl(cxt->hdr_handle, SPRD_HDR_GET_EXIF_SIZE_CMD,
+								(void *)&get_exif_size);
+	SWA_LOGD("exif_size %d", get_exif_size.exif_size);
+
+	if (ret)
+		SWA_LOGE("fail to do HDR_GET_EXIF_SIZE\n");
+	else
+		SWA_LOGD("1.HDR_GET_EXIF_SIZE success\n");
+
+	memset(&get_exif_param, 0, sizeof(sprd_hdr_get_exif_info_param_t));
+	get_exif_param.exif_info = malloc(get_exif_size.exif_size);
+	ret = sprd_hdr_adpt_ctrl(cxt->hdr_handle, SPRD_HDR_GET_EXIF_INFO_CMD,
+								(void *)&get_exif_param);
+	SWA_LOGD("exif_info %p", get_exif_param.exif_info);
+
+	if (ret)
+		SWA_LOGE("fail to do HDR_GET_EXIF_PARAM\n");
+	else
+		SWA_LOGD("2.HDR_GET_EXIF_PARAM success\n");
+
+	hdr_param->out_exif_ptr = get_exif_param.exif_info;
+	hdr_param->out_exif_size = get_exif_size.exif_size;
+	SWA_LOGD("exif_info size = %d", hdr_param->out_exif_size);
+
+	free(get_exif_param.exif_info);
 
 	return ret;
 }
