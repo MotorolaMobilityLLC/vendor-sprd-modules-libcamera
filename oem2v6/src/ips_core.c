@@ -176,6 +176,8 @@ static int s_dbg_ver;
 
 static const char *MFSR_START = "ISP_MFSR__";
 static const char *MFSR_END = "ISP_MFSR__";
+static const char *HDR_START = "ISP_HDR_";
+static const char *HDR_END = "ISP_HDR_";
 
 #define COPY_MAGIC(m) \
 {cmr_u32 len; len = strlen(m); memcpy(dst + off, m, len); off += len;}
@@ -328,11 +330,12 @@ static void swa_jpeg_dbginfo(struct ips_req_node *req, struct ips_jpeg_param_t *
 	CMR_LOGD("start addr 0x%lx, data %02x, %02x, size %d, info ptr %p\n",
 		req->frm_jpeg.addr_vir.addr_y,
 		ptemp[0], ptemp[1], req->frm_jpeg.buf_size, pstart);
-	CMR_LOGD("dbg info %p %d\n",pm->isp_debug_info, pm->isp_debug_info_size);
+	CMR_LOGD("dbg info %p %d\n", pm->isp_debug_info, pm->isp_debug_info_size);
 
 	memcpy(pstart, pm->isp_debug_info, pm->isp_debug_info_size);
 
 	/* re-pack debug info for post-processing */
+	CMR_LOGD("sprd_isp_debug_info size %d", sizeof(struct sprd_isp_debug_info));
 	memcpy(&hdr, pstart, sizeof(struct sprd_isp_debug_info));
 	memcpy(&log_info, pstart + sizeof(struct sprd_isp_debug_info), sizeof(struct sprd_isp_debug_info));
 	total_size = hdr.debug_len - 4;
@@ -342,18 +345,37 @@ static void swa_jpeg_dbginfo(struct ips_req_node *req, struct ips_jpeg_param_t *
 	for (i = 0; i < IPS_TYPE_MAX; i++) {
 		if (req->dbg_info[i].data == NULL || req->dbg_info[i].data_size == 0)
 			continue;
-		if (i != IPS_TYPE_MFSR)
+		if (i != IPS_TYPE_MFSR && i != IPS_TYPE_HDR)
 			continue;
 		offset = 0;
 		CMR_LOGD("cpy start, data  %p, size %d\n",
 			req->dbg_info[i].data, req->dbg_info[i].data_size);
-		copy_dbg_info((void *)pstart, req->dbg_info[i].data, req->dbg_info[i].data_size,
-				MFSR_START, MFSR_END, &offset);
-		log_info.mfsr_off = total_size;
-		log_info.mfsr_len = offset;
-		total_size += offset;
-		pstart += offset;
-		CMR_LOGD("size %d, off %d, ptr %p\n", total_size, offset, pstart);
+		if (i == IPS_TYPE_MFSR) {
+			copy_dbg_info((void *)pstart, req->dbg_info[i].data, req->dbg_info[i].data_size,
+					MFSR_START, MFSR_END, &offset);
+			if (offset) {
+				log_info.mfsr_off = total_size;
+				total_size += offset;
+				log_info.mfsr_len = offset;
+			} else {
+				log_info.mfsr_off = 0;
+			}
+			pstart += offset;
+			CMR_LOGD("isp_type %d size %d, off %d, ptr %p\n", i, total_size, offset, pstart);
+		}
+		if (i == IPS_TYPE_HDR) {
+			copy_dbg_info((void *)pstart, req->dbg_info[i].data, req->dbg_info[i].data_size,
+					HDR_START, HDR_END, &offset);
+			if (offset) {
+				log_info.hdr_off = total_size;
+				total_size += offset;
+				log_info.hdr_len = offset;
+			} else {
+				log_info.hdr_off = 0;
+			}
+			pstart += offset;
+			CMR_LOGD("isp_type %d size %d, off %d, ptr %p\n", i, total_size, offset, pstart);
+		}
 	}
 	end_tag = SPRD_DEBUG_END_FLAG;
 	memcpy(pstart, &end_tag, sizeof(cmr_u32));
@@ -1038,6 +1060,17 @@ static cmr_int ipmpro_hdr(struct ips_context *ips_ctx,
 	req->status = IPS_REQ_PROC_DONE;
 	req->frame_total = 1;
 	CMR_LOGD("Done");
+
+	if (s_dbg_ver && frm_param->hdr_param.out_exif_ptr && frm_param->hdr_param.out_exif_size) {
+		req->dbg_info[IPS_TYPE_HDR].data = malloc(frm_param->hdr_param.out_exif_size);
+		if (req->dbg_info[IPS_TYPE_HDR].data) {
+			memcpy(req->dbg_info[IPS_TYPE_HDR].data,
+					frm_param->hdr_param.out_exif_ptr,
+					frm_param->hdr_param.out_exif_size);
+			req->dbg_info[IPS_TYPE_HDR].data_size = frm_param->hdr_param.out_exif_size;
+		}
+	}
+
 	return ret;
 }
 

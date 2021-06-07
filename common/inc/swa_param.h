@@ -31,6 +31,8 @@ struct swa_hdr_param {
 	void *ae_exp_gain_info;
 	void* (*heap_mem_malloc)(size_t size, char* type);
 	void (*heap_mem_free)(void* addr);
+	void *out_exif_ptr;
+	uint32_t out_exif_size;
 };
 
 /*========= for HDR end  ========*/
