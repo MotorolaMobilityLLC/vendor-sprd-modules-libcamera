@@ -24,9 +24,9 @@
 
 #include "sensor_hi1336_mipi_raw_4lane.h"
 
-static char back_cam_efuse_id[64] = "88888888888888888888888888888888";
+static char back_cam_efuse_id[64] = "0";
 static bool identify_success = false;
-static cmr_u8 hi1336_snsotp_pid[16] = {0};
+static cmr_u8 hi1336_snsotp_pid[32] = {0};
 static cmr_u8 hi1336_snsotp_pid_size = 32;
 /*==============================================================================
  * Description:
@@ -388,7 +388,7 @@ static cmr_int hi1336_drv_get_snsotp_pid(cmr_handle handle, cmr_u32 *param) {
     }
 
     return SENSOR_SUCCESS;
-    }
+}
 
 static const cmr_u16 hi1336_pd_is_right[] = {0, 1, 0, 1};   //
 static const cmr_u16 hi1336_pd_row[] = {4, 0, 8, 12};     //y
@@ -504,70 +504,42 @@ static void get_back_cam_efuse_id(cmr_handle handle)
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    return;
+    hi1336_drv_write_reg2sensor(handle, &hi1336_init_tab);
 
-    hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x0B02, 0x01);//Fast standy on
-    usleep(10*1000);
-    hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x0809, 0x00);//Stream off
-    usleep(10*1000);
-    hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x0B00, 0x00);//Stream off
-    usleep(10*1000);
-	    temp = hw_sensor_grc_read_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x0B02, BITS_ADDR16_REG8);
-        SENSOR_LOGI("get_back_cam_efuse_id[%d] 0x0B02= %x", i, temp);
-	    temp = hw_sensor_grc_read_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x0809, BITS_ADDR16_REG8);
-        SENSOR_LOGI("get_back_cam_efuse_id[%d] 0x0809= %x", i, temp);
-	    temp = hw_sensor_grc_read_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x0B00, BITS_ADDR16_REG8);
-        SENSOR_LOGI("get_back_cam_efuse_id[%d] 0x0B00= %x", i, temp);
-    usleep(10*1000);
-    hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x0260, 0x10);//OTP test mode enable
-    usleep(10*1000);
-    hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x0809, 0x00);//Stream on
-    usleep(10*1000);
-    hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x0B00, 0x01);//Stream on
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x0B02, 0x01, BITS_ADDR16_REG8);//Fast standy on
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x0809, 0x00, BITS_ADDR16_REG8);//Stream off
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x0B00, 0x00, BITS_ADDR16_REG8);//Stream off
+    usleep(30*1000);
+
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x0260, 0x10, BITS_ADDR16_REG8);//OTP test mode enable
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x0809, 0x00, BITS_ADDR16_REG8);//Stream on
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x0B00, 0x01, BITS_ADDR16_REG8);//Stream on
     usleep(10*1000);
 
-    temp = hw_sensor_grc_read_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x0260, BITS_ADDR16_REG8);
-    SENSOR_LOGI("get_back_cam_efuse_id[%d] 0x0260= %x", i, temp);
-    temp = hw_sensor_grc_read_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x0809, BITS_ADDR16_REG8);
-    SENSOR_LOGI("get_back_cam_efuse_id[%d] 0x0809= %x", i, temp);
-    temp = hw_sensor_grc_read_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x0B00, BITS_ADDR16_REG8);
-    SENSOR_LOGI("get_back_cam_efuse_id[%d] 0x0B00= %x", i, temp);
-    hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x030a, 0x00);
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x030a, 0x00, BITS_ADDR16_REG8);
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x030b, 0x01, BITS_ADDR16_REG8);
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x0302, 0x01, BITS_ADDR16_REG8);//OTP read mode
     usleep(10*1000);
-    hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x030b, 0x01);
-    usleep(10*1000);
-    hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x0302, 0x01);//OTP read mode
-    usleep(10*1000);
-    temp = hw_sensor_grc_read_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x030a, BITS_ADDR16_REG8);
-    SENSOR_LOGI("get_back_cam_efuse_id[%d] 0x030a= %x", i, temp);
-    temp = hw_sensor_grc_read_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x030b, BITS_ADDR16_REG8);
-    SENSOR_LOGI("get_back_cam_efuse_id[%d] 0x030b= %x", i, temp);
-    temp = hw_sensor_grc_read_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x0302, BITS_ADDR16_REG8);
-    SENSOR_LOGI("get_back_cam_efuse_id[%d] 0x0302= %x", i, temp);
-    for(i=0;i<10;i++)
+
+    for(i=0;i<9;i++)
     {
-        //hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x030a, ((0x0000+i >> 8) & 0xff));   //start address H
-        //hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x030b, (0x0000+i & 0xff));   //start address L
-        //hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x0302, 0x01);   //OTP read mode
 	    efuse_id = hw_sensor_grc_read_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x0308, BITS_ADDR16_REG8);
         SENSOR_LOGI("get_back_cam_efuse_id[%d] = %x", i, efuse_id);
 
 	    sprintf(back_cam_efuse_id+2*i,"%02x",efuse_id);
-	    usleep(10*1000);
+	    usleep(1*1000);
     }
 
-    hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x0809, 0x00);     // Stream off
-    hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x0B00, 0x00);     // Stream off
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x0809, 0x00, BITS_ADDR16_REG8);     // Stream off
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x0B00, 0x00, BITS_ADDR16_REG8);     // Stream off
     usleep(10*1000);
 
-    hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x0260, 0x00);
-    hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x0809, 0x01);     // Stream on
-    hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x0B00, 0x01);     // Stream on
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x0260, 0x00, BITS_ADDR16_REG8);
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x0809, 0x01, BITS_ADDR16_REG8);     // Stream on
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x0B00, 0x01, BITS_ADDR16_REG8);     // Stream on
     usleep(1*1000);
 
-    }
-
-static cmr_u8 hi1336_snspid_is_init = 0;
+}
 
 static cmr_int hi1336_drv_save_snspid(cmr_handle handle) {
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -576,17 +548,14 @@ static cmr_int hi1336_drv_save_snspid(cmr_handle handle) {
     cmr_u8 snspid[32] = {0};
 
     SENSOR_LOGI("E");
-    //现在客户sensor读不出序列号,需要暂时强制写固定值32个8;
-    //后面客户需要参考售后标定文档示例,将sensor序列号调试读取成功,最终替换掉下面的固定值;
-    for (int i = 0; i < 32; i++) {
-        snspid[i] = 8;
+    for (int i = 0; i < 18; i++) {
+        snspid[i] = back_cam_efuse_id[i];
     }
     if (sns_drv_cxt->ops_cb.set_snspid) {
         sns_drv_cxt->ops_cb.set_snspid(
             sns_drv_cxt->caller_handle, sns_drv_cxt->sensor_id, snspid, snspid_size);
     }
 
-    hi1336_snspid_is_init = 1;
     return SENSOR_SUCCESS;
 }
 
@@ -620,13 +589,11 @@ static cmr_int hi1336_drv_identify(cmr_handle handle, cmr_uint param) {
                     ver_value, mid_value);
 
         if (hi1336_VER_VALUE == ver_value && 0x26 == mid_value) {
-		     if (!hi1336_snspid_is_init) {
-                hi1336_drv_save_snspid(handle);
-            }
             if(!identify_success){
                 sensor_rid_save_sensor_name(SENSOR_HWINFOR_BACK_CAM_NAME, "0_hi1336_arb_2");
                 get_back_cam_efuse_id(handle);
                 sensor_rid_save_sensor_name(SENSOR_HWINFOR_BACK_CAM_EFUSE, back_cam_efuse_id);
+                hi1336_drv_save_snspid(handle);
                 identify_success = true;
             }
             SENSOR_LOGI("this is hi1336_arb_2 sensor, module id: %x", mid_value);
