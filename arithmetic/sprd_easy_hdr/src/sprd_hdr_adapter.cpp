@@ -349,6 +349,7 @@ int sprd_hdr_adpt_ctrl(void *handle, sprd_hdr_cmd_t cmd, void *param)
     case SPRD_HDR_GET_EXIF_SIZE_CMD: {
         sprd_hdr_get_exif_size_param_t *hdr_param = (sprd_hdr_get_exif_size_param_t *)param;
         hdr_param->exif_size = hdr_adapt_get_exif_size();
+        HDR_LOGI("exif_size %d", hdr_param->exif_size);
         break;
     }
     case SPRD_HDR_PROCESS_CMD: {
