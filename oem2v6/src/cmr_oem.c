@@ -5868,7 +5868,7 @@ cmr_int camera_ipm_open_sw_algorithm(cmr_handle oem_handle) {
     }
 
     if (1 == camera_get_hdr_flag(cxt)) {
-        if (cxt->multicam_highres_mode) {
+        if (cxt->is_high_res_mode || cxt->multicam_highres_mode) {
             in_param.frame_size.width = cxt->snp_cxt.request_size.width / 2;
             in_param.frame_size.height = cxt->snp_cxt.request_size.height / 2;
         } else {
