@@ -3432,8 +3432,6 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 		}
 	}
 #endif
-
-exit:
 	ISP_LOGV("done %ld", ret);
 	return ret;
 }
@@ -5818,7 +5816,7 @@ error_dlsym:
 #endif
 	cxt->ispalg_lib_handle = NULL;
 error_dlopen:
-
+	ret = ISP_ERROR;
 	return ret;
 }
 
@@ -7863,7 +7861,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	property_get("persist.vendor.cam.all_data.mode", value, "0");
 	if (!strcmp(value, "cap_all"))
 		cxt->save_data = 1;
-	if (0 && input_ptr->init_param->is_simulator)
+	if (input_ptr->init_param->is_simulator)
 		cxt->save_data = 0;
 	cxt->dev_access_handle = input_ptr->dev_access_handle;
 	cxt->lib_use_info = sensor_raw_info_ptr->libuse_info;
