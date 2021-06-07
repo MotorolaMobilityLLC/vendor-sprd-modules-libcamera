@@ -128,7 +128,11 @@ typedef int64_t nsecs_t;
 #define MAX_PREVIEW_SIZE_HEIGHT 1080
 
 /*ae alg can not convergence in 3 frame duration, so change it to 4*/
-#define EV_EFFECT_FRAME_NUM 5
+#ifdef CAMERA_MANULE_SNEOSR
+#define EV_EFFECT_FRAME_NUM 6
+#else
+#define EV_EFFECT_FRAME_NUM 4
+#endif
 
 #define SAFE_FREE(a)                                                           \
     do {                                                                       \
