@@ -38,6 +38,7 @@ int hdr_adapt_get_exif_info(void *handle, sprd_hdr_get_exif_info_param_t *param)
     if (g_hdr_version == 2) {
         hdr_exif_info_t *exif_info = (hdr_exif_info_t *)param->exif_info;
         ret = sprd_hdr_get_exif_info(handle, exif_info);
+        HDR_LOGI("exif_info %p %d %d %d", exif_info, exif_info->gain_ae[0], exif_info->gain_ae[1], exif_info->gain_ae[2]);
     }
 #endif
     return ret;
@@ -358,6 +359,7 @@ int sprd_hdr_adpt_ctrl(void *handle, sprd_hdr_cmd_t cmd, void *param)
     case SPRD_HDR_GET_EXIF_INFO_CMD: {
         sprd_hdr_get_exif_info_param_t *hdr_param = (sprd_hdr_get_exif_info_param_t *)param;
         ret = hdr_adapt_get_exif_info(handle, hdr_param);
+        HDR_LOGI("exif_info %p", hdr_param->exif_info);
         break;
     }
     case SPRD_HDR_FAST_STOP_CMD: {

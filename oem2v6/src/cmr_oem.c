@@ -11843,6 +11843,11 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
          ptr_flag = 1;
          isp_param_ptr = param_ptr->cmd_ptr;
          break;
+    case COM_ISP_SET_HDR_LOG:
+         isp_cmd = ISP_CTRL_SET_HDR_LOG;
+         ptr_flag = 1;
+         isp_param_ptr = param_ptr->cmd_ptr;
+         break;
 
     default:
         CMR_LOGE("don't support cmd %ld", cmd_type);
