@@ -12542,7 +12542,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         CMR_LOGE("failed to get envir %ld", ret);
         goto exit;
     }
-    camera_set_hdr_flag(cxt, setting_param.cmd_type_value);
+    camera_set_hdr_flag(cxt, (cmr_u32)setting_param.cmd_type_value);
     out_param_ptr->is_hdr = setting_param.cmd_type_value;
 
      /*get fdr flag*/
@@ -12935,7 +12935,7 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
         if (ret) {
             CMR_LOGE("failed to get hdr %ld", ret);
         } else {
-            camera_set_hdr_flag(cxt, setting_param.cmd_type_value);
+            camera_set_hdr_flag(cxt, (cmr_u32)setting_param.cmd_type_value);
             out_ptr->is_hdr = camera_get_hdr_flag(cxt);
         }
     } else {
