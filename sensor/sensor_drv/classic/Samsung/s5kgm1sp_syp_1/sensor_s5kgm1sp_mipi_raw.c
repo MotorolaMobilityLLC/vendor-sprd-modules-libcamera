@@ -23,6 +23,9 @@
 #define MIPI_RAW_INFO g_s5kgm1sp_mipi_raw_info
 #define MODULE_INFO s_s5kgm1sp_module_info_tab
 
+static char back_cam_efuse_id[64] = "0";
+static bool identify_success = false;
+
 static cmr_int s5kgm1sp_drv_init_fps_info(cmr_handle handle) {
     cmr_int rtn = SENSOR_SUCCESS;
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -230,6 +233,53 @@ cmr_int s5kgm1sp_drv_pdaf_data_process(void *buffer_handle) {
     return SENSOR_SUCCESS;
 }
 
+static void get_back_cam_efuse_id(cmr_handle handle)
+{
+    cmr_u16 i = 0, j = 0;
+    cmr_u16 startadd = 0;
+    cmr_u16 efuse_id;
+    SENSOR_IC_CHECK_HANDLE_VOID(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, 0x5A>>1, 0x0100, 0x01, BITS_ADDR16_REG8);//Stream on
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, 0x5A>>1, 0x0A02, 0x00, BITS_ADDR16_REG8);//Write OTP Page
+    usleep(50*1000);
+
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, 0x5A>>1, 0x0A00, 0x01, BITS_ADDR16_REG8);//Read CMD
+    usleep(1*1000);
+
+    for(i=0;i<6;i++)
+    {
+	    efuse_id = hw_sensor_grc_read_i2c(sns_drv_cxt->hw_handle, 0x5A>>1, 0x0A24+i, BITS_ADDR16_REG8);
+        SENSOR_LOGI("get_back_cam_efuse_id[%d] = %x", i, efuse_id);
+
+	    sprintf(back_cam_efuse_id+2*i,"%02x",efuse_id);
+	    usleep(1*1000);
+    }
+
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, 0x5A>>1, 0x0A00, 0x04, BITS_ADDR16_REG8); //Stream off
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, 0x5A>>1, 0x0A00, 0x00, BITS_ADDR16_REG8); //Stream off
+}
+
+static cmr_int s5kgm1sp_drv_save_snspid(cmr_handle handle) {
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    cmr_u8 snspid_size = 32;
+    cmr_u8 snspid[32] = {0};
+
+    SENSOR_LOGI("E");
+    for (int i = 0; i < 12; i++) {
+        snspid[i] = back_cam_efuse_id[i];
+    }
+    if (sns_drv_cxt->ops_cb.set_snspid) {
+        sns_drv_cxt->ops_cb.set_snspid(
+            sns_drv_cxt->caller_handle, sns_drv_cxt->sensor_id, snspid, snspid_size);
+    }
+
+    return SENSOR_SUCCESS;
+}
+
+
 static cmr_int s5kgm1sp_drv_identify(cmr_handle handle, cmr_int param) {
     cmr_u16 pid_value = 0x00;
     cmr_u16 mid_value = 0x00;
@@ -250,8 +300,14 @@ static cmr_int s5kgm1sp_drv_identify(cmr_handle handle, cmr_int param) {
     SENSOR_LOGI("Identify: pid_value = %x, mid_value = %x", pid_value, mid_value);
 
     if (s5kgm1sp_PID_VALUE == pid_value && 0x0d == mid_value) {
+        if(!identify_success){
+            sensor_rid_save_sensor_name(SENSOR_HWINFOR_BACK_CAM_NAME, "0_s5kgm1sp_syp_1");
+            get_back_cam_efuse_id(handle);
+            sensor_rid_save_sensor_name(SENSOR_HWINFOR_BACK_CAM_EFUSE, back_cam_efuse_id);
+            s5kgm1sp_drv_save_snspid(handle);
+            identify_success = true;
+        }
         SENSOR_LOGI("this is s5kgm1sp sensor ofilm!");
-        sensor_rid_save_sensor_name(SENSOR_HWINFOR_BACK_CAM_NAME, "0_s5kgm1sp_syp_1");
         ret_value = SENSOR_SUCCESS;
         s5kgm1sp_drv_init_fps_info(handle);
     } else {
