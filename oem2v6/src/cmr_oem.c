@@ -10808,10 +10808,8 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
         }
         cmr_bzero(&flash_opt, sizeof(flash_opt));
 
-        if ((param_ptr->cmd_value == FLASH_OPEN ||
-             param_ptr->cmd_value == FLASH_HIGH_LIGHT) &&
-            (cxt->is_multi_mode == MODE_MULTI_CAMERA || cxt->camera_id == 0 ||
-             cxt->camera_id == 4)) {
+        if (param_ptr->cmd_value == FLASH_OPEN ||
+             param_ptr->cmd_value == FLASH_HIGH_LIGHT) {
             cmr_get_leds_ctrl(oem_handle, &flash_opt.led0_enable,
                               &flash_opt.led1_enable);
         } else {
