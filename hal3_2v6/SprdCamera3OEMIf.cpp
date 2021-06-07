@@ -281,7 +281,6 @@ bool SprdCamera3OEMIf::mZslCaptureExitLoop = false;
 ASensorManager *SprdCamera3OEMIf::mCTSensorManager = NULL;
 ASensorEventQueue *SprdCamera3OEMIf::mCTSensorEventQueue = NULL;
 const ASensor *SprdCamera3OEMIf::mcolortempSensor = NULL;
-uint32_t SprdCamera3OEMIf::mcolor_temp_sensor_flag = 0;
 uint32_t SprdCamera3OEMIf::mcolor_temp_sensor_count = 0;
 Mutex SprdCamera3OEMIf::mCTlock = Mutex();
 #endif
@@ -13914,15 +13913,13 @@ void *SprdCamera3OEMIf::color_temp_process_init(void) {
 
     Mutex::Autolock l(mCTlock);
     mcolor_temp_sensor_count++;
-    HAL_LOGD("mcolor_temp_sensor_count %d, mcolor_temp_sensor_flag %d",
-                       mcolor_temp_sensor_count, mcolor_temp_sensor_flag);
-    if(mcolor_temp_sensor_flag == 1){
-        HAL_LOGE("color temp sensor has registered");
+    HAL_LOGD("mcolor_temp_sensor_count %d", mcolor_temp_sensor_count);
+    if (mcolor_temp_sensor_count != 1)
         return NULL;
-    }
 
     mCTSensorManager = ASensorManager_getInstanceForPackage("");
     if (mCTSensorManager == NULL) {
+        mcolor_temp_sensor_count--;
         HAL_LOGE("can not get ISensorManager service");
         return NULL;
     }
@@ -13939,15 +13936,17 @@ void *SprdCamera3OEMIf::color_temp_process_init(void) {
             HAL_LOGE("Unable to register sensorUnable to register sensor "
                      "%d with rate %d and report latency %d" PRId64 "",
                      SENSOR_TYPE_SPRD_COLOR_TEMP, GsensorRate, 0);
+            mcolor_temp_sensor_count--;
             ASensorManager_destroyEventQueue(mCTSensorManager, mCTSensorEventQueue);
             return NULL;
-        } else {
-            mcolor_temp_sensor_flag = 1;
         }
+    } else {
+        mcolor_temp_sensor_count--;
+        ASensorManager_destroyEventQueue(mCTSensorManager, mCTSensorEventQueue);
     }
 
-    HAL_LOGI("mCTSensorEventQueue 0x%x, mcolortempSensor 0x%x",
-                         mCTSensorEventQueue, mcolortempSensor);
+    HAL_LOGI("EventQueue 0x%x, Sensor 0x%x, count %d",
+        mCTSensorEventQueue, mcolortempSensor, mcolor_temp_sensor_count);
     return NULL;
 }
 
@@ -13976,19 +13975,15 @@ void *SprdCamera3OEMIf::color_temp_Sensor_process(cmr_u32* data_colortemp) {
 }
 
 void *SprdCamera3OEMIf::color_temp_process_deinit(void) {
-    HAL_LOGD("mcolor_temp_sensor_count %d, mcolor_temp_sensor_flag %d",
-               mcolor_temp_sensor_count, mcolor_temp_sensor_flag);
-    if (mcolor_temp_sensor_flag) {
-        if((--mcolor_temp_sensor_count) == 0) {
-            HAL_LOGI("mCTSensorEventQueue 0x%x, mcolortempSensor 0x%x",
-                     mCTSensorEventQueue, mcolortempSensor);
-            ASensorEventQueue_disableSensor(mCTSensorEventQueue, mcolortempSensor);
-            ASensorManager_destroyEventQueue(mCTSensorManager, mCTSensorEventQueue);
-            mCTSensorManager = NULL;
-            mCTSensorEventQueue = NULL;
-            mcolortempSensor = NULL;
-            mcolor_temp_sensor_flag = 0;
-        }
+    HAL_LOGD("mcolor_temp_sensor_count %d", mcolor_temp_sensor_count);
+    if((--mcolor_temp_sensor_count) == 0) {
+        HAL_LOGI("mCTSensorEventQueue 0x%x, mcolortempSensor 0x%x",
+                 mCTSensorEventQueue, mcolortempSensor);
+        ASensorEventQueue_disableSensor(mCTSensorEventQueue, mcolortempSensor);
+        ASensorManager_destroyEventQueue(mCTSensorManager, mCTSensorEventQueue);
+        mCTSensorManager = NULL;
+        mCTSensorEventQueue = NULL;
+        mcolortempSensor = NULL;
     }
 
     return NULL;
