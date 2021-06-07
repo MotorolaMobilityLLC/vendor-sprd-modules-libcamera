@@ -599,8 +599,6 @@ static cmr_int hdr_arithmetic(cmr_handle class_handle,
         hdr_handle->dbg_info_size = sizeof(hdr_exif_info_t);
         CMR_LOGI("exif_info size = %d", hdr_handle->dbg_info_size);
 
-        free(get_exif_param.exif_info);
-
         if (ret != 0) {
             if (ret == 1) {
                 CMR_LOGI("hdr not executed completely");
