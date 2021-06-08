@@ -25,6 +25,8 @@
 #include "cmr_sensor_info.h"
 #include "../../ae/sprd/ae3.x/ae/inc/ae_tuning_type.h"
 
+#define SENSOR_PARAM_VERSION "ums9230_11_20a_0000"
+
 //Gamma Correction in full RGB domain
 #define SENSOR_GAMMA_POINT_NUM 257
 #define SENSOR_Y_GAMMA_POINT_NUM 129

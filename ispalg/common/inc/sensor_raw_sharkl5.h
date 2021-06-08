@@ -25,6 +25,8 @@
 #include "cmr_sensor_info.h"
 #include "../../ae/sprd/ae2.x/ae/inc/ae_tuning_type.h"
 
+#define SENSOR_PARAM_VERSION "ums312_11_20a_0000"
+
 #define AWB_POS_WEIGHT_LEN 64
 #define AWB_POS_WEIGHT_WIDTH_HEIGHT 4
 
