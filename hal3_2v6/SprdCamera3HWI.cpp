@@ -1983,6 +1983,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
 
                 mSetting->getSENSORTag(&sensorInfo);
                 sensorInfo.timestamp = capture_time;
+                sensorInfo.rollingShutterSkew = mSetting->rollingShutterSkew;
                 mSetting->setSENSORTag(sensorInfo);
                 mSetting->getREQUESTTag(&requestInfo);
                 requestInfo.id = i->request_id;
@@ -2077,6 +2078,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
 
                 mSetting->getSENSORTag(&sensorInfo);
                 sensorInfo.timestamp = capture_time;
+                sensorInfo.rollingShutterSkew = mSetting->rollingShutterSkew;
                 mSetting->setSENSORTag(sensorInfo);
                 mSetting->getREQUESTTag(&requestInfo);
                 requestInfo.id = i->request_id;
