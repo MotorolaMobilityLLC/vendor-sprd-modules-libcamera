@@ -821,9 +821,23 @@ SprdCamera3MetadataChannel::~SprdCamera3MetadataChannel() {
     FrameVec.clear();
     mAeCallBackQue.clear();
     mAfCallBackQue.clear();
-    mSyncResult.clear();
+//    mSyncResult.clear();
     mRequestInfoList.clear();
+    for (auto it = mSyncResult.begin(); it != mSyncResult.end(); ) {
+        if (it->result)
+            free_camera_metadata(it->result);
+        it = mSyncResult.erase(it);
+    }
 }
+
+void SprdCamera3MetadataChannel::initialize(){
+    for (auto it = mSyncResult.begin(); it != mSyncResult.end(); ) {
+        if (it->result)
+            free_camera_metadata(it->result);
+        it = mSyncResult.erase(it);
+    }
+}
+
 int SprdCamera3MetadataChannel::request(const CameraMetadata &metadata) {
     mSetting->updateWorkParameters(metadata);
     return 0;
@@ -1740,10 +1754,5 @@ void SprdCamera3MetadataChannel::clear(){
     mAfCallBackQue.clear();
 //    mSyncResult.clear();
     mRequestInfoList.clear();
-    for (auto it = mSyncResult.begin(); it != mSyncResult.end(); ) {
-        if (it->result)
-            free_camera_metadata(it->result);
-        it = mSyncResult.erase(it);
-    }
 }
 }; // namespace sprdcamera

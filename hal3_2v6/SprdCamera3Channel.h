@@ -203,6 +203,7 @@ class SprdCamera3MetadataChannel : public SprdCamera3Channel {
     };
     void clear();
 
+    void initialize();
     int request(const CameraMetadata &metadata);
     int request(const CameraMetadata &metadata, uint32_t frame_number);
     int channelCbRoutine(enum camera_cb_type cb, void *params);
