@@ -1791,11 +1791,7 @@ static struct sensor_module_info s_s5kgm1sp_module_info_tab[VENDOR_NUM] = {
                              .type = SENSOR_INTERFACE_TYPE_CSI2,
                              .bus_width = 4,
                              .pixel_width = 10,
-                       #ifdef _SENSOR_RAW_SHARKL5PRO_H_,
-                              .is_loose = 2,
-                       #else
-                              .is_loose = 0,
-                       #endif
+                             .is_loose = 2,
                          },
 
                      .change_setting_skip_num = 3,
