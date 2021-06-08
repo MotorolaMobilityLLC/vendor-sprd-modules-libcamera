@@ -3447,6 +3447,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         return UNKNOWN_ERROR;
     }
     mSetting->first_set= true;
+    mSetting->rollingShutterSkew = 30000000;
     mSetting->getFLASHINFOTag(&flashInfo);
     if (flashInfo.available) {
         SprdCamera3Flash::reserveFlash(mCameraId);
@@ -12648,9 +12649,7 @@ void SprdCamera3OEMIf::getRollingShutterSkew() {
     RollingShutterSkew = mHalOem->ops->
      camera_get_rolling_shutter_skew(mCameraHandle);
     if(RollingShutterSkew != -1) {
-        sensorInfo.rollingShutterSkew = RollingShutterSkew;
         mSetting->rollingShutterSkew = RollingShutterSkew;
-        mSetting->setSENSORTag(sensorInfo);
         HAL_LOGV("rolling shutter skew:%lld,address:%p",sensorInfo.rollingShutterSkew,&(sensorInfo));
     }
 }
