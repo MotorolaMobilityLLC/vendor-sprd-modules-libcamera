@@ -34,6 +34,7 @@
 #define MAX_AF_FILTER_CNT 10
 #define MAX_AF_WIN 32
 #define PD_MAX_AREA 16
+#define FA_SHAPE_POINTNUM 7
 
 enum aft_isp_mode {
 	AFT_ISP_SINGLE = 0,
@@ -211,6 +212,8 @@ struct isp_face_coor {
 	cmr_s32 yaw_angle;
 	cmr_s32 roll_angle;
 	cmr_u32 score;
+	cmr_u32 data[FA_SHAPE_POINTNUM * 2];
+	cmr_s32 fascore;
 };
 
 struct aft_face_info {

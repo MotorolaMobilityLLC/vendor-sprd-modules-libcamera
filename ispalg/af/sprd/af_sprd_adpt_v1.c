@@ -2545,6 +2545,8 @@ static void caf_monitor_fd(af_ctrl_t * af)
 		prm->fd_info.face_info[i].yaw_angle = af->face_info.face_info[i].pose;
 		prm->fd_info.face_info[i].roll_angle = af->face_info.face_info[i].angle;
 		prm->fd_info.face_info[i].score = 0;
+		memcpy(&(prm->fd_info.face_info[i].data[0]), &(af->face_info.face_info[i].data[0]), sizeof(cmr_u32) * (14));
+		prm->fd_info.face_info[i].fascore = af->face_info.face_info[i].fascore;
 		i++;
 	}
 	prm->fd_info.frame_width = af->face_info.frame_width;
