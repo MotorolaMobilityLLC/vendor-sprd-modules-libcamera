@@ -7988,6 +7988,11 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 		cxt->mfsr_cxt.log_mfsr= NULL;
 	}
 
+	if (cxt->hdr_cxt.log_hdr) {
+		free(cxt->hdr_cxt.log_hdr);
+		cxt->hdr_cxt.log_hdr = NULL;
+	}
+
 	if (cxt->fdr_cxt.log_fdr) {
 		free(cxt->fdr_cxt.log_fdr);
 		cxt->fdr_cxt.log_fdr= NULL;
