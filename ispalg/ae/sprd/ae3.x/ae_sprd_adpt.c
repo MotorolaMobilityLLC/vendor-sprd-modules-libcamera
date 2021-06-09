@@ -7683,10 +7683,10 @@ static void ae_set_ae_init_param(struct ae_ctrl_cxt *cxt, struct ae_lib_init_out
 static void write2flashcali1(cmr_s8 camID, struct flash_correct_info *result)
 {
 	FILE *fp = NULL;
-	char filename[128] = {"\0"};
+	char filename[128] = {0};
 	sprintf(filename, "%s%d%s", "/data/vendor/cameraserver/flash_cali_out_", camID, ".txt");
 	ISP_LOGD("FLASH_CALI>%s\n", filename);
-	fp = fopen(filename, "wt");
+	fp = fopen(filename, "w");
 	if(fp){
 		uint32 i = 0;
 		uint32 j = 0;
