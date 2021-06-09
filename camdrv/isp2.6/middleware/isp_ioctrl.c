@@ -1960,6 +1960,7 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 	struct debuginfo_message *current_smart_msg = NULL;
 	struct debuginfo_message *current_ae_msg = NULL;
 	struct debuginfo_message *current_fdr_msg, fdr_msg;
+	struct debuginfo_message *current_mfsr_msg, mfsr_msg;
 
 	if (NULL == info_ptr) {
 		ISP_LOGE("fail to get valid param ");
@@ -1997,6 +1998,9 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 		current_smart_msg = msg_get(&cxt->smart_queue, frame_id);
 		current_ai_msg = msg_get(&cxt->ai_queue, frame_id);
 		current_ae_msg = msg_get(&cxt->ae_queue, frame_id);
+                current_mfsr_msg = &mfsr_msg;
+		mfsr_msg.msg_log = cxt->mfsr_cxt.log_mfsr;
+		mfsr_msg.msg_size = cxt->mfsr_cxt.log_mfsr_size;
 		current_fdr_msg = &fdr_msg;
 		current_fdr_msg->msg_log = cxt->fdr_cxt.log_fdr;
 		current_fdr_msg->msg_size = cxt->fdr_cxt.log_fdr_size;
@@ -2010,6 +2014,7 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 		ISP_LOGV("smart_msg  %p, %d, %d", current_smart_msg->msg_log, current_smart_msg->msg_size, current_smart_msg->frame_id);
 		ISP_LOGV("ai_msg   %p,%d, %d", current_ai_msg->msg_log, current_ai_msg->msg_size,current_ai_msg->frame_id);
 		ISP_LOGV("ae_msg  %p,%d, %d", current_ae_msg->msg_log, current_ae_msg->msg_size,current_ae_msg->frame_id);
+                ISP_LOGV("mfsr_msg  %p,%d, %d", current_mfsr_msg->msg_log, current_mfsr_msg->msg_size, current_mfsr_msg->frame_id);
 		ISP_LOGD("fdr_msg  %p,%d, %d", current_fdr_msg->msg_log, current_fdr_msg->msg_size,current_fdr_msg->frame_id);
 
 		total_size = sizeof(struct sprd_isp_debug_info) + sizeof(isp_log_info_t)
@@ -2020,6 +2025,7 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 		    + calc_log_size(current_smart_msg->msg_log, current_smart_msg->msg_size, SMART_START, SMART_END)
 		    + calc_log_size(current_ai_msg->msg_log, current_ai_msg->msg_size, AI_START, AI_END)
 		    + calc_log_size(current_ae_msg->msg_log, current_ae_msg->msg_size, AE_START, AE_END)
+                    + calc_log_size(current_mfsr_msg->msg_log, current_mfsr_msg->msg_size, MFSR_START, MFSR_END)
 		    + calc_log_size(current_fdr_msg->msg_log, current_fdr_msg->msg_size, FDR_START, FDR_END)
 		    + sizeof(cmr_u32);
 		ISP_LOGV("total_size  %d", total_size);
@@ -2064,6 +2070,7 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 		COPY_LOG(lsc, LSC);
 		COPY_LOG(smart, SMART);
 		COPY_LOG(ai, AI);
+                COPY_LOG(mfsr, MFSR);
 		COPY_LOG(fdr, FDR);
 
 		pthread_mutex_unlock(&cxt->debuginfo_queue_lock);
@@ -2085,6 +2092,12 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 
 		info_ptr->addr = cxt->commn_cxt.log_isp;
 		info_ptr->size = cxt->commn_cxt.log_isp_size;
+	}
+
+	if (cxt->mfsr_cxt.log_mfsr) {
+		free(cxt->mfsr_cxt.log_mfsr);
+		cxt->mfsr_cxt.log_mfsr = NULL;
+		cxt->mfsr_cxt.log_mfsr_size = 0;
 	}
 
 	ISP_LOGV("ISP INFO:addr 0x%p, size = %d", info_ptr->addr, info_ptr->size);
@@ -5696,6 +5709,43 @@ unlock:
 	return ret;
 }
 
+static cmr_int ispctl_set_mfsr_log(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_info *info;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (param_ptr == NULL) {
+		ISP_LOGE("fail to get ptr %p\n", param_ptr);
+		return ISP_PARAM_NULL;
+	}
+
+	info = (struct isp_info *)param_ptr;
+	if (info->addr == NULL || info->size <= 0) {
+		ISP_LOGE("error mfsr log data %p, size %d\n", info->addr, info->size);
+		return ISP_PARAM_ERROR;
+	}
+
+	if (cxt->mfsr_cxt.log_mfsr_size != (cmr_u32)info->size) {
+		if (cxt->mfsr_cxt.log_mfsr) {
+			free(cxt->mfsr_cxt.log_mfsr);
+			cxt->mfsr_cxt.log_mfsr = NULL;
+			cxt->mfsr_cxt.log_mfsr_size = 0;
+		}
+		cxt->mfsr_cxt.log_mfsr = malloc(info->size);
+		if (cxt->mfsr_cxt.log_mfsr == NULL) {
+			ISP_LOGE("fail to malloc mfsr log data\n");
+			return ISP_ALLOC_ERROR;
+		}
+		cxt->mfsr_cxt.log_mfsr_size = (cmr_u32)info->size;
+		CMR_LOGD("mfsr log ptr %p, size %d, frm_id %d\n", cxt->mfsr_cxt.log_mfsr,
+			cxt->mfsr_cxt.log_mfsr_size, info->frame_id);
+	}
+
+	memcpy((void *)cxt->mfsr_cxt.log_mfsr, info->addr, info->size);
+	return ret;
+}
+
 static cmr_int ispctl_ev_adj(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -5967,6 +6017,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_YNRS_PARAM, ispctl_get_ynrs_param},
 	{ISP_CTRL_GET_SW3DNR_PARAM, ispctl_get_sw3dnr_param},
 	{ISP_CTRL_GET_MFSR_PARAM, ispctl_get_mfsr_param},
+	{ISP_CTRL_SET_MFSR_LOG, ispctl_set_mfsr_log},
 	{ISP_CTRL_GET_HDR_PARAM, ispctl_get_hdr_param},
 
 	{ISP_CTRL_GET_FLASH_SKIP_FRAME_NUM, ispctl_get_flash_skip_num},

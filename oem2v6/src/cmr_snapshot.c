@@ -265,6 +265,11 @@ struct snp_context {
     sem_t scaler_start_sm;
     struct snp_cvt_context cvt;
 
+    struct swa_frame_param mfsr_frm_param;
+    struct img_frm mfsr_in_frm[5];
+    struct img_frm mfsr_detail_frm;
+    struct img_frm mfsr_dst_frm;
+
     cmr_u32 zsl_ips_en;
     cmr_handle ips_handle;
     sem_t ips_sem;
@@ -335,6 +340,7 @@ static cmr_int snp_post_proc_for_raw(cmr_handle snp_handle, void *data);
 static void snp_reset_ctrl_condition(cmr_handle snp_handle);
 static cmr_int snp_post_proc(cmr_handle snp_handle, void *data);
 static cmr_int snp_stop_proc(cmr_handle snp_handle);
+static cmr_int snp_mfsr_proc(cmr_handle snp_handle, void *data);
 static cmr_int snp_start_encode(cmr_handle snp_handle, void *data);
 static cmr_int snp_start_encode_thumb(cmr_handle snp_handle);
 static cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data);
@@ -1368,6 +1374,118 @@ cmr_int snp_ips_jpeg_enc_done(struct snp_context *cxt,
 	return ret;
 }
 
+cmr_int snp_mfsr_proc(cmr_handle snp_handle, void *data)
+{
+	cmr_int ret = CMR_CAMERA_SUCCESS;
+	cmr_u32 fmt, w, h, buf_size;
+	int i, iret = 0;
+	struct buffer_cfg buf_cfg;
+	struct frm_info *frame = (struct frm_info *)data;
+	struct snp_context *cxt = (struct snp_context *)snp_handle;
+	struct camera_context *cam_cxt = (struct camera_context *)cxt->oem_handle;
+	struct ipm_context *ipm_cxt = &cam_cxt->ipm_cxt;
+	struct ipm_frame_in ipm_in_param;
+	struct ipm_frame_out ipm_out_param;
+	struct cmr_buf buf;
+	struct img_frm *cur_frm;
+
+	if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {
+		CMR_LOGD("post proc has been cancel");
+		return ret;
+	}
+	frame->length = cxt->req_param.req_size.width;
+	frame->height = cxt->req_param.req_size.height;
+	CMR_LOGD("frm %d, fd 0x%x, addr 0x%lx, fid %d size %dx%d, frm_param 0x%lx",
+		cxt->req_param.snap_cnt, frame->fd, frame->yaddr_vir,
+		frame->frame_real_id, frame->length, frame->height, frame->zsl_private);
+
+	memset(&ipm_in_param, 0, sizeof(struct ipm_frame_in));
+	memset(&ipm_out_param, 0, sizeof(struct ipm_frame_out));
+
+	convert_frame(&ipm_in_param.src_frame, frame);
+	cxt->mfsr_in_frm[cxt->req_param.snap_cnt] = ipm_in_param.src_frame;
+	ipm_in_param.dst_frame = ipm_in_param.src_frame;
+	ipm_out_param.dst_frame = ipm_in_param.src_frame;
+	if (cxt->req_param.snap_cnt > 0)
+		goto next_frm;
+
+	w = cxt->req_param.req_size.width;
+	h = cxt->req_param.req_size.height;
+	buf_size = w * h * 3 / 2;
+	memset(&buf, 0, sizeof(struct cmr_buf));
+	iret = get_free_buffer(&cxt->buf_queue, buf_size, &buf);
+	if (iret) {
+		CMR_LOGE("fail to get buffer fd %d, addr %p\n", buf.fd, (void *)buf.vaddr);
+	}
+
+	cur_frm = &ipm_in_param.dst_frame;
+	cur_frm->fd = buf.fd;
+	cur_frm->addr_vir.addr_y = buf.vaddr;
+	cur_frm->addr_vir.addr_u = buf.vaddr + w * h;
+	cur_frm->reserved = NULL;
+	CMR_LOGD("get mfsr dst buffer fd 0x%x, addr 0x%lx\n", buf.fd, buf.vaddr);
+
+	memset(&buf, 0, sizeof(struct cmr_buf));
+	iret = get_free_buffer(&cxt->buf_queue, buf_size, &buf);
+	if (iret) {
+		CMR_LOGE("fail to get buffer fd %d, addr %p\n", buf.fd, (void *)buf.vaddr);
+	}
+
+	cur_frm = &ipm_out_param.dst_frame;
+	cur_frm->fd = buf.fd;
+	cur_frm->addr_vir.addr_y = buf.vaddr;
+	cur_frm->addr_vir.addr_u = buf.vaddr + w * h;
+	cur_frm->reserved = NULL;
+	CMR_LOGD("get mfsr detail buffer fd 0x%x, addr 0x%lx\n", buf.fd, buf.vaddr);
+
+	if (frame->zsl_private) {
+		memcpy((void *)&cxt->mfsr_frm_param, (void *)frame->zsl_private, sizeof(struct swa_frame_param));
+		free((void *)frame->zsl_private);
+		frame->zsl_private = 0;
+	}
+
+	cxt->mfsr_detail_frm = ipm_out_param.dst_frame;
+	cxt->mfsr_dst_frm = ipm_in_param.dst_frame;
+
+next_frm:
+	ipm_in_param.src_frame.reserved = &cxt->mfsr_frm_param;
+	CMR_LOGD("mfsr_frm_param %p\n", ipm_in_param.src_frame.reserved);
+	ret = ipm_transfer_frame(ipm_cxt->mfsr_handle, &ipm_in_param, &ipm_out_param);
+	if (ret)
+		CMR_LOGE("fail to do mfsr processs\n");
+
+	cxt->req_param.snap_cnt++;
+	if (cxt->req_param.snap_cnt < cxt->req_param.total_num)
+		goto exit;
+
+
+	memset(&buf_cfg, 0, sizeof(struct buffer_cfg));
+	buf_cfg.channel_id = frame->channel_id;
+	buf_cfg.base_id = CMR_BASE_ID(frame->frame_id);
+	buf_cfg.count = 5;
+	buf_cfg.flag = BUF_FLAG_RUNNING;
+	for(i = 0; i < 5; i++) {
+		buf_cfg.addr[i] = cxt->mfsr_in_frm[i].addr_phy;
+		buf_cfg.addr_vir[i] = cxt->mfsr_in_frm[i].addr_vir;
+		buf_cfg.fd[i] = cxt->mfsr_in_frm[i].fd;
+	}
+	cxt->ops.channel_buff_cfg(cxt->oem_handle, &buf_cfg);
+
+	cxt->req_param.total_num = 1;
+	cxt->req_param.snap_cnt = 1;
+
+	ret = camera_local_set_zsl_snapshot_buffer(cxt->oem_handle,
+			cxt->mfsr_dst_frm.addr_phy.addr_y,
+			cxt->mfsr_dst_frm.addr_vir.addr_y,
+			cxt->mfsr_dst_frm.fd);
+	if (ret)
+		CMR_LOGE("fail to set zsl buffer fd 0x%x\n", cxt->mfsr_dst_frm.fd);
+
+exit:
+	return ret;
+}
+
+
 cmr_int snp_main_thread_proc(struct cmr_msg *message, void *p_data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     cmr_u32 req_cnt;
@@ -1465,9 +1583,11 @@ cmr_int snp_postproc_thread_proc(struct cmr_msg *message, void *p_data) {
     case SNP_EVT_POSTPROC_INIT:
         break;
     case SNP_EVT_POSTPROC_START:
-	if (cxt->zsl_ips_en)
-	    ret = snp_ips_req_proc(cxt, message->data);
-	else
+        if (cxt->zsl_ips_en)
+            ret = snp_ips_req_proc(cxt, message->data);
+        else if (cxt->req_param.is_mfsr && cxt->req_param.snap_cnt < cxt->req_param.total_num)
+            ret = snp_mfsr_proc(cxt, message->data);
+        else
             ret = snp_post_proc((cmr_handle)p_data, message->data);
         break;
     case SNP_EVT_POSTPROC_FREE_FRM:
@@ -1675,6 +1795,14 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data) {
     if (cxt->zsl_ips_en) {
         ret = snp_ips_jpeg_enc_done(cxt, enc_out_ptr);
         return ret;
+    }
+
+    if (cxt->req_param.is_mfsr) {
+        struct cmr_buf buf;
+        buf.fd = cxt->mfsr_dst_frm.fd;
+        put_free_buffer(&cxt->buf_queue, &buf);
+        buf.fd = cxt->mfsr_detail_frm.fd;
+        put_free_buffer(&cxt->buf_queue, &buf);
     }
 
     if (cxt->err_code) {
@@ -2978,6 +3106,10 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
     // camera_snapshot_step_statisic(&image_size);
     frame_type.timestamp = frame->sec * 1000000000LL + frame->usec * 1000LL;
     frame_type.monoboottime = frame->monoboottime;
+    if (cxt->req_param.is_mfsr) {
+        frame_type.frame_num = cxt->mfsr_dst_frm.frame_number;
+        frame_type.zsl_private = 1;
+    }
     memcpy((void *)&frame_type.jpeg_param, (void *)&enc_param,
            sizeof(struct camera_jpeg_param));
     snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_ENCODE_PICTURE,
@@ -3786,8 +3918,8 @@ cmr_int snp_set_ipm_param(cmr_handle snp_handle) {
     }
     ipm_ptr = &chn_param_ptr->ipm[0];
 
-    CMR_LOGD("src addr 0x%lx 0x%lx ", ipm_ptr->src.addr_phy.addr_y,
-             ipm_ptr->src.addr_phy.addr_u);
+    CMR_LOGD("src fd 0x%x, addr 0x%lx 0x%lx ", ipm_ptr->src.fd, ipm_ptr->src.addr_vir.addr_y,
+             ipm_ptr->src.addr_vir.addr_u);
     CMR_LOGD("src size %d %d ", ipm_ptr->src.size.width,
              ipm_ptr->src.size.height);
     return ret;
@@ -5389,10 +5521,14 @@ static cmr_int snp_ipm_process(cmr_handle snp_handle, void *data) {
     src = &chn_param_ptr->ipm[index].src;
 
     if (snap_cxt->ops.ipm_process == NULL) {
-
         CMR_LOGE("err ipm_process is null");
         ret = -CMR_CAMERA_FAIL;
         return ret;
+    }
+    if (snap_cxt->req_param.is_mfsr) {
+        snap_cxt->mfsr_detail_frm.reserved = &snap_cxt->mfsr_frm_param;
+        src->reserved = &snap_cxt->mfsr_detail_frm;
+        src->frame_number = snap_cxt->mfsr_dst_frm.frame_number + 4;
     }
 
     snap_cxt->ops.ipm_process(oem_cxt, src);
@@ -5445,7 +5581,7 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data) {
     CMR_LOGV("cnr_type %d", cnr_type);
 
     snp_set_status(snp_handle, POST_PROCESSING);
-    if ((cxt->req_param.filter_type || cxt->req_param.nr_flag
+    if ((cxt->req_param.filter_type || cxt->req_param.nr_flag || cxt->req_param.is_mfsr
         || cxt->req_param.dre_flag || cxt->req_param.ee_flag)
         && !cxt->req_param.is_yuv_callback_mode) {
         CMR_LOGI("before snp_ipm_process cameraid = %d ",cxt->camera_id);
@@ -6172,6 +6308,7 @@ cmr_int cmr_snapshot_prepare(
 		CMR_LOGE("fail to get valid ptr\n");
 		return CMR_CAMERA_FAIL;
 	}
+	cam_cxt = (struct camera_context *)cxt->oem_handle;
 
 	CMR_LOGD("zsl_ips_en %d\n", param->zsl_ips_en);
 	memcpy(&cxt->req_param, param, sizeof(struct snapshot_param));
@@ -6203,7 +6340,6 @@ cmr_int cmr_snapshot_prepare(
 	CMR_LOGD("memops %p,  alloc %p, free_cnt %d\n",
 		&cxt->mem_ops, cxt->mem_ops.alloc_mem, cxt->buf_queue.free_cnt);
 
-	cam_cxt = (struct camera_context *)cxt->oem_handle;
 	handles.jpeg_handle = cam_cxt->jpeg_cxt.jpeg_handle;
 	handles.scale_handle = cam_cxt->scaler_cxt.scaler_handle;
 	CMR_LOGD("cxt %p, handle %p %p\n", cam_cxt,
@@ -6243,18 +6379,39 @@ cmr_int cmr_snapshot_prepare(
 	return ret;
 
 ips_disable:
-	/* From enalbe => disalbe: free previous buffers */
-	if (cxt->zsl_ips_en) {
-		if (cxt->buf_queue.free_cnt) {
-			//balance bufQ,  free all buffers (size < yuv_buf_size)
-			buf_size = MAX_INT_VAL;
-			free_cnt = cxt->buf_queue.free_cnt;
-			CMR_LOGD("should free buf cnt %d\n", free_cnt);
-			dec_buffer_q(&cxt->buf_queue, &cxt->mem_ops, buf_size - 1, &free_cnt);
+	/* free previous buffers */
+	if (cxt->buf_queue.free_cnt) {
+		//balance bufQ,  free all buffers (size < yuv_buf_size)
+		buf_size = MAX_INT_VAL;
+		free_cnt = cxt->buf_queue.free_cnt;
+		CMR_LOGD("should free buf cnt %d\n", free_cnt);
+		dec_buffer_q(&cxt->buf_queue, &cxt->mem_ops, buf_size - 1, &free_cnt);
+	}
+
+	cxt->zsl_ips_en = 0;
+	CMR_LOGD("zsl_ips_en = 0, mfsr_force_off %d, free buf cnt %d\n",
+		cam_cxt->mfsr_force_off, cxt->buf_queue.free_cnt);
+
+	if (cam_cxt->mfsr_force_off)
+		return ret;
+
+	/* alloc buffer for mfsr output and detail image */
+	if (cxt->buf_queue.max == 0) {
+		 /* limited buffer count for IPS. TODO - limit total size from boardconfig */
+		ret = init_buffer_q(&cxt->buf_queue, IPS_LIMIT_BUFCNT, 0);
+		if (ret) {
+			CMR_LOGE("fail to init buffer q\n");
+			return CMR_CAMERA_FAIL;
 		}
 	}
-	cxt->zsl_ips_en = 0;
-	CMR_LOGD("X. zsl_ips_en = 0,  free buf cnt %d\n", cxt->buf_queue.free_cnt);
+
+	while (cxt->buf_queue.free_cnt  < 2) {
+		free_cnt = 2 - cxt->buf_queue.free_cnt;
+		ret = inc_gbuffer_q(&cxt->buf_queue, &cxt->mem_ops,
+				param->req_size.width, param->req_size.height, &free_cnt);
+		CMR_LOGD("yuv/jpeg buffer inc, ret %ld, cnt %d\n", ret, free_cnt);
+	}
+
 	return ret;
 }
 
