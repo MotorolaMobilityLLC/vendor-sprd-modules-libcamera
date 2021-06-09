@@ -384,7 +384,7 @@ extern "C" {
 		cmr_u32 brightness;
 		cmr_s32 pose;
 		cmr_s32 angle;
-		int data[FA_SHAPE_POINTNUM * 2];
+		cmr_u32 data[FA_SHAPE_POINTNUM * 2];
 		cmr_s32 fascore;
 	};
 
