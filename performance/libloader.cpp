@@ -17,7 +17,11 @@ static const char *kPreloadLibraries[] = {
     "libispalg.so",
     "libjpeg_hw_sprd.so",
     "libawb.so",
-    "libawb1.so"};
+    "libawb1.so",
+    "libcam_ipmpro.so",
+    "libfdr.so",
+    "libawb3.2.so"
+};
 
 class LibraryLoader {
   public:
@@ -42,14 +46,14 @@ class LibraryLoader {
         do {
             status = getLibraryStatus(name, &handle);
 
+            if (status == NotFound)
+                break;
+
             if (status == Error)
                 return nullptr;
 
             if (status == Available)
                 return handle;
-
-            if (status == Obtained)
-                return doOpen(name);
 
             wait();
         } while (!finished());
@@ -67,17 +71,18 @@ class LibraryLoader {
         Scheduled,
         Preparing,
         Available,
-        Obtained,
+        NotFound,
         Error,
     } library_status;
 
     struct library_info {
         string name;
         void *handle;
+        size_t count;
         library_status status;
 
         library_info(string name)
-            : name(name), handle(nullptr), status(Scheduled) {}
+            : name(name), handle(nullptr), count(0), status(Scheduled) {}
     };
 
     void prepare() {
@@ -148,8 +153,14 @@ class LibraryLoader {
         vector<void *> result;
         lock_guard<mutex> l(mLibraryMutex);
         for (auto &info : mLibraries) {
-            if (info.status == Available)
+            if (info.status == Available) {
+                if (info.count) {
+                    ALOGW("we're going to dlclose all libs, but %s still has "
+                          "%zu user(s)",
+                          info.name.c_str(), info.count);
+                }
                 result.push_back(info.handle);
+            }
             /* mark status as Error to let user dlclose himself */
             info.status = Error;
         }
@@ -162,9 +173,8 @@ class LibraryLoader {
         auto it = findLibraryInfoLocked(name);
         if (it != mLibraries.end()) {
             if (it->status == Available) {
-                it->status = Obtained;
+                it->count++;
                 *pHandle = it->handle;
-                return Available;
             }
 
             return it->status;
@@ -175,9 +185,11 @@ class LibraryLoader {
             return Scheduled;
         }
 
-        /* there's no meaning to wait for loading thread while it's performing
-         * dlopen on last library, we do it ourself and wait in dlopen call */
-        return Obtained;
+        /*
+         * there's no meaning to wait for loading thread while it's performing
+         * dlopen on last library, we do it ourself and wait in dlopen call
+         */
+        return NotFound;
     }
 
     vector<library_info>::iterator findLibraryInfoLocked(string name) {
@@ -188,7 +200,7 @@ class LibraryLoader {
 
     bool finished() {
         lock_guard<mutex> l(mLibraryMutex);
-        return mLibraries.size() >= mNext;
+        return mLibraries.size() == mNext;
     }
 
     bool tryPutLibraryHandle(void *handle) {
@@ -197,8 +209,9 @@ class LibraryLoader {
             mLibraries.begin(), mLibraries.end(),
             [=](const library_info &info) { return info.handle == handle; });
 
-        if (it != mLibraries.end() && it->status == Obtained) {
-            it->status = Available;
+        if (it != mLibraries.end() && it->status == Available) {
+            if (it->count)
+                it->count--;
             return true;
         }
 
