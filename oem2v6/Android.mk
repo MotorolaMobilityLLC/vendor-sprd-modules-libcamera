@@ -45,6 +45,7 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../$(CPP_DIR)/algo/inc \
     $(LOCAL_PATH)/../arithmetic/sprd_easy_hdr/inc \
     $(LOCAL_PATH)/../arithmetic/sprd_warp/inc \
+    $(LOCAL_PATH)/../arithmetic/sprd_mfsr/inc \
     $(LOCAL_PATH)/../arithmetic/sprdface/inc \
     $(LOCAL_PATH)/../arithmetic/4dtracking/inc \
     $(LOCAL_PATH)/../arithmetic/sprd_yuvprocess/inc \
@@ -114,6 +115,11 @@ endif
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FDR_CAPTURE)),true)
 LOCAL_SHARED_LIBRARIES += libsprdfdr
 LOCAL_SHARED_LIBRARIES += libsprdfdradapter
+endif
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_MFSR_CAPTURE)),true)
+LOCAL_SRC_FILES += src/cmr_mfsr.c
+LOCAL_SHARED_LIBRARIES += libsprd_mfsr libsprdmfsradapter
 endif
 
 

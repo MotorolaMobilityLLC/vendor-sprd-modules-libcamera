@@ -1023,6 +1023,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mIsCameraClearQBuf;
     int64_t mLatestFocusDoneTime;
     int32_t mFlush;
+    int32_t mExitCurZslLoop;
     Mutex mPipelineStartLock;
     Condition mPipelineStartSignal;
 
