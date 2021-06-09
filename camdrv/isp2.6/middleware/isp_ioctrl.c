@@ -2155,43 +2155,6 @@ static cmr_int ispctl_get_awb_gain(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
-static cmr_int ispctl_set_hdr_log(cmr_handle isp_alg_handle, void *param_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_info *info;
-	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-
-	if (param_ptr == NULL) {
-		ISP_LOGE("fail to get ptr %p\n", param_ptr);
-		return ISP_PARAM_NULL;
-	}
-
-	info = (struct isp_info *)param_ptr;
-	ISP_LOGD("ispctl_set_hdr_log %p, %d", info->addr, info->size);
-	if (info->addr == NULL || info->size <= 0) {
-		ISP_LOGE("error fdr log data %p, size %d\n", info->addr, info->size);
-		return ISP_PARAM_ERROR;
-	}
-
-	if (cxt->hdr_cxt.log_hdr_size != (cmr_u32)info->size) {
-		if (cxt->hdr_cxt.log_hdr) {
-			free(cxt->hdr_cxt.log_hdr);
-			cxt->hdr_cxt.log_hdr = NULL;
-			cxt->hdr_cxt.log_hdr_size = 0;
-		}
-		cxt->hdr_cxt.log_hdr = malloc(info->size);
-		if (cxt->hdr_cxt.log_hdr == NULL) {
-			ISP_LOGE("fail to malloc hdr log data\n");
-			return ISP_ALLOC_ERROR;
-		}
-		cxt->hdr_cxt.log_hdr_size = (cmr_u32)info->size;
-	}
-
-	memcpy((void *)cxt->hdr_cxt.log_hdr, info->addr, info->size);
-
-	return ret;
-}
-
 static cmr_int ispctl_awb_ct(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
