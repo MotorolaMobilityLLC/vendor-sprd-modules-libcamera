@@ -855,9 +855,9 @@ struct FCData1 {
 	float around2center[2];				//
 	uint32 endID;
 
-	uint32 expTime;
+	float expTime;
 	uint32 gain;
-	uint32 expTimeBase;
+	float expTimeBase;
 	uint32 gainBase;
 	/*uint32 nextexpTime;
 	uint32 nextgain;
@@ -897,7 +897,7 @@ static void write2flashcali(cmr_s8 camID, struct flash_correct_info *result)
 	char filename[128] = {0};
 	sprintf(filename, "%s%d%s", "/data/vendor/cameraserver/flash_cali_out_", camID, ".txt");
 	ISP_LOGD("FLASH_CALI>%s\n", filename);
-	fp = fopen(filename, "wt");
+	fp = fopen(filename, "w");
 	if(fp){
 		uint32 i = 0;
 		uint32 j = 0;
@@ -982,7 +982,7 @@ static void write2flashcali(cmr_s8 camID, struct flash_correct_info *result)
 
 static void write2FCConfig(struct FCData1 *cali, struct flash_correct_info *result)
 {
-	int i = 0;
+	uint32 i = 0;
 	result->numP1_hw = cali->numP1_hw;
 	result->numP2_hw = cali->numP2_hw;
 	result->numM1_hw = cali->numM1_hw;
@@ -1039,7 +1039,7 @@ static void readFCConfig1(char *f, struct FCData1 *d)
 	int32 i = 0;
 	FILE *fp = NULL;
 	if(f){
-        fp = fopen(f, "rt");
+        fp = fopen(f, "r");
         if (fp) {
 			fscanf(fp, "%d", &d->LED_enable);
 	      	fscanf(fp, "%d", &d->numP1_hw);		//hardware hold up num of LED
@@ -1153,10 +1153,10 @@ static void readFCtuneparam(struct flash_correct_info *cf_info, struct FCData1 *
 
 static void writedata(float *y, float *deta, float *f2c, float *a2c){
 	FILE *fp = NULL;
-	char filename[128] = {"\0"};
+	char filename[128] = {0};
 	sprintf(filename, "%s%s", "/data/vendor/cameraserver/flash_varify", ".txt");	//result->camID
 	ISP_LOGD("FLASH_CALI>%s\n", filename);
-	fp = fopen(filename, "wt");
+	fp = fopen(filename, "w");
 	int i = 0;
 	if(fp){
 		fprintf(fp, "%s\n", "brighness!");
@@ -1448,7 +1448,7 @@ static void write2brigthness(struct FCData1 *caliData){
 				ISP_LOGD("PENG_END:R [%d,%d]\n", caliData->out.rPf1[i], caliData->out.rPf2[j]);
 				ISP_LOGD("PENG_END:G [%d,%d]\n", caliData->out.gPf1[i], caliData->out.gPf2[j]);
 				if (r > 0 && g > 0) {
-					caliData->out.rTable_preflash[ind] = (uint32)ae_round(1024 * g / r);
+					caliData->out.rTable_preflash[ind] = (uint32)ae_round(1.0 * 1024 * g / r);
 				} else {
 					caliData->out.rTable_preflash[ind] = 0;
 				}
@@ -1477,8 +1477,8 @@ static void write2brigthness(struct FCData1 *caliData){
 				ISP_LOGD("PENG_END:G(%f, %f)\n", gTab1Main[j], gTab2Main[i]);
 				ISP_LOGD("PENG_END:B(%f, %f)\n", bTab1Main[j], bTab2Main[i]);
 				if (r > 0 && g > 0 && b > 0) {
-					caliData->out.rTable[ind] = (uint32)ae_round(1024 * g / r);
-					caliData->out.bTable[ind] = (uint32)ae_round(1024 * g / b);
+					caliData->out.rTable[ind] = (uint32)ae_round(1.0 * 1024 * g / r);
+					caliData->out.bTable[ind] = (uint32)ae_round(1.0 * 1024 * g / b);
 				} else {
 					caliData->out.brightnessTable[ind] = 0;
 					caliData->out.rTable[ind] = 0;
@@ -1720,11 +1720,11 @@ void flash_calibration(cmr_handle ae_cxt, struct flash_cali_stat *cali_stat)
 				if (caliData->expTime > 0.05 * AEC_LINETIME_PRECESION) {
 					ratio = caliData->expTime / (0.05 * AEC_LINETIME_PRECESION);
 					caliData->expTime = 0.05 * AEC_LINETIME_PRECESION;
-					caliData->gain *= ratio;
+					caliData->gain = (uint32)(caliData->gain * ratio);
 				} else if (caliData->expTime < 0.001 * AEC_LINETIME_PRECESION) {
 					ratio = caliData->expTime / (0.001 * AEC_LINETIME_PRECESION);
 					caliData->expTime = 0.001 * AEC_LINETIME_PRECESION;
-					caliData->gain *= ratio;
+					caliData->gain = (uint32)(caliData->gain * ratio);
 				}
 				if (caliData->gain < 128)
 					caliData->gain = 128;
@@ -1810,7 +1810,7 @@ void flash_calibration(cmr_handle ae_cxt, struct flash_cali_stat *cali_stat)
 					if (caliData->gain > 128) {
 						rat2 = rat / rat1;
 						uint32 gainTest = caliData->gain;
-						gainTest /= rat2;
+						gainTest = (uint32)(gainTest / rat2);
 						if (gainTest < 128)
 							gainTest = 128;
 						rat2 = (float)caliData->gain / gainTest;
@@ -1886,7 +1886,7 @@ void flash_calibration(cmr_handle ae_cxt, struct flash_cali_stat *cali_stat)
 					if (caliData->gain > 128) {
 						rat2 = rat / rat1;
 						uint32 gainTest = caliData->gain;
-						gainTest /= rat2;
+						gainTest = (uint32) (gainTest / rat2);
 						if (gainTest < 128)
 							gainTest = 128;
 						rat2 = (float)caliData->gain / gainTest;
@@ -1991,7 +1991,7 @@ void flash_calibration(cmr_handle ae_cxt, struct flash_cali_stat *cali_stat)
 			}
 			uint32 j = 0;
 			if ( caliData->expReset[i] != 1 ) {
-				if((i >= 1) && (i < caliData->numP1_hwSample + 1)){
+				if((i >= 1) && (i < caliData->numP1_hwSample + 1) && ((i - 1) < 3)){
 					j = i - 1;
 					result->P1rgbData[j][0] = caliData->rData[i];
 					result->P1rgbData[j][1] = caliData->gData[i];
@@ -1999,7 +1999,7 @@ void flash_calibration(cmr_handle ae_cxt, struct flash_cali_stat *cali_stat)
 
 					result->P1expgain[j][0] = caliData->expTab[i];
 					result->P1expgain[j][1] = caliData->gainTab[i];
-				} else if((i >= caliData->numP1_hwSample + 2) && (i < caliData->numP1_hwSample + caliData->numP2_hwSample + 2)){
+				} else if((i >= caliData->numP1_hwSample + 2) && (i < caliData->numP1_hwSample + caliData->numP2_hwSample + 2) && ((i - caliData->numP1_hwSample - 2) < 3)){
 					j = i - caliData->numP1_hwSample - 2;
 					result->P2rgbData[j][0] = caliData->rData[i];
 					result->P2rgbData[j][1] = caliData->gData[i];
@@ -2007,7 +2007,8 @@ void flash_calibration(cmr_handle ae_cxt, struct flash_cali_stat *cali_stat)
 
 					result->P2expgain[j][0] = caliData->expTab[i];
 					result->P2expgain[j][1] = caliData->gainTab[i];
-				} else if((i >= caliData->numP1_hwSample + caliData->numP2_hwSample + 3) && (i < caliData->numP1_hwSample + caliData->numP2_hwSample + caliData->numM1_hwSample + 3)){
+				} else if((i >= caliData->numP1_hwSample + caliData->numP2_hwSample + 3) && (i < caliData->numP1_hwSample + caliData->numP2_hwSample + caliData->numM1_hwSample + 3) 
+					&& ((i - caliData->numP1_hwSample - caliData->numP2_hwSample - 3) < 3)){
 					j = i - caliData->numP1_hwSample - caliData->numP2_hwSample - 3;
 					result->M1rgbData[j][0] = caliData->rData[i];
 					result->M1rgbData[j][1] = caliData->gData[i];
@@ -2015,7 +2016,8 @@ void flash_calibration(cmr_handle ae_cxt, struct flash_cali_stat *cali_stat)
 
 					result->M1expgain[j][0] = caliData->expTab[i];
 					result->M1expgain[j][1] = caliData->gainTab[i];
-				} else if(i >= caliData->numP1_hwSample + caliData->numP2_hwSample + caliData->numM1_hwSample + 4){
+				} else if(i >= caliData->numP1_hwSample + caliData->numP2_hwSample + caliData->numM1_hwSample + 4 
+					&& ((i - caliData->numP1_hwSample - caliData->numP2_hwSample - caliData->numM1_hwSample - 4) < 3)){
 					j = i - caliData->numP1_hwSample - caliData->numP2_hwSample - caliData->numM1_hwSample - 4;
 					result->M2rgbData[j][0] = caliData->rData[i];
 					result->M2rgbData[j][1] = caliData->gData[i];
@@ -2611,7 +2613,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 
 
 						if (r > 0 && g > 0) {
-							caliData->out.rTable_preflash[ind] = ae_round(1024 * g / r);
+							caliData->out.rTable_preflash[ind] = ae_round(1.0 * 1024 * g / r);
 						}
 						else {
 							caliData->out.rTable_preflash[ind] = 0;
@@ -2649,8 +2651,8 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 						rgbflag=(r > 0 && g > 0 && b > 0);
 
 						if (rgbflag) {
-							caliData->out.rTable[ind] = ae_round(1024 * g / r);
-							caliData->out.bTable[ind] = ae_round(1024 * g / b);
+							caliData->out.rTable[ind] = ae_round(1.0 * 1024 * g / r);
+							caliData->out.bTable[ind] = ae_round(1.0 * 1024 * g / b);
 						} else {
 							caliData->out.brightnessTable[ind] = 0;
 							caliData->out.rTable[ind] = 0;
