@@ -49,8 +49,6 @@ enum isp_br_ioctl_cmd {
 	GET_Y_HIST_PARAM,
 	SET_SYNC_STABLE_PARAM,
 	GET_SYNC_STABLE_PARAM,
-	SET_AWB_GAIN_PARAM,
-	GET_AWB_GAIN_PARAM,
 
 	// AWB
 	SET_STAT_AWB_DATA,
@@ -234,7 +232,6 @@ struct match_data_param {
 	cmr_u32 sync_stable[SENSOR_NUM_MAX];
 	cmr_u32 sync_stable_out;
 	struct isp_hist_statistic_info y_hist[SENSOR_NUM_MAX];
-	struct awb_gain_data awbgain[SENSOR_NUM_MAX];
 };
 
 struct hist_match_stats_data {
