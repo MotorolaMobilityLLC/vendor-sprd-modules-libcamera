@@ -4667,7 +4667,7 @@ static cmr_int sensor_drv_check_cmei(cmr_u8 dual_flag) {
                 return SENSOR_FAIL;
             }
         } else {
-            SENSOR_LOGI("cannot get bokeh module info, use calibraton data");
+            SENSOR_LOGI("cannot get bokeh module info, use golden data");
             return SENSOR_FAIL;
         }
         break;
@@ -4684,7 +4684,7 @@ static cmr_int sensor_drv_check_cmei(cmr_u8 dual_flag) {
                 return SENSOR_FAIL;
             }
         } else {
-            SENSOR_LOGI("cannot get oz1 module info, use calibraton data");
+            SENSOR_LOGI("cannot get oz1 module info, use golden data");
             return SENSOR_FAIL;
         }
         break;
@@ -4701,7 +4701,7 @@ static cmr_int sensor_drv_check_cmei(cmr_u8 dual_flag) {
                 return SENSOR_FAIL;
             }
         } else {
-            SENSOR_LOGI("cannot get oz2 module info, use calibraton data");
+            SENSOR_LOGI("cannot get oz2 module info, use golden data");
             return SENSOR_FAIL;
         }
         break;
