@@ -214,6 +214,26 @@ cmr_int isp_br_ioctrl(cmr_u32 camera_id, cmr_int cmd, void *in, void *out)
 			sem_post(&cxt->ae_sm);
 		}
 		break;
+
+	case SET_AWB_GAIN_PARAM:
+		{
+			sem_wait(&cxt->ae_sm);
+			memcpy(&cxt->match_param.awbgain[camera_id], in,
+				sizeof(cxt->match_param.awbgain[camera_id]));
+			sem_post(&cxt->ae_sm);
+		}
+		break;
+
+	case GET_AWB_GAIN_PARAM:
+		{
+			sem_wait(&cxt->ae_sm);
+			if (out)
+				memcpy(out, &cxt->match_param.awbgain[camera_id],
+					sizeof(cxt->match_param.awbgain[camera_id]));
+			sem_post(&cxt->ae_sm);
+		}
+		break;
+
 	case GET_USER_COUNT:
 		sem_wait(&cxt->module_sm);
 		memcpy(out, &cxt->start_user_cnt,sizeof(cxt->start_user_cnt));
