@@ -2668,6 +2668,10 @@ void SprdCamera3HWI::setAeLockUnLock() {
     mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AE_LOCK);
 }
 
+void SprdCamera3HWI::setAeExposureCompensation() {
+    mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION);
+}
+
 void SprdCamera3HWI::setAeRegion() {
     mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AE_REGIONS);
 }
