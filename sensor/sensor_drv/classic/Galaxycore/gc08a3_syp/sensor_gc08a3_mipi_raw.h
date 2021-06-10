@@ -34,7 +34,7 @@
 //#define FEATURE_OTP
 
 #define VENDOR_NUM 1
-#define SENSOR_NAME				"gc08a3_mipi_raw"
+#define SENSOR_NAME				"gc08a3_syp"
 
 /* please check layout
 * Pin IDSEL1 = 0, IDSEL0 = 0, I2C_SLAVE_ADDR = 0x62;
