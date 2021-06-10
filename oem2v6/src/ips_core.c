@@ -1888,6 +1888,7 @@ cmr_int cmr_ips_jpeg_done(cmr_handle ips_handle,
 		CMR_LOGD("No request waiting jpeg\n");
 		return ret;
 	}
+	CMR_LOGD("req_id %d jpeg done\n", req->req_in.request_id);
 
 	message.data = malloc(sizeof(struct jpeg_enc_cb_param));
 	if (message.data == NULL) {
@@ -1905,7 +1906,6 @@ cmr_int cmr_ips_jpeg_done(cmr_handle ips_handle,
 		ret = CMR_CAMERA_FAIL;
 	}
 
-	CMR_LOGD("req_id %d jpeg done\n", req->req_in.request_id);
 	return ret;
 }
 
