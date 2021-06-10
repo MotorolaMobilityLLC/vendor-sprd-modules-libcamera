@@ -192,6 +192,7 @@ struct awb_info {
 	cmr_u8 *log_awb;
 	cmr_u32 log_awb_size;
 	struct awb_ctrl_gain cur_gain;
+	struct awb_ctrl_init_param param;
 };
 
 struct smart_info {
@@ -523,6 +524,10 @@ struct isp_alg_fw_context {
 	cmr_u16 smooth_ratio;
 	cmr_u32 is_ai_scene_pro;
 	cmr_u16 app_mode;
+	/*for fdr awb param*/
+	void *data_ptr[2];
+	cmr_u32 data_size[2];
+	cmr_u8 bypass[2];
 
 	pthread_mutex_t debuginfo_queue_lock;
 	struct debuginfo_queue ae_queue;
@@ -4888,13 +4893,12 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	char awb_ver[PROPERTY_VALUE_MAX];
 	struct isp_pm_ioctl_input input;
 	struct isp_pm_ioctl_output output;
-	struct awb_ctrl_init_param param;
 	struct isp_rgb_aem_info aem_info;
 	struct ae_monitor_info info;
 
 	memset((void *)&input, 0, sizeof(input));
 	memset((void *)&output, 0, sizeof(output));
-	memset((void *)&param, 0, sizeof(param));
+	memset((void *)&cxt->awb_cxt.param, 0, sizeof(cxt->awb_cxt.param));
 	memset((void *)&info, 0, sizeof(info));
 
 	cxt->awb_cxt.cur_gain.r = 1;
@@ -4912,19 +4916,19 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 		}
 	}
 
-	param.camera_id = cxt->camera_id;
-	param.base_gain = 1024;
-	param.awb_enable = 1;
-	param.wb_mode = 0;
-	param.stat_img_format = AWB_CTRL_STAT_IMG_CHN;
-	param.stat_img_size.w = info.win_num.w;
-	param.stat_img_size.h = info.win_num.h;
-	param.stat_img_size_ae.w = info.win_num.w;
-	param.stat_img_size_ae.h = info.win_num.h;
-	param.stat_win_size.w = info.win_size.w;
-	param.stat_win_size.h = info.win_size.h;
-	param.awb_set_cb = ispalg_awb_set_cb;
-	param.caller_handle = (cmr_handle) cxt;
+	cxt->awb_cxt.param.camera_id = cxt->camera_id;
+	cxt->awb_cxt.param.base_gain = 1024;
+	cxt->awb_cxt.param.awb_enable = 1;
+	cxt->awb_cxt.param.wb_mode = 0;
+	cxt->awb_cxt.param.stat_img_format = AWB_CTRL_STAT_IMG_CHN;
+	cxt->awb_cxt.param.stat_img_size.w = info.win_num.w;
+	cxt->awb_cxt.param.stat_img_size.h = info.win_num.h;
+	cxt->awb_cxt.param.stat_img_size_ae.w = info.win_num.w;
+	cxt->awb_cxt.param.stat_img_size_ae.h = info.win_num.h;
+	cxt->awb_cxt.param.stat_win_size.w = info.win_size.w;
+	cxt->awb_cxt.param.stat_win_size.h = info.win_size.h;
+	cxt->awb_cxt.param.awb_set_cb = ispalg_awb_set_cb;
+	cxt->awb_cxt.param.caller_handle = (cmr_handle) cxt;
 
 	ISP_LOGI("awb get ae win %d %d %d %d %d %d\n", info.trim.x, info.trim.y,
 		info.win_size.w, info.win_size.h, info.win_num.w, info.win_num.h);
@@ -4932,20 +4936,26 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	pthread_mutex_lock(&cxt->pm_getting_lock);
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AWB, &input, &output);
 	ISP_TRACE_IF_FAIL(ret, ("fail to get awb init param"));
-	if (ret == ISP_SUCCESS && output.param_data != NULL) {
-		param.tuning_param = output.param_data->data_ptr;
-		param.param_size = output.param_data->data_size;
-		param.bypass = output.param_data->user_data[0];
+	if (ret == ISP_SUCCESS && output.param_num > 0) {
+		cxt->data_ptr[0] = output.param_data[0].data_ptr;
+		cxt->data_size[0] = output.param_data[0].data_size;
+		cxt->bypass[0] = output.param_data[0].user_data[0];
+		cxt->data_ptr[1] = output.param_data[output.param_num - 1].data_ptr;
+		cxt->data_size[1] = output.param_data[output.param_num - 1].data_size;
+		cxt->bypass[1] = output.param_data[output.param_num - 1].user_data[0];
 	}
+	cxt->awb_cxt.param.param_size = cxt->data_size[0];
+	cxt->awb_cxt.param.tuning_param = cxt->data_ptr[0];
+	cxt->awb_cxt.param.bypass = cxt->bypass[0];
 	pthread_mutex_unlock(&cxt->pm_getting_lock);
 
-	param.lib_param = cxt->lib_use_info->awb_lib_info;
-	ISP_LOGV("param addr is %p size %d", param.tuning_param, param.param_size);
+	cxt->awb_cxt.param.lib_param = cxt->lib_use_info->awb_lib_info;
+	ISP_LOGV("param addr is %p size %d", cxt->awb_cxt.param.tuning_param, cxt->awb_cxt.param.param_size);
 
-	param.otp_info_ptr = cxt->otp_data;
-	param.is_master = cxt->is_master;
-	param.sensor_role = cxt->sensor_role;
-	param.color_support = cxt->awb_cxt.color_support;
+	cxt->awb_cxt.param.otp_info_ptr = cxt->otp_data;
+	cxt->awb_cxt.param.is_master = cxt->is_master;
+	cxt->awb_cxt.param.sensor_role = cxt->sensor_role;
+	cxt->awb_cxt.param.color_support = cxt->awb_cxt.color_support;
 
 
 	/* here can select awb3.x using tuning_param */
@@ -4963,34 +4973,34 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 
 	switch (cxt->is_multi_mode) {
 	case ISP_SINGLE:
-		param.is_multi_mode = ISP_ALG_SINGLE;
+		cxt->awb_cxt.param.is_multi_mode = ISP_ALG_SINGLE;
 		break;
 	case ISP_DUAL_NORMAL:
-		param.is_multi_mode = ISP_ALG_DUAL_C_C;
+		cxt->awb_cxt.param.is_multi_mode = ISP_ALG_DUAL_C_C;
 		break;
 	case ISP_BOKEH:
-		param.is_multi_mode = ISP_ALG_DUAL_C_C;
+		cxt->awb_cxt.param.is_multi_mode = ISP_ALG_DUAL_C_C;
 		break;
 	case ISP_WIDETELE:
-		param.is_multi_mode = ISP_ALG_DUAL_W_T;
+		cxt->awb_cxt.param.is_multi_mode = ISP_ALG_DUAL_W_T;
 		break;
 	case ISP_WIDETELEULTRAWIDE:
 #if defined (CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
-		param.is_multi_mode = ISP_ALG_TRIBLE_W_T_UW_SYNC;
+		cxt->awb_cxt.param.is_multi_mode = ISP_ALG_TRIBLE_W_T_UW_SYNC;
 #else
-		param.is_multi_mode = ISP_ALG_TRIBLE_W_T_UW;
+		cxt->awb_cxt.param.is_multi_mode = ISP_ALG_TRIBLE_W_T_UW;
 #endif
 		break;
 	default:
-		param.is_multi_mode = ISP_ALG_SINGLE;
+		cxt->awb_cxt.param.is_multi_mode = ISP_ALG_SINGLE;
 		break;
 	}
 	ISP_LOGI("is_master %u, sensor_role %u, is_multi_mode %u",
 			cxt->is_master, cxt->sensor_role, cxt->is_multi_mode);
-	param.ptr_isp_br_ioctrl = isp_br_ioctrl;
+	cxt->awb_cxt.param.ptr_isp_br_ioctrl = isp_br_ioctrl;
 
 	if (cxt->ops.awb_ops.init) {
-		ret = cxt->ops.awb_ops.init(&param, &cxt->awb_cxt.handle);
+		ret = cxt->ops.awb_ops.init(&cxt->awb_cxt.param, &cxt->awb_cxt.handle);
 		ISP_TRACE_IF_FAIL(ret, ("fail to do awb_ctrl_init"));
 	}
 	ISP_LOGI("done %ld", ret);
@@ -6961,6 +6971,31 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	ISP_LOGV("is_master = %d, sn_mode = %d", cxt->is_master, sn_mode);
 	if (!cxt->is_master) {
 		isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_SLAVE_SENSOR_MODE, &sn_mode, NULL);
+	}
+
+	/*for get awb param in nigthtpro*/
+	if (cxt->ops.awb_ops.deinit && cxt->awb_cxt.handle){
+		cxt->ops.awb_ops.deinit(&cxt->awb_cxt.handle);
+		cxt->awb_cxt.handle = NULL;
+	}
+
+	if (cxt->app_mode == CAMERA_MODE_FDR) {
+		cxt->awb_cxt.param.param_size = cxt->data_size[1];
+		cxt->awb_cxt.param.tuning_param = cxt->data_ptr[1];
+		cxt->awb_cxt.param.bypass = cxt->bypass[1];
+	} else {
+		cxt->awb_cxt.param.param_size = cxt->data_size[0];
+		cxt->awb_cxt.param.tuning_param = cxt->data_ptr[0];
+		cxt->awb_cxt.param.bypass = cxt->bypass[0];
+	}
+	ISP_LOGV("awb_param(0, 1) (%p %d) (%p %d) cur_param(%p  %d)" ,
+			cxt->data_ptr[0], cxt->data_size[0],
+			cxt->data_ptr[1],cxt->data_size[1],
+			cxt->awb_cxt.param.tuning_param, cxt->awb_cxt.param.param_size);
+
+	if (cxt->ops.awb_ops.init) {
+		ret = cxt->ops.awb_ops.init(&cxt->awb_cxt.param, &cxt->awb_cxt.handle);
+		ISP_TRACE_IF_FAIL(ret, ("fail to do awb_ctrl_init"));
 	}
 
 	/* initialize isp pm */
