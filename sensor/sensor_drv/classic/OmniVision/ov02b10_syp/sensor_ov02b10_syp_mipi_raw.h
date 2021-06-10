@@ -20,7 +20,7 @@
 
 
 #define VENDOR_NUM           1
-#define SENSOR_NAME          "ov02b10_syp_mipi_raw"
+#define SENSOR_NAME          "ov02b10_syp"
 
 #define I2C_SLAVE_ADDR       0x7A     /*0x20*//* 8bit slave address*/
 

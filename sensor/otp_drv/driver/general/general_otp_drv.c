@@ -3136,15 +3136,34 @@ static cmr_int general_otp_drv_parse(cmr_handle otp_drv_handle, void *param) {
         _general_otp_parse_module_data_1v1(otp_drv_handle);
 
         if (otp_cxt->sensor_id < SENSOR_ID_MAX) {
-            _general_otp_parse_af_1v1(otp_drv_handle);
-            _general_otp_parse_awb_1v1(otp_drv_handle);
-            _general_otp_parse_lsc_1v1(otp_drv_handle);
-            _general_otp_parse_pdaf_1v1(otp_drv_handle);
-            _general_otp_parse_xtalk_4in1_1v1(otp_drv_handle);
-            _general_otp_parse_dpc_4in1_1v1(otp_drv_handle);
-            _general_otp_parse_spw_1v1(otp_drv_handle);
-            _general_otp_parse_bokeh_1v1(otp_drv_handle);
-            _general_otp_parse_wt_1v1(otp_drv_handle);
+            cnce_clear_otp_check_result(otp_cxt->dev_name);
+
+            ret = _general_otp_parse_af_1v1(otp_drv_handle);
+            cnce_save_otp_check_result(otp_cxt->dev_name, "af", ret);
+
+            ret = _general_otp_parse_awb_1v1(otp_drv_handle);
+            cnce_save_otp_check_result(otp_cxt->dev_name, "awb", ret);
+
+            ret = _general_otp_parse_lsc_1v1(otp_drv_handle);
+            cnce_save_otp_check_result(otp_cxt->dev_name, "lsc", ret);
+
+            ret = _general_otp_parse_pdaf_1v1(otp_drv_handle);
+            cnce_save_otp_check_result(otp_cxt->dev_name, "pdaf", ret);
+
+            ret = _general_otp_parse_xtalk_4in1_1v1(otp_drv_handle);
+            cnce_save_otp_check_result(otp_cxt->dev_name, "xtalk_4in1", ret);
+
+            ret = _general_otp_parse_dpc_4in1_1v1(otp_drv_handle);
+            cnce_save_otp_check_result(otp_cxt->dev_name, "dpc_4in1", ret);
+
+            ret = _general_otp_parse_spw_1v1(otp_drv_handle);
+            cnce_save_otp_check_result(otp_cxt->dev_name, "spw", ret);
+
+            ret = _general_otp_parse_bokeh_1v1(otp_drv_handle);
+            cnce_save_otp_check_result(otp_cxt->dev_name, "bokeh", ret);
+
+            ret = _general_otp_parse_wt_1v1(otp_drv_handle);
+            cnce_save_otp_check_result(otp_cxt->dev_name, "wt", ret);
         } else {
             OTP_LOGE("illegal sensor id");
             goto exit;
