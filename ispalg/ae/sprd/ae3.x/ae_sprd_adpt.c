@@ -1117,7 +1117,7 @@ static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 		return ret;
 	}
 	if ((cxt->zsl_flag == 0) && (cxt->is_snapshot) && (cxt->ae_cb_result[AE_CB_RESULT_LONG_EXP])) {
-		exp_data->lib_data.exp_time = cxt->manual_exp_time;
+		exp_data->lib_data.exp_time = cxt->cur_result.nzl_cap_exp;
 		exp_data->lib_data.exp_line = (cmr_u32)(1.0 * exp_data->lib_data.exp_time /cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
 		exp_data->lib_data.gain = cxt->cur_result.nzl_cap_gain;
 		ISP_LOGD("LONG_EXP:exp_line %d,exp_gain %d, zsl_flag %d, long_exp_flag %d",exp_data->lib_data.exp_line, exp_data->lib_data.gain, cxt->zsl_flag, cxt->ae_cb_result[AE_CB_RESULT_LONG_EXP]);
@@ -4594,7 +4594,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			cxt->cur_status.adv_param.is_snapshot =  work_info->is_snapshot;//ok
 			ISP_LOGV("table_idx:%d",cxt->cur_status.adv_param.cur_ev_setting.ae_idx);
 			if (cxt->ae_cb_result[AE_CB_RESULT_LONG_EXP]){
-				cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->manual_exp_time;
+				cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->cur_result.nzl_cap_exp;
 				cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = cxt->cur_result.nzl_cap_gain;
 				ISP_LOGD("LONGEXP: manual_exp_time %"PRIu64", nzl_cap_gain %d\n",cxt->manual_exp_time,cxt->cur_result.nzl_cap_gain);
 			}
