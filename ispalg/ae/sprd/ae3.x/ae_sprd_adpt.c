@@ -4880,7 +4880,7 @@ static cmr_s32 ae_set_ev_offset(struct ae_ctrl_cxt *cxt, void *param)
 static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_exp_compensation *exp_comp)
 {
 	if (exp_comp) {
-		if(exp_comp->comp_val)
+		if((exp_comp->comp_val != 0) && (exp_comp->comp_val != 255))
 			cxt->is_ev_setting = 1;
 		else
 			cxt->is_ev_setting = 0;
