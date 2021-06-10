@@ -1829,7 +1829,7 @@ SENSOR_INFO_T g_s5kgm1sp_mipi_raw_info = {
 
     .source_width_max = 4000,
     .source_height_max = 3000,
-    .name = (cmr_s8 *)"s5kgm1sp",
+    .name = (cmr_s8 *)"s5kgm1sp_syp_1",
 
     .image_format = SENSOR_IMAGE_FORMAT_RAW,
 
