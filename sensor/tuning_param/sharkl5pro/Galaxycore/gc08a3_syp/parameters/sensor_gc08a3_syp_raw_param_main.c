@@ -31,8 +31,11 @@
 /* Begin Include */
 #include "sensor_gc08a3_syp_raw_param_common.c"
 #include "sensor_gc08a3_syp_raw_param_prv_0.c"
+#include "sensor_gc08a3_syp_raw_param_prv_1.c"
 #include "sensor_gc08a3_syp_raw_param_cap_0.c"
+#include "sensor_gc08a3_syp_raw_param_cap_1.c"
 #include "sensor_gc08a3_syp_raw_param_video_0.c"
+#include "sensor_gc08a3_syp_raw_param_video_1.c"
 
 /* End Include */
 
@@ -46,7 +49,7 @@
 
 
 /* Capture Sizes:
-	3264x2448
+	3264x2448,1632x1224
 */
 
 
@@ -104,14 +107,15 @@ static struct sensor_raw_ioctrl s_gc08a3_syp_ioctrl=
  * NO modifying manually.
 ********************************************************************************/
 
+
 static struct sensor_version_info s_gc08a3_syp_version_info=
 {
 	0x000B0009,
 	{
 		{
 			0x38306367,
-			0x735F3361,
-			0x00007079,
+			0x00003361,
+			0x00000000,
 			0x00000000,
 			0x00000000,
 			0x00000000,
@@ -158,15 +162,15 @@ static struct sensor_raw_info s_gc08a3_syp_mipi_raw_info=
 	{
 		{s_gc08a3_syp_tune_info_common, sizeof(s_gc08a3_syp_tune_info_common)},
 		{s_gc08a3_syp_tune_info_prv_0, sizeof(s_gc08a3_syp_tune_info_prv_0)},
-		{NULL, 0},
+		{s_gc08a3_syp_tune_info_prv_1, sizeof(s_gc08a3_syp_tune_info_prv_1)},
 		{NULL, 0},
 		{NULL, 0},
 		{s_gc08a3_syp_tune_info_cap_0, sizeof(s_gc08a3_syp_tune_info_cap_0)},
-		{NULL, 0},
+		{s_gc08a3_syp_tune_info_cap_1, sizeof(s_gc08a3_syp_tune_info_cap_1)},
 		{NULL, 0},
 		{NULL, 0},
 		{s_gc08a3_syp_tune_info_video_0, sizeof(s_gc08a3_syp_tune_info_video_0)},
-		{NULL, 0},
+		{s_gc08a3_syp_tune_info_video_1, sizeof(s_gc08a3_syp_tune_info_video_1)},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
@@ -179,15 +183,15 @@ static struct sensor_raw_info s_gc08a3_syp_mipi_raw_info=
 	{
 		&s_gc08a3_syp_fix_info_common,
 		&s_gc08a3_syp_fix_info_prv_0,
-		NULL,
+		&s_gc08a3_syp_fix_info_prv_1,
 		NULL,
 		NULL,
 		&s_gc08a3_syp_fix_info_cap_0,
-		NULL,
+		&s_gc08a3_syp_fix_info_cap_1,
 		NULL,
 		NULL,
 		&s_gc08a3_syp_fix_info_video_0,
-		NULL,
+		&s_gc08a3_syp_fix_info_video_1,
 		NULL,
 		NULL,
 		NULL,
@@ -197,15 +201,15 @@ static struct sensor_raw_info s_gc08a3_syp_mipi_raw_info=
 	{
 		{s_gc08a3_syp_common_tool_ui_input, sizeof(s_gc08a3_syp_common_tool_ui_input)},
 		{s_gc08a3_syp_prv_0_tool_ui_input, sizeof(s_gc08a3_syp_prv_0_tool_ui_input)},
-		{NULL, 0},
+		{s_gc08a3_syp_prv_1_tool_ui_input, sizeof(s_gc08a3_syp_prv_1_tool_ui_input)},
 		{NULL, 0},
 		{NULL, 0},
 		{s_gc08a3_syp_cap_0_tool_ui_input, sizeof(s_gc08a3_syp_cap_0_tool_ui_input)},
-		{NULL, 0},
+		{s_gc08a3_syp_cap_1_tool_ui_input, sizeof(s_gc08a3_syp_cap_1_tool_ui_input)},
 		{NULL, 0},
 		{NULL, 0},
 		{s_gc08a3_syp_video_0_tool_ui_input, sizeof(s_gc08a3_syp_video_0_tool_ui_input)},
-		{NULL, 0},
+		{s_gc08a3_syp_video_1_tool_ui_input, sizeof(s_gc08a3_syp_video_1_tool_ui_input)},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
