@@ -1,4 +1,4 @@
-/*
+  /*
  * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -4211,7 +4211,7 @@ static cmr_int ispalg_ebd_process(cmr_handle isp_alg_handle, cmr_u32 data_type, 
 	cxt->ae_cxt.ebd_info.dgain_r = sensor_ebd_info.parse_data.dgain_r;
 	cxt->ae_cxt.ebd_info.dgain_b = sensor_ebd_info.parse_data.dgain_b;
 	cxt->ae_cxt.ebd_info.dgain_gb = sensor_ebd_info.parse_data.dgain_gb;
-	cxt->ae_cxt.ebd_info.gain = sensor_ebd_info.parse_data.gain;
+	cxt->ae_cxt.ebd_info.gain = (cmr_u32) sensor_ebd_info.parse_data.gain;
 	cxt->ae_cxt.ebd_info.dgain_valid = sensor_ebd_info.dgain_valid;
 
 	ISP_LOGV("frame id %x %d, shutter %x %d, again %x %d",
@@ -7423,12 +7423,12 @@ static cmr_int ispalg_alsc_update(cmr_handle isp_alg_handle)
 		}
 
 		memset(&awb_stat, 0, sizeof(awb_stat));
-		ret = isp_sim_get_no_lsc_ae_stats((void *)&awb_stat, &stat_w, &stat_h);
+		ret = (cmr_s32) isp_sim_get_no_lsc_ae_stats((void *)&awb_stat, &stat_w, &stat_h);
 		if (ret) {
 			ISP_LOGE("fail to get ae stats");
 		}
 
-		ret = isp_sim_get_scene_parm(&scene_param);
+		ret = (cmr_s32) isp_sim_get_scene_parm(&scene_param);
 		if(ret) {
 			ISP_LOGE("fail to get scene parameter");
 		}
