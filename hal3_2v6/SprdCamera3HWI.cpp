@@ -598,7 +598,7 @@ int SprdCamera3HWI::checkStreamList(
 }
 
 int32_t SprdCamera3HWI::getStreamType(camera3_stream_t *stream) {
-    int32_t streamType = -1;
+    int32_t streamType = CAMERA_STREAM_TYPE_YUV2;
     if (stream == mStreamConfiguration.preview.stream) {
         streamType = CAMERA_STREAM_TYPE_PREVIEW;
     } else if (stream == mStreamConfiguration.video.stream) {
