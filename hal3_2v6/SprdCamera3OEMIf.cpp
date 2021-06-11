@@ -5722,6 +5722,14 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     }
 #endif
 
+    if (mIsIspToolMode == 1) {
+        regularChannel->channelCbRoutine(frame_num, timestamp,
+                                 CAMERA_STREAM_TYPE_YUV2);
+        regularChannel->channelCbRoutine(frame_num, timestamp,
+                                 CAMERA_STREAM_TYPE_CALLBACK);
+        HAL_LOGI("remove yuv2 buffer.");
+    }
+
     picChannel->channelCbRoutine(frame_num, timestamp,
                                  CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
 
