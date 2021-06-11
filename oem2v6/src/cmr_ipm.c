@@ -47,7 +47,7 @@ extern struct class_tab_t tab_info_4in1;
 #ifdef CONFIG_CAMERA_CNR
 extern struct class_tab_t cnr_tab_info;
 #endif
-#ifdef CONFIG_CAMERA_DRE
+#ifdef CONFIG_CAMERA_DRE_PRO
 extern struct class_tab_t dre_tab_info;
 #endif
 #ifdef CONFIG_CAMERA_AUTO_TRACKING
@@ -89,7 +89,7 @@ struct ipm_class_tab class_type_tab[] = {
 #ifdef CONFIG_CAMERA_CNR
     {IPM_TYPE_CNR, &cnr_tab_info},
 #endif
-#ifdef CONFIG_CAMERA_DRE
+#ifdef CONFIG_CAMERA_DRE_PRO
     {IPM_TYPE_DRE, &dre_tab_info},
 #endif
     {IPM_TYPE_AI_SCENE, &ai_scene_tab_info},
