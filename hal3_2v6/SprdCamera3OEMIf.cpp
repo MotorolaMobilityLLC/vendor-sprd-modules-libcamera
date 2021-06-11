@@ -5585,6 +5585,11 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         goto exit;
     }
 
+    if (frame->zsl_private) {
+        HAL_LOGV("is_mfsr.  set mExitCurZslLoop = 1");
+        mExitCurZslLoop = 1;
+    }
+
     if (0 != frame->sensor_info.exposure_time_denominator) {
         exposureTime = 1000000000ll *
                        frame->sensor_info.exposure_time_numerator /
@@ -5646,11 +5651,11 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         Mutex::Autolock l(&mJpegDebugQLock);
         List<ZslBufferQueue>::iterator itor;
         ZslBufferQueue node;
-        camera_frame_type *frame;
         cmr_s32 frame_id = -1;
 
         HAL_LOGD("Cam%d JpegQueue size %d\n", mCameraId, mJpegDebugQ.size());
         if (mJpegDebugQ.size() > 0) {
+            camera_frame_type *frame;
             itor = mJpegDebugQ.begin()++;
             node = static_cast<ZslBufferQueue>(*itor);
             frame = &node.frame;
@@ -5658,7 +5663,10 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
             HAL_LOGD("Cam%d JpegQueue pop fd 0x%x,  frame_id %d, frame_num %d\n",
                         mCameraId, frame->fd, frame->frame_num, frame->buf_id);
             frame_id = (cmr_s32)frame->frame_num;
-	}
+        } else {
+            HAL_LOGD("Cam%d, is_mfsr %d, frame_id %d\n", mCameraId, frame->zsl_private, frame->frame_num);
+            frame_id = (cmr_s32)frame->frame_num;
+        }
 
         // add isp debug info for userdebug version
         ret = mHalOem->ops->camera_get_isp_info(mCameraHandle, &ispInfoAddr,
@@ -12016,10 +12024,11 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
     // sharkl2-like
     // obj->skipZslFrameForFlashCapture();
 
+    mExitCurZslLoop = 0;
     do {
         ret = 0;
         // for exception exit
-        if (obj->mZslCaptureExitLoop == true) {
+        if (obj->mZslCaptureExitLoop == true || mExitCurZslLoop) {
             HAL_LOGD("zsl loop exit done.");
             break;
         }
