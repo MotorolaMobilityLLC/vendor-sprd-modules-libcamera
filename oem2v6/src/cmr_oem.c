@@ -5940,8 +5940,10 @@ cmr_int camera_ipm_open_sw_algorithm(cmr_handle oem_handle) {
         cxt->ipm_cxt.cnr_inited = 1;
     }
 
-#ifdef CONFIG_CAMERA_DRE
-    if (!cxt->ipm_cxt.dre_inited && cxt->dre_flag) {
+#ifdef CONFIG_CAMERA_DRE_PRO
+    CMR_LOGD("dre_inited = %ld, dre_flag = %ld, camera_get_hdr_flag = %d",
+                        cxt->ipm_cxt.dre_inited, cxt->dre_flag, camera_get_hdr_flag(cxt));
+    if (!cxt->ipm_cxt.dre_inited && cxt->dre_flag && (1 != camera_get_hdr_flag(cxt))) {
         in_param.frame_size.width = cxt->sn_cxt.sensor_info.source_width_max;
         in_param.frame_size.height = cxt->sn_cxt.sensor_info.source_height_max;
         ret = camera_open_dre(cxt, &in_param, NULL);
@@ -5975,7 +5977,7 @@ cmr_int camera_ipm_deinit(cmr_handle oem_handle) {
         cxt->ipm_cxt.cnr_inited = 0;
     }
 
-#ifdef CONFIG_CAMERA_DRE
+#ifdef CONFIG_CAMERA_DRE_PRO
     if (cxt->ipm_cxt.dre_inited && cxt->dre_flag) {
         ret = camera_close_dre(cxt);
         if (ret) {
@@ -12352,7 +12354,8 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     setting_param.camera_id = cxt->camera_id;
     ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_APPMODE,
                             &setting_param);
-    if (setting_param.cmd_type_value == CAMERA_MODE_NIGHT_PHOTO) {
+    if (setting_param.cmd_type_value == CAMERA_MODE_NIGHT_PHOTO ||
+        setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO) {
         out_ptr->dre_flag = 1;
         cxt->dre_flag = 1;
     }
@@ -13657,7 +13660,7 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
         cxt->ipm_cxt.cnr_inited = 0;
     }
 
-#ifdef CONFIG_CAMERA_DRE
+#ifdef CONFIG_CAMERA_DRE_PRO
     if (cxt->ipm_cxt.dre_inited && cxt->dre_flag) {
         ret = camera_close_dre(cxt);
         if (ret) {
