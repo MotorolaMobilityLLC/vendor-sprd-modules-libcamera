@@ -16009,7 +16009,7 @@ camera_copy_sensor_ex_info_to_isp(struct isp_sensor_ex_info *out_isp_sn_ex_info,
         CMR_LOGE("input param or out param is null!");
         return CMR_CAMERA_FAIL;
     }
-    out_isp_sn_ex_info->f_num = in_sn_ex_info->f_num;
+    out_isp_sn_ex_info->f_num = (cmr_u32) in_sn_ex_info->f_num;
     out_isp_sn_ex_info->focal_length = in_sn_ex_info->focal_length;
     out_isp_sn_ex_info->max_fps = in_sn_ex_info->max_fps;
     out_isp_sn_ex_info->max_adgain = in_sn_ex_info->max_adgain;
