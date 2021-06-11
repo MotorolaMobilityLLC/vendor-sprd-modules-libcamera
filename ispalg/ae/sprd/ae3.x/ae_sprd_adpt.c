@@ -654,6 +654,8 @@ static cmr_s32 ae_sync_process(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_dat
 	struct ae_match_stats_data stats_data_slave[2] = {{0},{0}};
 	struct aem_info slave_aem_info[2] = {{0},{0}};
 	struct isp_hist_statistic_info y_hist_data[2] = {{0},{0}};
+	struct ae_alg_rgb_gain awb_gain_data[2]= {{0},{0}};
+
 
 	memset(master_ae_sync_info_ptr,0,sizeof(struct ae_frm_sync_param));
 	memset(slave0_ae_sync_info_ptr,0,sizeof(struct ae_frm_sync_param));
@@ -675,6 +677,8 @@ static cmr_s32 ae_sync_process(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_dat
 
 		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, GET_Y_HIST_PARAM, NULL, &y_hist_data[0]);
 		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_Y_HIST_PARAM, NULL, &y_hist_data[1]);
+		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, GET_AWB_GAIN_PARAM, NULL, &awb_gain_data[0]);
+		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_AWB_GAIN_PARAM, NULL, &awb_gain_data[1]);
 
 		stats_data_master.len = sizeof(master_ae_sync_info_ptr->aem);
 		stats_data_master.stats_data = &master_ae_sync_info_ptr->aem[0];
@@ -712,6 +716,7 @@ static cmr_s32 ae_sync_process(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_dat
 		master_ae_sync_info_ptr->otp_info.gain_8x_exp = ae_otp_master.gain_8x_exp;
 		master_ae_sync_info_ptr->otp_info.ae_target_lum = ae_otp_master.ae_target_lum;
 		master_ae_sync_info_ptr->otp_info.reserve = ae_otp_master.reserve;
+		master_ae_sync_info_ptr->awb_gain = awb_gain_data[0];
 		memcpy(&master_ae_sync_info_ptr->blk_size, &sync_info_master.block_size, sizeof(struct ae_size));
 		memcpy(&master_ae_sync_info_ptr->img_size,&sync_info_master.sensor_size, sizeof(struct ae_size));
 		memcpy(&master_ae_sync_info_ptr->aem_roi_rect, &sync_info_master.target_rect, sizeof(struct ae_rect));
@@ -753,6 +758,7 @@ static cmr_s32 ae_sync_process(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_dat
 		slave0_ae_sync_info_ptr->effect_param.dmy_line = ae_sync_actual[0].dmy_line;
 		slave0_ae_sync_info_ptr->effect_param.exp_time = ae_sync_actual[0].exp_time;
 		slave0_ae_sync_info_ptr->effect_param.frm_len =  ae_sync_actual[0].frm_len;
+		slave0_ae_sync_info_ptr->awb_gain = awb_gain_data[1];
 
 		if (cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW) {
 			in_param.mode = AE_SYNC_1;
@@ -6456,6 +6462,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	cxt->cur_status.adv_param.bhist_data[2].hist_bin = calc_in->bayerhist_stats[2].bin;
 	/* set y hist stat to bridge for every sensor*/
 	cxt->ptr_isp_br_ioctrl(cxt->sensor_role, SET_Y_HIST_PARAM, &calc_in->hist_stats, NULL);
+	cxt->ptr_isp_br_ioctrl(cxt->sensor_role, SET_AWB_GAIN_PARAM, &cxt->cur_status.awb_gain, NULL);
 
 #if DEBUG_EN
 	/*set frame id to bridge*/
