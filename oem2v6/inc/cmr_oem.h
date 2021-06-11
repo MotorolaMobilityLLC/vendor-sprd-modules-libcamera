@@ -147,6 +147,8 @@ struct ipmpro_context {
 struct ipm_context {
     cmr_handle ipm_handle;
     cmr_handle hdr_handle;
+    cmr_handle mfsr_handle;
+    cmr_handle mfsr_post_handle;
     cmr_handle filter_handle;
     cmr_handle uvde_handle;
     cmr_handle yde_handle;
@@ -374,7 +376,9 @@ struct camera_context {
     cmr_u32 inited;
     cmr_u32 camera_mode;
     cmr_u32 zsl_ips_en;
+    cmr_u32 mfsr_force_off;
     cmr_uint is_discard_frm;
+    sem_t mfsr_sm;
     sem_t hdr_sync_sm;
     sem_t hdr_flag_sm;
     sem_t ai_scene_flag_sm;
