@@ -85,6 +85,8 @@ struct match_data_param {
 	struct ae_lib_output_data ae_lib_output[CAM_SENSOR_MAX];
 	struct ae_sync_lib_outout_data ae_sync_lib_output[CAM_SENSOR_MAX];
 	struct isp_hist_statistic_info y_hist[CAM_SENSOR_MAX];
+	struct awb_gain_data awbgain[CAM_SENSOR_MAX];
+
 };
 
 struct awb_master_sync_data {
@@ -405,6 +407,25 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 			if (out)
 				memcpy(out, &cxt->match_param.y_hist[sensor_role],
 					sizeof(cxt->match_param.y_hist[sensor_role]));
+			sem_post(&cxt->ae_sm);
+		}
+		break;
+
+	case SET_AWB_GAIN_PARAM:
+		{
+			sem_wait(&cxt->ae_sm);
+			memcpy(&cxt->match_param.awbgain[sensor_role], in,
+				sizeof(cxt->match_param.awbgain[sensor_role]));
+			sem_post(&cxt->ae_sm);
+		}
+		break;
+
+	case GET_AWB_GAIN_PARAM:
+		{
+			sem_wait(&cxt->ae_sm);
+			if (out)
+				memcpy(out, &cxt->match_param.awbgain[sensor_role],
+					sizeof(cxt->match_param.awbgain[sensor_role]));
 			sem_post(&cxt->ae_sm);
 		}
 		break;
