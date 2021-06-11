@@ -13957,6 +13957,7 @@ void *SprdCamera3OEMIf::color_temp_process_init(void) {
                      SENSOR_TYPE_SPRD_COLOR_TEMP, GsensorRate, 0);
             mcolor_temp_sensor_count--;
             ASensorManager_destroyEventQueue(mCTSensorManager, mCTSensorEventQueue);
+            mcolortempSensor = NULL;
             return NULL;
         }
     } else {
@@ -13974,6 +13975,10 @@ void *SprdCamera3OEMIf::color_temp_Sensor_process(cmr_u32* data_colortemp) {
     ASensorEvent buffer[8];
     ssize_t n;
     memset((void *)buffer, 0x00, 8 * sizeof(ASensorEvent));
+
+    if (mcolortempSensor == NULL){
+        return NULL;
+    }
 
     if ((n = ASensorEventQueue_getEvents(mCTSensorEventQueue, buffer, 8)) > 0) {
         for (int i = 0; i < n; i++) {
