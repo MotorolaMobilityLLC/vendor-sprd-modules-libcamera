@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 #include <cutils/properties.h>
-#define LOG_TAG "cmr_sprd_dre"
+#define LOG_TAG "cmr_sprd_dre_pro"
 #include "cmr_common.h"
 #include "cmr_oem.h"
-#include "sprd_dre_adapter.h"
+#include "sprd_dre_adapter_pro.h"
 #include "isp_mw.h"
 
 struct class_dre {
@@ -75,7 +75,7 @@ static cmr_int dre_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     CMR_LOGI("sprd_dre_init height=%d,width = %d", dre_handle->height,
              dre_handle->width);
 
-    ret = sprd_dre_adpt_init(&dre_handle->handle, dre_handle->width,
+    ret = sprd_dre_pro_adpt_init(&dre_handle->handle, dre_handle->width,
                         dre_handle->height, NULL);
 
     if (ret != CMR_CAMERA_SUCCESS) {
@@ -110,8 +110,8 @@ static cmr_int dre_close(cmr_handle class_handle) {
     CMR_LOGI("E");
     if (dre_handle->is_inited) {
         sem_wait(&dre_handle->sem);
-        sprd_dre_adpt_ctrl(dre_handle->handle, SPRD_DRE_FAST_STOP_CMD, NULL, NULL);
-        ret = sprd_dre_adpt_deinit(dre_handle->handle);
+        sprd_dre_pro_adpt_ctrl(dre_handle->handle, SPRD_DRE_FAST_STOP_CMD, NULL, NULL);
+        ret = sprd_dre_pro_adpt_deinit(dre_handle->handle);
         if (ret) {
             CMR_LOGE("failed to deinit");
         }
@@ -169,7 +169,7 @@ static cmr_int dre_transfer_frame(cmr_handle class_handle,
     struct ipm_init_in *ipm_in = &dre_handle->common.ipm_cxt->init_in;
 
     ret =
-        ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_DRE_PARAM, &isp_cmd_parm);
+        ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_DRE_PRO_PARAM, &isp_cmd_parm);
 
     if (CMR_CAMERA_SUCCESS != ret) {
         CMR_LOGI("no parameters ,bypass dre");
@@ -181,42 +181,44 @@ static cmr_int dre_transfer_frame(cmr_handle class_handle,
     image_in.height = height;
     image_in.width = width;
     image_in.format = SPRD_CAMALG_IMG_NV21;
-    CMR_LOGV("predre enable=%d ", isp_cmd_parm.dre_param.predre_param.enable);
+    CMR_LOGV("predre enable=%d ", isp_cmd_parm.dre_pro_param.predre_pro_param.enable);
     CMR_LOGV("predre imgKey_setting_mode=%d ",
-             isp_cmd_parm.dre_param.predre_param.imgKey_setting_mode);
+             isp_cmd_parm.dre_pro_param.predre_pro_param.imgKey_setting_mode);
     CMR_LOGV("predre tarNorm_setting_mode=%d ",
-             isp_cmd_parm.dre_param.predre_param.tarNorm_setting_mode);
+             isp_cmd_parm.dre_pro_param.predre_pro_param.tarNorm_setting_mode);
     CMR_LOGV("predre target_norm=%d ",
-             isp_cmd_parm.dre_param.predre_param.target_norm);
+             isp_cmd_parm.dre_pro_param.predre_pro_param.target_norm);
     CMR_LOGV("predre imagekey=%d ",
-             isp_cmd_parm.dre_param.predre_param.imagekey);
-    CMR_LOGV("predre min_per=%d ", isp_cmd_parm.dre_param.predre_param.min_per);
-    CMR_LOGV("predre max_per=%d ", isp_cmd_parm.dre_param.predre_param.max_per);
+             isp_cmd_parm.dre_pro_param.predre_pro_param.imagekey);
+    CMR_LOGV("predre min_per=%d ", isp_cmd_parm.dre_pro_param.predre_pro_param.min_per);
+    CMR_LOGV("predre max_per=%d ", isp_cmd_parm.dre_pro_param.predre_pro_param.max_per);
     CMR_LOGV("predre stat_step=%d ",
-             isp_cmd_parm.dre_param.predre_param.stat_step);
+             isp_cmd_parm.dre_pro_param.predre_pro_param.stat_step);
     CMR_LOGV("predre low_thresh=%d ",
-             isp_cmd_parm.dre_param.predre_param.low_thresh);
+             isp_cmd_parm.dre_pro_param.predre_pro_param.low_thresh);
     CMR_LOGV("predre high_thresh=%d ",
-             isp_cmd_parm.dre_param.predre_param.high_thresh);
+             isp_cmd_parm.dre_pro_param.predre_pro_param.high_thresh);
     CMR_LOGV("predre tarCoeff=%d ",
-             isp_cmd_parm.dre_param.predre_param.tarCoeff);
+             isp_cmd_parm.dre_pro_param.predre_pro_param.tarCoeff);
 
-    CMR_LOGV("post enable=%d ", isp_cmd_parm.dre_param.postdre_param.enable);
+    CMR_LOGV("post enable=%d ", isp_cmd_parm.dre_pro_param.postdre_pro_param.enable);
     CMR_LOGV("post strength=%d ",
-             isp_cmd_parm.dre_param.postdre_param.strength);
+             isp_cmd_parm.dre_pro_param.postdre_pro_param.strength);
     CMR_LOGV("post texture_counter_en=%d ",
-             isp_cmd_parm.dre_param.postdre_param.texture_counter_en);
+             isp_cmd_parm.dre_pro_param.postdre_pro_param.texture_counter_en);
     CMR_LOGV("post text_point_thres=%d ",
-             isp_cmd_parm.dre_param.postdre_param.text_point_thres);
+             isp_cmd_parm.dre_pro_param.postdre_pro_param.text_point_thres);
     CMR_LOGV("post text_prop_thres=%d ",
-             isp_cmd_parm.dre_param.postdre_param.text_prop_thres);
+             isp_cmd_parm.dre_pro_param.postdre_pro_param.text_prop_thres);
     CMR_LOGV("post tile_num_auto=%d ",
-             isp_cmd_parm.dre_param.postdre_param.tile_num_auto);
+             isp_cmd_parm.dre_pro_param.postdre_pro_param.tile_num_auto);
     CMR_LOGV("post tile_num_x=%d ",
-             isp_cmd_parm.dre_param.postdre_param.tile_num_x);
+             isp_cmd_parm.dre_pro_param.postdre_pro_param.tile_num_x);
     CMR_LOGV("post tile_num_y=%d ",
-             isp_cmd_parm.dre_param.postdre_param.tile_num_y);
-    ret = sprd_dre_adpt_ctrl(dre_handle->handle, SPRD_DRE_PROCESS_CMD, &image_in, &isp_cmd_parm.dre_param);
+             isp_cmd_parm.dre_pro_param.postdre_pro_param.tile_num_y);
+    CMR_LOGV("post text_point_alpha=%d ",
+             isp_cmd_parm.dre_pro_param.postdre_pro_param.text_point_alpha);
+    ret = sprd_dre_pro_adpt_ctrl(dre_handle->handle, SPRD_DRE_PROCESS_CMD, &image_in, &isp_cmd_parm.dre_pro_param);
     if (CMR_CAMERA_SUCCESS != ret) {
         CMR_LOGE("failed to do dre %ld", ret);
         goto exit;
