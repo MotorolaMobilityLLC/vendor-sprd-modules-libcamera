@@ -8845,15 +8845,14 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             mSetting->getLENSTag(&lensInfo);
 
             HAL_LOGD("focus_distance:%f", lensInfo.focus_distance);
-
+#ifdef CAMERA_MANULE_SNEOSR
             if (!mMultiCameraMode) {
                 lensInfo.focus_distance = mSetting->focusDistanceTranslateToDrvFocusDistance(lensInfo.focus_distance , mCameraId);
-                HAL_LOGD("transfer to drv focus distance:%d",lensInfo.focus_distance);
+                HAL_LOGD("transfer to drv focus_distance:%d",lensInfo.focus_distance);
             }
-
+#endif
             if (lensInfo.focus_distance) {
-                SET_PARM(mHalOem, mCameraHandle,
-                         CAMERA_PARAM_LENS_FOCUS_DISTANCE,
+                SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_LENS_FOCUS_DISTANCE,
                          (cmr_uint)(lensInfo.focus_distance));
             }
         }

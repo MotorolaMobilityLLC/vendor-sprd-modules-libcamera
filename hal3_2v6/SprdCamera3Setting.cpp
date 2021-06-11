@@ -1825,12 +1825,14 @@ int SprdCamera3Setting::initStaticParametersforLensInfo(int32_t cameraId) {
     /*android.lens.focusDistance,The value set will be clamped to
     [0.0f, android.lens.info.minimumFocusDistance]*/
     if (mSensorFocusEnable[cameraId]) {
+#ifdef CAMERA_MANULE_SNEOSR
         minimum_focus_distance = (float)getMinFocusDistance(cameraId);
         minimum_focus_distance = 1000 / minimum_focus_distance;
-        HAL_LOGD("camera%d minimum focus distance:%f",
-                 cameraId,minimum_focus_distance);
         s_setting[cameraId].lens_InfoInfo.mini_focus_distance =
                  minimum_focus_distance;
+#else
+        s_setting[cameraId].lens_InfoInfo.mini_focus_distance = 1023.0f;
+#endif
     } else {
         s_setting[cameraId].lens_InfoInfo.mini_focus_distance = 0.0f;
     }
@@ -1884,7 +1886,9 @@ int SprdCamera3Setting::initStaticParametersforLensInfo(int32_t cameraId) {
            camera3_default_info.common.availDistortionCorrectionModes,
            sizeof(camera3_default_info.common.availDistortionCorrectionModes));
 
-    HAL_LOGD("log_parameters_lens_statics_info:%d", cameraId);
+    HAL_LOGD("lens_statics_info: cameraId %d, mini_focus_distance %f, hyperfocal_distance %f",
+        cameraId, s_setting[cameraId].lens_InfoInfo.mini_focus_distance,
+        s_setting[cameraId].lens_InfoInfo.hyperfocal_distance);
     return 0;
 }
 
