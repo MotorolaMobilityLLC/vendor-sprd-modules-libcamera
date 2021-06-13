@@ -4064,7 +4064,7 @@ static cmr_int sensor_drv_ois_load_library(const char *name,
         libPtr->ois_lib_handle = NULL;
         goto exit;
     }
-    libPtr->ois_info_ptr = (struct sns_af_drv_entry *)ois_driver_open_lib();
+    libPtr->ois_info_ptr = (struct sns_ois_drv_entry *)ois_driver_open_lib();
     if (!libPtr->ois_info_ptr) {
         SENSOR_LOGE("load ois_info_ptr failed");
         dlclose(libPtr->ois_lib_handle);
