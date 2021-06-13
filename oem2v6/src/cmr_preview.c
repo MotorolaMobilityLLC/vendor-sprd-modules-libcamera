@@ -8817,7 +8817,7 @@ cmr_int channel0_alloc_bufs(struct prev_handle *handle, cmr_u32 camera_id,
 
     /*arrange the buffer*/
     buffer->channel_id = 0; /*should be update when channel cfg complete*/
-    buffer->base_id = CMR_PREV_ID_BASE;
+    buffer->base_id = CMR_CAP0_ID_BASE;
     buffer->count = prev_cxt->channel0.valid_buf_cnt;
     buffer->length = prev_cxt->channel0.buf_size;
     buffer->flag = BUF_FLAG_INIT;
@@ -8998,7 +8998,7 @@ cmr_int channel0_configure(struct prev_handle *handle, cmr_u32 camera_id,
         for (i = 0; i < prev_cxt->channel0.skip_num; i++) {
             cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
             buf_cfg.channel_id = prev_cxt->channel0.chn_id;
-            buf_cfg.base_id = CMR_VIDEO_ID_BASE;
+            buf_cfg.base_id = CMR_CAP0_ID_BASE;
             buf_cfg.count = 1;
             buf_cfg.length = prev_cxt->channel0.frm_reserved.buf_size;
             buf_cfg.is_reserved_buf = 0;
@@ -9033,7 +9033,7 @@ cmr_int channel0_configure(struct prev_handle *handle, cmr_u32 camera_id,
     /*config reserved buffer*/
     cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
     buf_cfg.channel_id = prev_cxt->channel0.chn_id;
-    buf_cfg.base_id = CMR_VIDEO_ID_BASE;
+    buf_cfg.base_id = CMR_CAP0_ID_BASE;
     buf_cfg.count = 1;
     buf_cfg.length = prev_cxt->channel0.frm_reserved.buf_size;
     buf_cfg.is_reserved_buf = 1;
@@ -9359,7 +9359,7 @@ cmr_int channel1_alloc_bufs(struct prev_handle *handle, cmr_u32 camera_id,
 
     /*arrange the buffer*/
     buffer->channel_id = 0; /*should be update when channel cfg complete*/
-    buffer->base_id = CMR_PREV_ID_BASE;
+    buffer->base_id = CMR_VIDEO_ID_BASE;
     buffer->count = prev_cxt->channel1.valid_buf_cnt;
     buffer->length = prev_cxt->channel1.buf_size;
     buffer->flag = BUF_FLAG_INIT;
@@ -10202,7 +10202,7 @@ cmr_int channel2_alloc_bufs(struct prev_handle *handle, cmr_u32 camera_id,
 
     /*arrange the buffer*/
     buffer->channel_id = 0; /*should be update when channel cfg complete*/
-    buffer->base_id = CMR_PREV_ID_BASE;
+    buffer->base_id = CMR_VIDEO_ID_BASE;
     buffer->count = prev_cxt->channel2.valid_buf_cnt;
     buffer->length = prev_cxt->channel2.buf_size;
     buffer->flag = BUF_FLAG_INIT;
@@ -11078,7 +11078,7 @@ cmr_int channel3_alloc_bufs(struct prev_handle *handle, cmr_u32 camera_id,
 
     /*arrange the buffer*/
     buffer->channel_id = 0; /*should be update when channel cfg complete*/
-    buffer->base_id = CMR_PREV_ID_BASE;
+    buffer->base_id = CMR_VIDEO_ID_BASE;
     buffer->count = prev_cxt->channel3.valid_buf_cnt;
     buffer->length = prev_cxt->channel3.buf_size;
     buffer->flag = BUF_FLAG_INIT;
@@ -11921,7 +11921,7 @@ cmr_int channel4_alloc_bufs(struct prev_handle *handle, cmr_u32 camera_id,
 
     /*arrange the buffer*/
     buffer->channel_id = 0; /*should be update when channel cfg complete*/
-    buffer->base_id = CMR_PREV_ID_BASE;
+    buffer->base_id = CMR_VIDEO_ID_BASE;
     buffer->count = prev_cxt->channel4.valid_buf_cnt;
     buffer->length = prev_cxt->channel4.buf_size;
     buffer->flag = BUF_FLAG_INIT;
