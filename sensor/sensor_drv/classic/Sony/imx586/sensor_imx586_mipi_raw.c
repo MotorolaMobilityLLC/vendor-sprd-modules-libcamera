@@ -226,7 +226,7 @@ static void imx586_drv_calc_gain(cmr_handle handle, cmr_uint isp_gain,
                 sensor_gain);
 
     sns_drv_cxt->sensor_ev_info.preview_gain = isp_gain;
-    imx586_drv_write_gain(handle, aec_info, isp_gain);
+    imx586_drv_write_gain(handle, aec_info, (cmr_u32)isp_gain);
 }
 
 /*==============================================================================
