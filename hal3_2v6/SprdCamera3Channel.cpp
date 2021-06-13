@@ -366,7 +366,11 @@ int SprdCamera3RegularChannel::request(camera3_stream_t *stream,
                    }
                 } else if (i == (CAMERA_STREAM_TYPE_CALLBACK -
                                  REGULAR_STREAM_TYPE_BASE))
-                    mOEMIf->queueBuffer(buffer, CAMERA_STREAM_TYPE_CALLBACK);
+                    if (!mOEMIf->isCallbackCopyFromPreview()) {
+                        mOEMIf->queueBuffer(buffer, CAMERA_STREAM_TYPE_CALLBACK);
+                    } else {
+                        HAL_LOGV("no need to queueBuffer to oem");
+                    }
                 else if (i ==
                          (CAMERA_STREAM_TYPE_YUV2 - REGULAR_STREAM_TYPE_BASE))
                     mOEMIf->queueBuffer(buffer, CAMERA_STREAM_TYPE_YUV2);

@@ -807,6 +807,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mIsPowerhintWait = 0;
     mtimestamplast = 0ll;
     mVideoProcessedWithPreview = false;
+    mCallbackWithPreview = false;
     mLastAeMode = 0;
     mLastAwbMode = 0;
     mSprd3dnrType = 0;
@@ -2222,6 +2223,11 @@ int SprdCamera3OEMIf::setPreviewParams() {
         getMultiCameraMode() != MODE_MULTI_CAMERA) {
         callbackSize.width = mCallbackWidth;
         callbackSize.height = mCallbackHeight;
+    }
+
+    if(mCallbackWidth == mPreviewWidth && mCallbackHeight == mPreviewHeight && mSprdAppmodeId == 0 && mCameraId == 1) {
+        callbackSize = {0, 0};
+        HAL_LOGD("resize callback size to 0");
     }
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_YUV_CALLBACK_SIZE,
              (cmr_uint)&callbackSize);
@@ -3661,6 +3667,12 @@ int SprdCamera3OEMIf::startPreviewInternal() {
                      (cmr_uint)(atoi(prop)));
     }
 
+    if(mCallbackWidth == mPreviewWidth && mCallbackHeight == mPreviewHeight && mSprdAppmodeId == 0 && mCameraId == 1) {
+        mCallbackWithPreview = true;
+    } else {
+        mCallbackWithPreview = false;
+    }
+
     setCameraState(SPRD_INTERNAL_PREVIEW_REQUESTED, STATE_PREVIEW);
     mPipelineStartSignal.signal();
 #ifndef CAMERA_MANULE_SNEOSR
@@ -4575,7 +4587,7 @@ int SprdCamera3OEMIf::PreviewFramePreviewStream(struct camera_frame_type *frame,
     int ret = 0;
     SprdCamera3RegularChannel *channel;
     uint32_t frame_num = 0;
-    SprdCamera3Stream *pre_stream = NULL, *rec_stream = NULL;
+    SprdCamera3Stream *pre_stream = NULL, *rec_stream = NULL,*callback_stream = NULL;
     cmr_uint buff_vir = (cmr_uint)(frame->y_vir_addr);
     int64_t tmp64;
     cmr_s32 fd0 = 0;
@@ -4584,6 +4596,9 @@ int SprdCamera3OEMIf::PreviewFramePreviewStream(struct camera_frame_type *frame,
     cmr_uint videobuf_vir = 0;
     cmr_uint prebuf_phy = 0;
     cmr_uint prebuf_vir = 0;
+    cmr_uint callback_phy = 0;
+    cmr_uint callback_vir = 0;
+
     cmr_u32 ae_iso;
     SPRD_DEF_Tag *sprddefInfo = mSetting->getSPRDDEFTagPTR();
 
@@ -4594,6 +4609,8 @@ int SprdCamera3OEMIf::PreviewFramePreviewStream(struct camera_frame_type *frame,
     channel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
     channel->getStream(CAMERA_STREAM_TYPE_VIDEO, &rec_stream);
     channel->getStream(CAMERA_STREAM_TYPE_PREVIEW, &pre_stream);
+    channel->getStream(CAMERA_STREAM_TYPE_CALLBACK, &callback_stream);
+
     HAL_LOGV("preview_stream %p", pre_stream);
 
     if (!pre_stream) {
@@ -4715,13 +4732,43 @@ int SprdCamera3OEMIf::PreviewFramePreviewStream(struct camera_frame_type *frame,
 
             channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp,
                                       CAMERA_STREAM_TYPE_PREVIEW);
+        } else if  (mCallbackWithPreview && callback_stream ){
+            ret = callback_stream->getQBufAddrForNum(
+                    frame_num, &callback_vir, &callback_phy, &fd0);
+            if (ret || callback_vir == 0) {
+                HAL_LOGE("getQBufAddrForNum failed,just return preview buffer");
+                channel->channelCbRoutine(frame_num, buffer_timestamp,
+                                      CAMERA_STREAM_TYPE_PREVIEW);
+            } else {
+                pre_stream->getQBufAddrForNum(frame_num, &prebuf_vir,
+                        &prebuf_phy, &fd1);
+                HAL_LOGV("frame_num=%d, callback_phy=0x%lx, "
+                        "callback_vir=0x%lx,fd=0x%x",
+                        frame_num, callback_phy, callback_vir, fd0);
+                HAL_LOGV("frame_num=%d, prebuf_phy=0x%lx, prebuf_vir=0x%lx",
+                        frame_num, prebuf_phy, prebuf_vir);
+                memcpy((void *)callback_vir, (void *)prebuf_vir,
+                        mPreviewWidth * mPreviewHeight * 3 / 2);
+                flushIonBuffer(fd0, (void *)callback_vir, 0,
+                        mPreviewWidth * mPreviewHeight * 3 / 2);
+                channel->channelCbRoutine(frame_num,buffer_timestamp,
+                                      CAMERA_STREAM_TYPE_CALLBACK);
+                channel->channelCbRoutine(frame_num, buffer_timestamp,
+                                      CAMERA_STREAM_TYPE_PREVIEW);
+            }
+
         } else {
+
             channel->channelCbRoutine(frame_num, buffer_timestamp,
                                       CAMERA_STREAM_TYPE_PREVIEW);
         }
     } else {
         channel->channelClearInvalidQBuff(frame_num, buffer_timestamp,
                                           CAMERA_STREAM_TYPE_PREVIEW);
+        if(mCallbackWithPreview && callback_stream) {
+            channel->channelClearInvalidQBuff(frame_num, buffer_timestamp,
+                                          CAMERA_STREAM_TYPE_CALLBACK);
+        }
     }
 
     if (mTakePictureMode == SNAPSHOT_PREVIEW_MODE) {
@@ -4768,6 +4815,7 @@ int SprdCamera3OEMIf::PreviewFrameCallbackStream(struct camera_frame_type *frame
     HAL_LOGD("fd=0x%x, vir=0x%lx, frame_num %d, time 0x%llx, frame type = %ld",
              (cmr_u32)frame->fd, buff_vir, frame_num, buffer_timestamp,
              frame->type);
+
 #ifdef CONFIG_FACE_BEAUTY
     if (isFaceBeautyOn(sprddefInfo) && (mCameraId == 1)
           && (sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO)){
@@ -12607,6 +12655,11 @@ cmr_int SprdCamera3OEMIf::ZSLMode_monitor_thread_proc(struct cmr_msg *message,
 bool SprdCamera3OEMIf::isVideoCopyFromPreview() {
     return mVideoCopyFromPreviewFlag;
 }
+
+bool SprdCamera3OEMIf::isCallbackCopyFromPreview() {
+    return mCallbackWithPreview;
+}
+
 
 uint32_t SprdCamera3OEMIf::isPreAllocCapMem() {
     if (0 == mIsPreAllocCapMem) {

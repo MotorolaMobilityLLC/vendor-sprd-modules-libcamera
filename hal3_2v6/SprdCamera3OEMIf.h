@@ -363,6 +363,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool isNeedAfFullscan();
     bool isFdrHasTuningParam();
     bool isVideoCopyFromPreview();
+    bool isCallbackCopyFromPreview();
     int camera_ioctrl(int cmd, void *param1, void *param2);
     void setMimeType(int type);
     void setOriginalPictureSize(int32_t width,int32_t height);
@@ -434,6 +435,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool mSetCapRatioFlag;
     bool mVideoCopyFromPreviewFlag;
     bool mVideoProcessedWithPreview;
+    bool mCallbackWithPreview;
     cmr_uint mVideo3dnrFlag;
     void setTimeoutParams();
     int ProcessAlgoNr(struct camera_frame_type *zsl_frame,sprd_cam_image_sw_algorithm_type_t sw_algorithm_type);
