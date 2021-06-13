@@ -140,7 +140,7 @@ static int dw9781b_drv_calibrate(cmr_handle sns_ois_drv_handle) {
 }
 
 static int dw9781b_drv_enforce(cmr_handle sns_ois_drv_handle) {
-    uint32_t ret_value = OIS_SUCCESS;
+    cmr_int ret_value = OIS_SUCCESS;
     cmr_u16 pid_value = 0x0000;
     struct sns_ois_drv_cxt *ois_drv_cxt =
         (struct sns_ois_drv_cxt *)sns_ois_drv_handle;
@@ -189,6 +189,8 @@ static int dw9781b_drv_enforce(cmr_handle sns_ois_drv_handle) {
                       hw_sensor_grc_read_i2c(ois_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR, 0x70fc, BITS_ADDR16_REG16),
                       hw_sensor_grc_read_i2c(ois_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR, 0x70fd, BITS_ADDR16_REG16));
         }
+    default:
+        break;
     }
     return OIS_SUCCESS;
 }
