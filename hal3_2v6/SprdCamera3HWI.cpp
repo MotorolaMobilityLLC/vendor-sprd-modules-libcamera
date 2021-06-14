@@ -720,6 +720,7 @@ int SprdCamera3HWI::configureStreams(
         if (mMetadataChannel == NULL) {
             HAL_LOGE("failed to allocate metadata channel");
         }
+        mMetadataChannel->initialize();
     } else {
         mMetadataChannel->stop(mFrameNum);
         mMetadataChannel->clear();

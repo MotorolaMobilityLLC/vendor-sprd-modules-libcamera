@@ -3740,6 +3740,9 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
     int ret = NO_ERROR;
     SPRD_DEF_Tag *sprddefInfo;
     CONTROL_Tag controlInfo;
+    SprdCamera3RegularChannel *regularChannel =
+        reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
+    int64_t timestamp;
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
@@ -3811,6 +3814,25 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
 #endif
     // used for single camera need raw stream
     // freeRawBuffers();
+
+#ifdef CAMERA_MANULE_SNEOSR
+{
+    HAL_LOGI("manual sensor clear all buffers");
+    timestamp = systemTime(SYSTEM_TIME_BOOTTIME);
+    if (regularChannel) {
+        // TBD: will add a user-kernel interface, to return all inflight
+        // buffers, then we need not to stop streams
+        regularChannel->channelClearAllQBuff(timestamp,
+                                           CAMERA_STREAM_TYPE_PREVIEW);
+        regularChannel->channelClearAllQBuff(timestamp,
+                                           CAMERA_STREAM_TYPE_VIDEO);
+        regularChannel->channelClearAllQBuff(timestamp,
+                                           CAMERA_STREAM_TYPE_CALLBACK);
+        regularChannel->channelClearAllQBuff(timestamp,
+                                           CAMERA_STREAM_TYPE_YUV2);
+    }
+}
+#endif
 
 exit:
     mSprdYuvCallBack = false;
@@ -9083,10 +9105,6 @@ int SprdCamera3OEMIf::setCameraIspPara(isp_params_t isp_mode) {
         HAL_LOGD("focus_distance:%f ,  min real focus distance:%f",
                  af_cts_params.focus_distance, af_cts_params.min_real_focus_distance);
         if (af_cts_params.focus_distance) {
-            //for AR Core E2E apk to skip 0.1 focus distance
-            //according to previous code, choose to skip decimal number
-            cmr_uint focus_distance = af_cts_params.focus_distance;
-            af_cts_params.focus_distance = focus_distance;
             ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_SET_AF_PARAMS, (void *)&af_cts_params);
         }
         break;
@@ -12073,7 +12091,8 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
             HAL_LOGD("Cam%d JpegQueue other fd 0x%x,  frame_id %d\n",
                         mCameraId, zsl_frame->fd, zsl_frame->frame_num);
         }
-#ifdef CAMERA_MANULE_SNEOSR
+
+/*    delete for fix testJpegExif
 {
         bool wrtie_exif = false;
         std::map<uint32_t, cmr_u32>::iterator iter;
@@ -12097,7 +12116,7 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
                 return 0;
         }
 }
-#endif
+*/
 
        if (sprddefInfo->sprd_appmode_id == 1 && mSetting->save_iso_value) {
             camera_set_exif_iso_value(obj->mCameraHandle,mSetting->save_iso_value);

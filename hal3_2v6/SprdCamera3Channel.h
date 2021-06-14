@@ -53,6 +53,7 @@ typedef void (*channel_cb_routine)(cam_result_data_info_t *result_info,
 #define REGULAR_STREAM_TYPE_BASE CAMERA_STREAM_TYPE_PREVIEW
 #define REPROCESS_STREAM_TYPE_BASE CAMERA_STREAM_TYPE_ZSL_PREVIEW
 #define PIC_STREAM_TYPE_BASE CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT
+#define TIMEOUT_FOR_CALLBACK 80
 
 class SprdCamera3OEMIf;
 class SprdCamera3Channel {
@@ -181,6 +182,11 @@ typedef struct {
     uint32_t frame_number;
 } sync_result_t;
 
+typedef struct {
+    uint8_t flash_mode;
+    uint8_t flash_state;
+} sync_flash_t;
+
 class SprdCamera3MetadataChannel : public SprdCamera3Channel {
   public:
     SprdCamera3MetadataChannel(SprdCamera3OEMIf *oem_if,
@@ -203,6 +209,7 @@ class SprdCamera3MetadataChannel : public SprdCamera3Channel {
     };
     void clear();
 
+    void initialize();
     int request(const CameraMetadata &metadata);
     int request(const CameraMetadata &metadata, uint32_t frame_number);
     int channelCbRoutine(enum camera_cb_type cb, void *params);
@@ -224,11 +231,14 @@ class SprdCamera3MetadataChannel : public SprdCamera3Channel {
     af_params_t syncAfParams;
    private:
     std::mutex mResultLock;
-    std::condition_variable mResultSignal;
+    //std::condition_variable mResultSignal;
+    sem_t mResultSem;
+    sem_t mSyncSem;
+    struct timespec time;
     //Mutex mResultLock;
     Mutex mLock;
     //Condition mResultSignal;
-    std::map<uint32_t, uint8_t> mFlashMap;
+    std::map<uint32_t, sync_flash_t> mFlashMap;
 };
 
 }; // namespace sprdcamera

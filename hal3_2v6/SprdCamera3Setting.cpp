@@ -6211,8 +6211,7 @@ int SprdCamera3Setting::updateIspParameters(
     }
 
     // AF
-    if (frame_settings.exists(ANDROID_LENS_FOCUS_DISTANCE) &&
-        (s_setting[mCameraId].af_cts_params.af_mode == ANDROID_CONTROL_AF_MODE_OFF)&& sprd_app_id != 1) {
+    if (frame_settings.exists(ANDROID_LENS_FOCUS_DISTANCE) && sprd_app_id != 1) {
         valueFloat = frame_settings.find(ANDROID_LENS_FOCUS_DISTANCE).data.f[0];
         if (valueFloat != s_setting[mCameraId].af_cts_params.focus_distance) {
             s_setting[mCameraId].af_cts_params.focus_distance = valueFloat;
@@ -6382,7 +6381,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
         s_setting[mCameraId].resultInfo.ae_state =
             ANDROID_CONTROL_AE_STATE_LOCKED;
 #endif
-}
+    }
 
     if (s_setting[mCameraId].controlInfo.ae_state ==
             ANDROID_CONTROL_AE_STATE_LOCKED &&
@@ -6392,6 +6391,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
             ANDROID_CONTROL_AE_STATE_SEARCHING;
         s_setting[mCameraId].controlInfo.ae_comp_effect_frames_cnt--;
     }
+    HAL_LOGV("ae_comp_effect_frames_cnt = %d", s_setting[mCameraId].controlInfo.ae_comp_effect_frames_cnt);
 
     // HAL_LOGD("af_state = %d, af_mode = %d, af_trigger_Id = %d, mCameraId =
     // %d",s_setting[mCameraId].controlInfo.af_state,
@@ -6905,7 +6905,7 @@ camera_metadata_t *SprdCamera3Setting::reportMetadataToFramework
     camera_metadata_t *new_result = clone_camera_metadata(data);
     struct isp_sync_params tmp_cts_isp_params;
     memcpy(&tmp_cts_isp_params, params, sizeof(struct isp_sync_params));
-    if(data) {
+    if (data) {
         free_camera_metadata(data);
         data = nullptr;
     }
@@ -6918,7 +6918,7 @@ camera_metadata_t *SprdCamera3Setting::reportMetadataToFramework
         tmp_cts_isp_params.ae_cts_params.exp_time, s_setting[mCameraId].sensor_InfoInfo.exposupre_time_range[0],
         s_setting[mCameraId].sensor_InfoInfo.exposupre_time_range[1]);
     {
-        if(tmp_cts_isp_params.ae_cts_params.exp_time <
+        if (tmp_cts_isp_params.ae_cts_params.exp_time <
             s_setting[mCameraId].sensor_InfoInfo.exposupre_time_range[0])
             tmp_cts_isp_params.ae_cts_params.exp_time =
                 s_setting[mCameraId].sensor_InfoInfo.exposupre_time_range[0] + 10016;
@@ -6946,10 +6946,10 @@ camera_metadata_t *SprdCamera3Setting::reportMetadataToFramework
     }
     HAL_LOGV("af_cts_params.frame_number %d focus_distance %f",
         tmp_cts_isp_params.af_cts_params.frame_number,tmp_cts_isp_params.af_cts_params.focus_distance);
-    if(tmp_cts_isp_params.af_cts_params.focus_distance)
+    if (tmp_cts_isp_params.af_cts_params.focus_distance)
         s_setting[mCameraId].lensInfo.focus_distance =
         tmp_cts_isp_params.af_cts_params.focus_distance;
-    if(tmp_cts_isp_params.af_cts_params.lens_state)
+    if (tmp_cts_isp_params.af_cts_params.lens_state)
         s_setting[mCameraId].lensInfo.state = tmp_cts_isp_params.af_cts_params.lens_state;
 
     //AE
@@ -6973,8 +6973,10 @@ camera_metadata_t *SprdCamera3Setting::reportMetadataToFramework
         tmp_cts_isp_params.ae_cts_params.sensitivity, s_setting[mCameraId].sensor_InfoInfo.sensitivity_range[0],
         s_setting[mCameraId].sensor_InfoInfo.sensitivity_range[1]);
 
-        camMetadata->update(ANDROID_SENSOR_SENSITIVITY,
-                   &(tmp_cts_isp_params.ae_cts_params.sensitivity), 1);
+    camMetadata->update(ANDROID_SENSOR_SENSITIVITY,
+               &(tmp_cts_isp_params.ae_cts_params.sensitivity), 1);
+    camMetadata->update(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER,
+               &(tmp_cts_isp_params.ae_cts_params.ae_precap_triger), 1);
 
     //AF
     camMetadata->update(ANDROID_LENS_FOCUS_DISTANCE,
@@ -6988,20 +6990,21 @@ camera_metadata_t *SprdCamera3Setting::reportMetadataToFramework
     HAL_LOGV("report focus_distance %f", tmp_cts_isp_params.af_cts_params.focus_distance);
     HAL_LOGV("report lens_state %d", tmp_cts_isp_params.af_cts_params.lens_state);
     HAL_LOGV("report fps %f", tmp_cts_isp_params.ae_cts_params.fps);
-    HAL_LOGV("AE_STATE ANDROID_CONTROL_AE_STATE=%d",
-        camMetadata->find(ANDROID_CONTROL_AE_STATE).data.u8[0]);
-    if(s_setting[mCameraId].af_cts_params.af_mode == ANDROID_CONTROL_AF_MODE_OFF) {
+    if (s_setting[mCameraId].af_cts_params.af_mode == ANDROID_CONTROL_AF_MODE_OFF) {
         cmr_u8 afmoving = 0;
-        if(s_setting[mCameraId].afMovingCount < 4 &&
-            s_setting[mCameraId].afMovingCount > 0)
-            afmoving = 1;
-        else
-            afmoving = 0;
+        if (s_setting[mCameraId].lensInfo.focus_distance >= 1) {
+            if (s_setting[mCameraId].afMovingCount < 4 &&
+                s_setting[mCameraId].afMovingCount > 0)
+                afmoving = 1;
+            else
+                afmoving = 0;
+        }
+        s_setting[mCameraId].lensInfo.state = afmoving;
         camMetadata->update(ANDROID_LENS_STATE,
-                           &(afmoving), 1);
-        if(s_setting[mCameraId].afMovingCount)
+                           &(s_setting[mCameraId].lensInfo.state), 1);
+        if (s_setting[mCameraId].afMovingCount)
         s_setting[mCameraId].afMovingCount++;
-        if(s_setting[mCameraId].lensInfo.focus_distance) {
+        if (s_setting[mCameraId].lensInfo.focus_distance) {
             camMetadata->update(ANDROID_LENS_FOCUS_DISTANCE,
                            &(s_setting[mCameraId].lensInfo.focus_distance), 1);
         }
@@ -7013,18 +7016,19 @@ camera_metadata_t *SprdCamera3Setting::reportMetadataToFramework
         uint8_t valueU8 = 0;
         if (camMetadata->exists(ANDROID_CONTROL_AF_STATE)) {
             valueU8 = camMetadata->find(ANDROID_CONTROL_AF_STATE).data.u8[0];
-            if(valueU8 != s_setting[mCameraId].controlInfo.af_state)
-                    camMetadata->update(ANDROID_CONTROL_AF_STATE,
-                       &(s_setting[mCameraId].resultInfo.af_state), 1);
+            if (valueU8 != s_setting[mCameraId].controlInfo.af_state)
+                camMetadata->update(ANDROID_CONTROL_AF_STATE,
+                    &(s_setting[mCameraId].controlInfo.af_state), 1);
         }
         if (camMetadata->exists(ANDROID_CONTROL_AE_STATE)) {
             valueU8 = camMetadata->find(ANDROID_CONTROL_AE_STATE).data.u8[0];
-            if(valueU8 != s_setting[mCameraId].controlInfo.ae_state)
-                    camMetadata->update(ANDROID_CONTROL_AE_STATE,
-                                       &(s_setting[mCameraId].resultInfo.ae_state), 1);
+            if (valueU8 != s_setting[mCameraId].controlInfo.ae_state)
+                camMetadata->update(ANDROID_CONTROL_AE_STATE,
+                    &(s_setting[mCameraId].controlInfo.ae_state), 1);
         }
     }
 
+    HAL_LOGD("X");
     new_result = camMetadata->release();
     delete camMetadata;
     return new_result;
