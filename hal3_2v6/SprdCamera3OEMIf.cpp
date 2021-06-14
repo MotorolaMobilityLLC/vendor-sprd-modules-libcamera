@@ -12182,7 +12182,8 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     }
 
     char value2[PROPERTY_VALUE_MAX];
-    if(controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR && mAf_start_time > 0){
+    if(controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR && mAf_start_time > 0 &&
+        mMultiCameraMode != MODE_REFOCUS){
        property_get("persist.vendor.cam.hdr.wait.af_time", value2, "0");
        if(mAf_stop_time > mAf_start_time) {
             lock_af = 1;
@@ -12197,7 +12198,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
                 usleep(1000);
                 hdr_count --;
                 if (hdr_count == 0) {
-                    HAL_LOGI("wait for hdr_done timeout %d ms",mfnr_count);
+                    HAL_LOGI("wait for hdr_done timeout %d ms",hdr_count);
                     break;
                 }
                 if (mAf_stop_time > mAf_start_time ) {
@@ -12216,7 +12217,8 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
         mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
         mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW ||
         mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_HW ||
-        mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) && mAf_start_time > 0) {
+        mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) &&
+        mAf_start_time > 0 && mMultiCameraMode != MODE_REFOCUS) {
         property_get("persist.vendor.cam.mfnr.wait.af_time", value2, "0");
         if(mAf_stop_time > mAf_start_time) {
             lock_af = 1;
