@@ -816,6 +816,8 @@ SprdCamera3MetadataChannel::SprdCamera3MetadataChannel(
         ReSetFirstMeta = true;
         memset(&syncAeParams, 0, sizeof(struct ae_params));
         memset(&syncAfParams, 0, sizeof(struct af_params));
+        sem_init(&mResultSem, 0, 0);
+        sem_init(&mSyncSem, 0, 0);
 
 //        mIspParamsList.clear();
     }
@@ -825,9 +827,24 @@ SprdCamera3MetadataChannel::~SprdCamera3MetadataChannel() {
     FrameVec.clear();
     mAeCallBackQue.clear();
     mAfCallBackQue.clear();
-    mSyncResult.clear();
     mRequestInfoList.clear();
+    for (auto it = mSyncResult.begin(); it != mSyncResult.end(); ) {
+        if (it->result)
+            free_camera_metadata(it->result);
+        it = mSyncResult.erase(it);
+    }
+    sem_destroy(&mResultSem);
+    sem_destroy(&mSyncSem);
 }
+
+void SprdCamera3MetadataChannel::initialize(){
+    for (auto it = mSyncResult.begin(); it != mSyncResult.end(); ) {
+        if (it->result)
+            free_camera_metadata(it->result);
+        it = mSyncResult.erase(it);
+    }
+}
+
 int SprdCamera3MetadataChannel::request(const CameraMetadata &metadata) {
     mSetting->updateWorkParameters(metadata);
     return 0;
@@ -837,6 +854,7 @@ int SprdCamera3MetadataChannel::request(
     const CameraMetadata &metadata, uint32_t frame_number) {
     int ret = 0;
     int tag = 0;
+    int valueU8 = 0;
     int tmp_control = 0;
     bool aeaf_triger = false;
     bool isInvalidpa = false;
@@ -855,12 +873,14 @@ int SprdCamera3MetadataChannel::request(
     ret = mSetting->getAfParams(&(isp_params.af_cts_params));
 
     if (metadata.exists(ANDROID_FLASH_MODE)) {
+        //map flash mode and flash state with frame_number
         HAL_LOGV("flashmode is %d [%d]", metadata.find(ANDROID_FLASH_MODE).data.u8[0], frame_number);
+        mFlashMap[frame_number].flash_mode = metadata.find(ANDROID_FLASH_MODE).data.u8[0];
         if (metadata.find(ANDROID_FLASH_MODE).data.u8[0] == 0) {
-            mFlashMap[frame_number] = ANDROID_FLASH_STATE_READY;
+            mFlashMap[frame_number].flash_state = ANDROID_FLASH_STATE_READY;
             HAL_LOGV("flash is off [%d]", frame_number);
         } else {
-            mFlashMap[frame_number] = ANDROID_FLASH_STATE_FIRED;
+            mFlashMap[frame_number].flash_state = ANDROID_FLASH_STATE_FIRED;
             HAL_LOGV("flash is on [%d]", frame_number);
         }
     }
@@ -874,13 +894,13 @@ int SprdCamera3MetadataChannel::request(
         }
 
     if (isp_params.ae_cts_params.is_cts == false) {
-        if (metadata.exists(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER) &&
-            frame_number != 0) {
-            HAL_LOGV("AE frame_number:%d, precaptrue triger[%d]",
-                frame_number, metadata.find(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER).data.u8[0]);
-            if(metadata.find(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER).data.u8[0] == 1) {
+        if (metadata.exists(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER) && frame_number != 0) {
+            //mark ae_precap_triger request params as AE_CONTROL
+            if(metadata.find(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER).data.u8[0]) {
+                HAL_LOGV("AE triger [%d]:%d,", frame_number, metadata.find(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER).data.u8[0]);
+                valueU8 = metadata.find(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER).data.u8[0];
                 isp_params.ae_cts_params.frame_number = frame_number;
-                isp_params.ae_cts_params.ae_precap_triger = 1;
+                isp_params.ae_cts_params.ae_precap_triger = valueU8;
                 aeaf_triger = true;
                 tmp_control |= AE_CONTROL;
             }
@@ -888,12 +908,13 @@ int SprdCamera3MetadataChannel::request(
             isp_params.ae_cts_params.frame_number = -1;
     } else if (isp_params.ae_cts_params.is_cts == true) {
         isp_params.ae_cts_params.frame_number = frame_number;
-        HAL_LOGV("AE frame_number:%d,", frame_number);
+        HAL_LOGV("AE frame_number:%d", frame_number);
         tmp_control |= AE_CONTROL;
     }
 
     if (isp_params.af_cts_params.is_cts == false) {
         if (metadata.exists(ANDROID_CONTROL_AF_TRIGGER)) {
+            //mark af_triger as AF_CONTROL
             if(metadata.find(ANDROID_CONTROL_AF_TRIGGER).data.u8[0] == 1) {
                 HAL_LOGV("AF triger frame_number:%d,", frame_number);
                 isp_params.af_cts_params.frame_number = frame_number;
@@ -915,7 +936,7 @@ int SprdCamera3MetadataChannel::request(
     HAL_LOGV("isp_params:%p->%d,", &isp_params, sizeof(struct isp_sync_params));
     isp_params.syncRequst = tmp_control;
     isp_params.frame_number = (cmr_s32) frame_number;
-    HAL_LOGD("isp_params.frame_number %d", isp_params.frame_number);
+    HAL_LOGV("isp_params.frame_number %d", isp_params.frame_number);
 
     if ((isp_params.frame_number < AESYNCNUM) &&
         isp_params.ae_cts_params.sensitivity == 50 &&
@@ -925,16 +946,19 @@ int SprdCamera3MetadataChannel::request(
     if (!isInvalidpa && (isp_params.ae_cts_params.is_cts == true ||
         isp_params.af_cts_params.is_cts == true ||
         aeaf_triger == true)) {
+        //push isp params request frames into mRequestInfoList
         mRequestInfoList.push_back(isp_params);
         if (!mRequestInfoList.empty()) {
             cmr_uint size = mRequestInfoList.size();;
             struct isp_sync_params tmp_control_ =
             mRequestInfoList.at(size - 1);
-            HAL_LOGD("syncRequst:%d, frame_number: %d",
+            HAL_LOGV("syncRequst:%d, frame_number: %d",
                 tmp_control_.syncRequst,
                 tmp_control_.frame_number);
         }
     }
+
+    //push all request frames into FrameVec
     FrameVec.push_back(frame_number);
     HAL_LOGD("frameNum %d FrameVec size %d",frame_number, FrameVec.size());
 
@@ -961,8 +985,6 @@ bool SprdCamera3MetadataChannel::pushResult () {
         tmp_result.frame_number = FrameNum;
         tmp_result.result = mSetting->translateLocalToFwMetadata();
         tmp_isp_params.frame_number = FrameNum;
-        //exp_time = ae_params_tmp.exp_time;
-        //CMR_LOGD("exp_time %lld", exp_time);
 
         memcpy(&(tmp_isp_params.ae_cts_params), &ae_params_tmp, sizeof(ae_params_t));
         memcpy(&(tmp_isp_params.af_cts_params), &af_params_tmp, sizeof(af_params_t));
@@ -981,8 +1003,10 @@ bool SprdCamera3MetadataChannel::pushResult () {
             free_camera_metadata(const_cast<camera_metadata_t *>(tmp_result.result));
         } else {
             mSyncResult.push_back(tmp_result);
+            sem_post(&mSyncSem);
+            HAL_LOGV("already post the sem");
         }
-        HAL_LOGD("frameNum %d", FrameNum);
+        HAL_LOGV("frameNum %d", FrameNum);
         ret = true;
     }
     HAL_LOGV("mAeCallBackQue size %d, mAfCallBackQue size %d, FrameVec %d",
@@ -1040,7 +1064,7 @@ int SprdCamera3MetadataChannel::channelCbRoutine(
         if (!FrameVec.empty()) {
             if (!mRequestInfoList.empty() &&
                 (mRequestInfoList[0].syncRequst & AE_CONTROL)) {
-                HAL_LOGD("FrameVec.front():%d, mRequestInfoList[0].frame_number:%d, mRequestInfoList[0].syncRequst:%d",
+                HAL_LOGV("FrameVec.front():%d, mRequestInfoList[0].frame_number:%d, mRequestInfoList[0].syncRequst:%d",
                 FrameVec.front(),
                 mRequestInfoList[0].frame_number,
                 mRequestInfoList[0].syncRequst);
@@ -1048,7 +1072,8 @@ int SprdCamera3MetadataChannel::channelCbRoutine(
                 struct isp_sync_params AE_syncframe;
                 bool syncfamr_found = false;
                 if (FrameVec.front() < mRequestInfoList[0].frame_number) {
-
+                    //search for sync frame number
+                    //when ae callback request frame, mark it down
                     vector<struct isp_sync_params>::iterator lsItr =
                     find_if(mRequestInfoList.begin(), mRequestInfoList.end(),
                         [&](const struct isp_sync_params &result_tmp) {
@@ -1061,34 +1086,39 @@ int SprdCamera3MetadataChannel::channelCbRoutine(
                     }
 
                     if (syncfamr_found && (ae_cts_callback_params->frame_number ==
-                        AE_syncframe.frame_number ||
-                        AE_syncframe.ae_cts_params.ae_precap_triger == 1)) {
-                        tmp_ae_params.ae_precap_triger = 1;
+                        AE_syncframe.frame_number)) {
+                        //this sync frame callback earlier than expected, mark as error
                         AE_syncframe.ae_notified = CALLBACK_ERROR;
                     } else {
+                        //no sync frame, push normally
                         mAeCallBackQue.push_back(tmp_ae_params);
                     }
                 } else if(FrameVec.front() == mRequestInfoList[0].frame_number) {
                     if (mRequestInfoList[0].ae_notified == CALLBACK_ERROR) {
-                            if (tmp_ae_params.exp_time !=
-                                mRequestInfoList[0].ae_cts_params.exp_time) {
-                                tmp_ae_params.exp_time = mRequestInfoList[0]
-                                    .ae_cts_params.exp_time;
-                                tmp_ae_params.sensitivity = mRequestInfoList[0]
-                                    .ae_cts_params.sensitivity;
-                                }
-                                mAeCallBackQue.push_back(tmp_ae_params);
-                    } else {
-                        if (ae_cts_callback_params->frame_number ==
-                            mRequestInfoList[0].frame_number &&
-                            mRequestInfoList[0].unSyncCount < 4) {
+                        //this frame need to callback request params
+                        if (tmp_ae_params.exp_time !=
+                            mRequestInfoList[0].ae_cts_params.exp_time) {
+                            tmp_ae_params.exp_time = mRequestInfoList[0]
+                                .ae_cts_params.exp_time;
+                            tmp_ae_params.sensitivity = mRequestInfoList[0]
+                                .ae_cts_params.sensitivity;
+                            }
                             mAeCallBackQue.push_back(tmp_ae_params);
-                        } else {
-                            mAeCallBackQue.push_back(tmp_ae_params);
+                    } else if (mRequestInfoList[0].ae_cts_params.ae_precap_triger) {
+                        //this trigger frame need to callback request params
+                        for (auto it = mAeCallBackQue.begin(); it != mAeCallBackQue.end(); ) {
+                            //clear the af list to make sure the trigger frame callback report immediately
+                            HAL_LOGV("remove an ae useless frame");
+                            it = mAeCallBackQue.erase(it);
                         }
-                        mRequestInfoList[0].unSyncCount++;
+                        tmp_ae_params.ae_precap_triger = mRequestInfoList[0].ae_cts_params.ae_precap_triger;
+                        tmp_ae_params.frame_number = mRequestInfoList[0].frame_number;
+                        HAL_LOGV("ae_precap_triger:%d", tmp_ae_params.ae_precap_triger);
+                        mAeCallBackQue.push_back(tmp_ae_params);
+                    } else {
+                        mAeCallBackQue.push_back(tmp_ae_params);
                     }
-                    HAL_LOGD("report mRequestInfoList frame_number:%d, exp_time: %lld, sensitivity %d",
+                    HAL_LOGV("report mRequestInfoList frame_number:%d, exp_time: %lld, sensitivity %d",
                         mRequestInfoList[0].ae_cts_params.frame_number,
                         mRequestInfoList[0].ae_cts_params.exp_time,
                         mRequestInfoList[0].ae_cts_params.sensitivity);
@@ -1097,7 +1127,7 @@ int SprdCamera3MetadataChannel::channelCbRoutine(
                 mAeCallBackQue.push_back(tmp_ae_params);
         }else if (mAeCallBackQue.empty() && !mSyncResult.empty())
             mAeCallBackQue.push_back(tmp_ae_params);
-        HAL_LOGV("AE control ae list %d", mAeCallBackQue.size());
+        HAL_LOGD("AE control ae list %d", mAeCallBackQue.size());
     } break;
 
     case CAMERA_EVT_CB_AF_PARAMS: {
@@ -1128,6 +1158,8 @@ int SprdCamera3MetadataChannel::channelCbRoutine(
                 bool syncfamr_found = false;
 
                 if (FrameVec.front() < mRequestInfoList[0].frame_number) {
+                    //search for sync frame number
+                    //when af callback request frame, mark it down
                     vector<struct isp_sync_params>::iterator lsItr =
                     find_if(mRequestInfoList.begin(), mRequestInfoList.end(),
                         [&](const struct isp_sync_params &result_tmp) {
@@ -1139,22 +1171,23 @@ int SprdCamera3MetadataChannel::channelCbRoutine(
                         syncfamr_found = true;
                     }
                     if (syncfamr_found && (af_cts_callback_params->frame_number ==
-                        AF_syncframe.frame_number ||
-                        AF_syncframe.af_cts_params.af_triger == 1)) {
+                        AF_syncframe.frame_number)) {
+                        //this sync frame callback earlier than expected, mark as error
                         AF_syncframe.af_notified = CALLBACK_ERROR;
-                        tmp_af_params.af_triger = 1;
                         memcpy(&syncAfParams, &tmp_af_params, sizeof(af_params_t));
                         tmp_af_params.focus_distance = 0;
                         tmp_af_params.lens_state = 0;
-                        HAL_LOGV("AF control push %d",FrameVec.front());
+                        HAL_LOGV("AF control don't push %d",FrameVec.front());
                     } else {
-                    HAL_LOGV("AF control push %d",FrameVec.front());
-                    mAfCallBackQue.push_back(tmp_af_params);
+                        //no sync frame, push normally
+                        HAL_LOGV("AF control push %d",FrameVec.front());
+                        mAfCallBackQue.push_back(tmp_af_params);
                     }
                 } else if(FrameVec.front() == mRequestInfoList[0].frame_number ) {
                     mSetting->s_setting[mOEMIf->getOemCameraId()].afMovingCount = 1;
                     if (mRequestInfoList[0].af_notified == CALLBACK_ERROR ||
                         mRequestInfoList[0].frame_number == 0) {
+                        //this error frame need to callback request params
                         if (tmp_af_params.focus_distance !=
                             mRequestInfoList[0].af_cts_params.focus_distance) {
                                 tmp_af_params.focus_distance = syncAfParams.focus_distance;
@@ -1162,30 +1195,32 @@ int SprdCamera3MetadataChannel::channelCbRoutine(
                             }
                         HAL_LOGV("AF control push %d",FrameVec.front());
                         mAfCallBackQue.push_back(tmp_af_params);
-                    } else {
-                        if (af_cts_callback_params->frame_number ==
-                            mRequestInfoList[0].frame_number &&
-                            mRequestInfoList[0].unSyncCount < 4) {
-                            mAfCallBackQue.push_back(tmp_af_params);
-                            HAL_LOGV("AF control push %d",FrameVec.front());
-                        } else {
-                            mAfCallBackQue.push_back(tmp_af_params);
-                            HAL_LOGV("AF control push %d",FrameVec.front());
+                    } else if (mRequestInfoList[0].af_cts_params.af_triger == 1) {
+                        //this trigger frame need to callback request params
+                        for (auto it = mAfCallBackQue.begin(); it != mAfCallBackQue.end(); ) {
+                            //clear the af list to make sure the trigger frame callback report immediately
+                            HAL_LOGV("remove an af useless frame");
+                            it = mAfCallBackQue.erase(it);
                         }
-                        mRequestInfoList[0].unSyncCount++;
-                        HAL_LOGV("AF control unSyncCount %d",mRequestInfoList[0].unSyncCount);
+                        tmp_af_params.af_triger = 1;
+                        tmp_af_params.frame_number = mRequestInfoList[0].frame_number;
+                        mAfCallBackQue.push_back(tmp_af_params);
+                        HAL_LOGV("AF control push %d",FrameVec.front());
+                    } else {
+                        mAfCallBackQue.push_back(tmp_af_params);
+                        HAL_LOGV("AF control push %d",FrameVec.front());
                     }
-                    HAL_LOGD("report mRequestInfoList frame_number:%d, focus_distance: %f, lens_state %d",
+                    HAL_LOGV("report mRequestInfoList frame_number:%d, focus_distance: %f, lens_state %d",
                         mRequestInfoList[0].af_cts_params.frame_number,
                         mRequestInfoList[0].af_cts_params.focus_distance,
                         mRequestInfoList[0].af_cts_params.lens_state);
-                } 
+                }
             }else {
                 HAL_LOGV("AF control push %d",FrameVec.front());
                 mAfCallBackQue.push_back(tmp_af_params);
             }
         }
-        HAL_LOGV("AF_CALLBACK");
+        HAL_LOGD("AF_CALLBACK");
     } break;
 
     default:
@@ -1193,11 +1228,8 @@ int SprdCamera3MetadataChannel::channelCbRoutine(
     }
 
     {
-        std::unique_lock <std::mutex> lck(mResultLock);
         if(pushResult()) {
-            HAL_LOGD("mResultSignal push");
-            //mResultSignal.signal();
-            mResultSignal.notify_one();
+            HAL_LOGD("mSyncResult push");
         }
     }
 
@@ -1206,16 +1238,25 @@ exit:
 }
 
 camera_metadata_t *SprdCamera3MetadataChannel::getMetadata(cmr_s32 frame_num) {
-    {
-        std::unique_lock <std::mutex> lck(mResultLock);
-        //Mutex::Autolock lr(mResultLock);
-        HAL_LOGD("E");
-        if (mResultSignal.wait_for(lck, std::chrono:: milliseconds (120)) ==
-          std::cv_status::timeout) {
-            HAL_LOGE("timeout wait for mResultSignal");
-        };
-        HAL_LOGV("report frame_num %d mSyncResult size %d", frame_num, mSyncResult.size());
+    HAL_LOGD("E");
+    HAL_LOGV("report frame_num %d mSyncResult size %d", frame_num, mSyncResult.size());
+    if (frame_num >= AESYNCNUM) {
+        long msecs = TIMEOUT_FOR_CALLBACK;
+        clock_gettime(CLOCK_REALTIME, &time);
+        long secs = msecs/1000;
+        msecs = msecs%1000;
+        long add = 0;
+        msecs = msecs*1000*1000 + time.tv_nsec;
+        add = msecs / (1000*1000*1000);
+        time.tv_sec += (add + secs);
+        time.tv_nsec = msecs%(1000*1000*1000);
+        if (sem_timedwait(&mSyncSem, &time) == -1) {
+            HAL_LOGD("timeout wait for mSyncSem");
+        }
+        HAL_LOGV("end to wait for mSyncSem");
     }
+
+    Mutex::Autolock lr(mLock);
 
     if (!FrameVec.empty()) {
         list<cmr_u32>::iterator lsItr =
@@ -1227,7 +1268,7 @@ camera_metadata_t *SprdCamera3MetadataChannel::getMetadata(cmr_s32 frame_num) {
             FrameVec.erase(lsItr);
         }
     }
-    Mutex::Autolock lr(mLock);
+
     if (!mSyncResult.empty()) {
         sync_result_t result = mSyncResult.front();
         mSyncResult.pop_front();
@@ -1341,16 +1382,21 @@ camera_metadata_t *SprdCamera3MetadataChannel::getMetadata(cmr_s32 frame_num) {
                 }
             }
 
-            if (camMetadata->exists(ANDROID_FLASH_STATE) &&
+            if ((camMetadata->exists(ANDROID_FLASH_STATE) ||
+                camMetadata->exists(ANDROID_FLASH_MODE)) &&
                 mOEMIf->getOemCameraId() != 1) {
-                uint8_t valueU8 = camMetadata->find(ANDROID_FLASH_STATE).data.u8[0];
-                std::map<uint32_t, uint8_t>::iterator iter;
+                uint8_t value1 = camMetadata->find(ANDROID_FLASH_MODE).data.u8[0];
+                uint8_t value2 = camMetadata->find(ANDROID_FLASH_STATE).data.u8[0];
+                std::map<uint32_t, sync_flash_t>::iterator iter;
                 iter = mFlashMap.find(frame_num);
                 if (iter != mFlashMap.end()) {
-                    if (valueU8 != mFlashMap[frame_num]) {
-                        HAL_LOGV("update flash state");
-                        valueU8 = mFlashMap[frame_num];
-                        camMetadata->update(ANDROID_FLASH_STATE, &valueU8, 1);
+                    if (value1 != mFlashMap[frame_num].flash_mode ||
+                        value2 != mFlashMap[frame_num].flash_state) {
+                        HAL_LOGD("update flash");
+                        value1 = mFlashMap[frame_num].flash_mode;
+                        value2 = mFlashMap[frame_num].flash_state;
+                        camMetadata->update(ANDROID_FLASH_MODE, &value1, 1);
+                        camMetadata->update(ANDROID_FLASH_STATE, &value2, 1);
                         mFlashMap.erase(iter);
                     }
                  }
@@ -1364,6 +1410,14 @@ camera_metadata_t *SprdCamera3MetadataChannel::getMetadata(cmr_s32 frame_num) {
                 camMetadata->find(ANDROID_SENSOR_EXPOSURE_TIME).data.i64[0]);
             HAL_LOGV("iso_value ANDROID_SENSOR_SENSITIVITY=%d",
                 camMetadata->find(ANDROID_SENSOR_SENSITIVITY).data.i32[0]);
+            HAL_LOGV("frame_duration ANDROID_SENSOR_FRAME_DURATION=%lld",
+                camMetadata->find(ANDROID_SENSOR_FRAME_DURATION).data.i64[0]);
+            HAL_LOGV("flash_mode ANDROID_FLASH_MODE=%d",
+                camMetadata->find(ANDROID_FLASH_MODE).data.u8[0]);
+            HAL_LOGV("flash_state ANDROID_FLASH_STATE=%d",
+                camMetadata->find(ANDROID_FLASH_STATE).data.u8[0]);
+            HAL_LOGV("ae_precap_trigger ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER=%d",
+                camMetadata->find(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER).data.u8[0]);
 
             result.result = camMetadata->release();
             delete camMetadata;
@@ -1372,6 +1426,14 @@ camera_metadata_t *SprdCamera3MetadataChannel::getMetadata(cmr_s32 frame_num) {
     }else {
         camera_metadata_t *tmp_result = mSetting->translateLocalToFwMetadata();;
         HAL_LOGE("AE or AF callback error, give default metadata %p", tmp_result);
+
+        {
+            //restart to sync for ae
+            HAL_LOGD("restart to sync");
+            sem_destroy(&mSyncSem);
+            sem_init(&mSyncSem, 0, 0);
+        }
+
         if (!mRequestInfoList.empty()) {
             struct isp_sync_params tmp_isp_sync_params;
             vector<struct isp_sync_params>::iterator lsItr =
@@ -1729,7 +1791,8 @@ int SprdCamera3MetadataChannel::stop(uint32_t frame_number) {
     while(!FrameVec.empty()) {
         std::unique_lock <std::mutex> lck(mResultLock);
         HAL_LOGD("flush mResultSignal push");
-        mResultSignal.notify_one();
+        //mResultSignal.notify_one();
+        sem_post(&mSyncSem);
         if(i-- <= 0)
             break;
     }
@@ -1742,12 +1805,6 @@ void SprdCamera3MetadataChannel::clear(){
     FrameVec.clear();
     mAeCallBackQue.clear();
     mAfCallBackQue.clear();
-//    mSyncResult.clear();
     mRequestInfoList.clear();
-    for (auto it = mSyncResult.begin(); it != mSyncResult.end(); ) {
-        if (it->result)
-            free_camera_metadata(it->result);
-        it = mSyncResult.erase(it);
-    }
 }
 }; // namespace sprdcamera
