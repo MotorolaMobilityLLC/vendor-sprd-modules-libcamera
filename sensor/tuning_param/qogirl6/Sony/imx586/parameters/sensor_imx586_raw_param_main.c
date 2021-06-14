@@ -37,7 +37,7 @@
 #include "sensor_imx586_raw_param_video_0.c"
 #include "sensor_imx586_raw_param_video_1.c"
 #include "sensor_imx586_raw_param_video_2.c"
-#include "sensor_imx586_raw_param_fdr_cap0.c"
+#include "sensor_imx586_raw_param_fdr_cap1.c"
 
 /* End Include */
 
@@ -175,8 +175,8 @@ static struct sensor_raw_info s_imx586_mipi_raw_info=
 		{s_imx586_tune_info_video_1, sizeof(s_imx586_tune_info_video_1)},
 		{s_imx586_tune_info_video_2, sizeof(s_imx586_tune_info_video_2)},
 		{NULL, 0},
-		{s_imx586_tune_info_fdr_cap0, sizeof(s_imx586_tune_info_fdr_cap0)},
 		{NULL, 0},
+		{s_imx586_tune_info_fdr_cap1, sizeof(s_imx586_tune_info_fdr_cap1)},
 		{NULL, 0},
 		{NULL, 0},
 	},
@@ -197,8 +197,8 @@ static struct sensor_raw_info s_imx586_mipi_raw_info=
 		&s_imx586_fix_info_video_1,
 		&s_imx586_fix_info_video_2,
 		NULL,
-		&s_imx586_fix_info_fdr_cap0,
 		NULL,
+		&s_imx586_fix_info_fdr_cap1,
 		NULL,
 		NULL,
 	},
@@ -216,8 +216,8 @@ static struct sensor_raw_info s_imx586_mipi_raw_info=
 		{s_imx586_video_1_tool_ui_input, sizeof(s_imx586_video_1_tool_ui_input)},
 		{s_imx586_video_2_tool_ui_input, sizeof(s_imx586_video_2_tool_ui_input)},
 		{NULL, 0},
-		{s_imx586_fdr_cap0_tool_ui_input, sizeof(s_imx586_fdr_cap0_tool_ui_input)},
 		{NULL, 0},
+		{s_imx586_fdr_cap1_tool_ui_input, sizeof(s_imx586_fdr_cap1_tool_ui_input)},
 		{NULL, 0},
 		{NULL, 0},
 	},
