@@ -488,6 +488,8 @@ struct ae_ev_setting_param {
 	cmr_u32 frm_len;
 	cmr_u32 ae_gain;
 	cmr_u32 calc_y;
+	cmr_u64 base_exp;
+	cmr_u32 base_gain;
 };
 
 struct ae_sync_gain_param {
