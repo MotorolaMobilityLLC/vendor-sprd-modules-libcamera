@@ -1337,3 +1337,4 @@ static struct sensor_ic_ops s_imx351_ops_tab = {
             [SENSOR_IOCTL_STREAM_OFF].ops = imx351_drv_stream_off,
             [SENSOR_IOCTL_ACCESS_VAL].ops = imx351_drv_access_val,
 }};
+
