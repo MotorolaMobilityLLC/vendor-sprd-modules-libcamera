@@ -26,6 +26,8 @@
 #define MIPI_RAW_INFO g_imx351_mipi_raw_info
 #define MODULE_INFO s_imx351_module_info_tab
 
+static const imx351_longExp_valid_frame_num = 3;
+
 /*==============================================================================
  * Description:
  * set video mode
@@ -882,6 +884,10 @@ static cmr_int imx351_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     memcpy(&ex_info->fov_info, &static_info->fov_info,
            sizeof(static_info->fov_info));
     ex_info->mono_sensor = static_info->mono_sensor;
+    ex_info->long_expose_supported = static_info->long_expose_supported;
+    if(ex_info->long_expose_supported) {
+             ex_info->longExp_valid_frame_num = imx351_longExp_valid_frame_num;
+    }
 
 exit:
     sensor_ic_print_static_info((cmr_s8 *)SENSOR_NAME, ex_info);

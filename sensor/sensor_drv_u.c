@@ -1125,11 +1125,14 @@ LOCAL cmr_int sensor_set_mode(struct sensor_drv_context *sensor_cxt,
         goto exit;
     }
 
-    if (sensor_cxt->sensor_mode == mode) {
-        SENSOR_LOGI("The sensor mode as before");
-        rtn = SENSOR_SUCCESS;
-        goto exit;
+    if(!sensor_cxt->is_long_expo) {
+        if (sensor_cxt->sensor_mode == mode) {
+            SENSOR_LOGI("The sensor mode as before");
+            rtn = SENSOR_SUCCESS;
+            goto exit;
+        }
     }
+
     if (PNULL != res_info_ptr[mode].sensor_reg_tab_ptr) {
         mclk = res_info_ptr[mode].xclk_to_sensor;
         hw_sensor_set_mclk(sensor_cxt->hw_drv_handle, mclk);
@@ -1488,7 +1491,7 @@ LOCAL cmr_int sensor_init_defaul_exif(struct sensor_drv_context *sensor_cxt) {
 }
 
 cmr_int sensor_set_exif_common(cmr_handle sns_module_handle, cmr_u32 cmdin,
-                               cmr_u32 param) {
+                               cmr_u64 param) {
     struct sensor_drv_context *sensor_cxt =
         (struct sensor_drv_context *)sns_module_handle;
     SENSOR_EXIF_CTRL_E cmd = (SENSOR_EXIF_CTRL_E)cmdin;
@@ -1512,17 +1515,15 @@ cmr_int sensor_set_exif_common(cmr_handle sns_module_handle, cmr_u32 cmdin,
 
     switch (cmd) {
     case SENSOR_EXIF_CTRL_EXPOSURETIME_BYTIME: {
-        cmr_u32 exposure_time = param / 1000;
-        cmr_int orig_exposure_time = param;
-        cmr_int regen_exposure_time = 0x00;
+        cmr_u64 exposure_time = param / 1000;
         sensor_exif_info_ptr->valid.ExposureTime = 1;
 
         if (0x00 == exposure_time) {
             sensor_exif_info_ptr->valid.ExposureTime = 0;
         } else if (1000000 >= exposure_time) {
-            sensor_exif_info_ptr->ExposureTime.numerator = 0x01;
             sensor_exif_info_ptr->ExposureTime.denominator =
-                (1000000.00 / exposure_time + 0.5);
+                (1000000.00 / exposure_time) * 1000 + 0.5;
+            sensor_exif_info_ptr->ExposureTime.numerator = 1000;
         } else {
             cmr_u32 second = 0x00;
             do {
@@ -1533,45 +1534,32 @@ cmr_int sensor_set_exif_common(cmr_handle sns_module_handle, cmr_u32 cmdin,
                 }
             } while (1);
             sensor_exif_info_ptr->ExposureTime.denominator =
-                1000000 / exposure_time;
-            sensor_exif_info_ptr->ExposureTime.numerator =
-                sensor_exif_info_ptr->ExposureTime.denominator * second;
-        }
-        if (0 != sensor_exif_info_ptr->ExposureTime.denominator)
-            regen_exposure_time =
-                1000000000ll * sensor_exif_info_ptr->ExposureTime.numerator /
-                sensor_exif_info_ptr->ExposureTime.denominator;
-        // To check within range of CTS
-        if ((0x00 != exposure_time) &&
-            (((orig_exposure_time - regen_exposure_time) > 100000) ||
-             ((regen_exposure_time - orig_exposure_time) > 100000))) {
-            sensor_exif_info_ptr->ExposureTime.denominator =
                 (1000000.00 / exposure_time) * 1000 + 0.5;
-            sensor_exif_info_ptr->ExposureTime.numerator = 1000;
+            sensor_exif_info_ptr->ExposureTime.numerator =
+                sensor_exif_info_ptr->ExposureTime.denominator * second  + 1000;
         }
+        SENSOR_LOGV("ExposureTime = %d/%d", sensor_exif_info_ptr->ExposureTime.numerator,
+                sensor_exif_info_ptr->ExposureTime.denominator);
         break;
     }
     case SENSOR_EXIF_CTRL_EXPOSURETIME: {
         enum sensor_mode img_sensor_mode = sensor_cxt->sensor_mode;
         if (img_sensor_mode == 0)
             img_sensor_mode = 1;
-        cmr_u32 exposureline_time =
+        cmr_u64 exposureline_time =
             sensor_info_ptr->sensor_mode_info[img_sensor_mode].line_time;
-        cmr_u32 exposureline_num = param;
-        cmr_u32 exposure_time = 0x00;
-        cmr_int regen_exposure_time = 0x00;
-        cmr_int orig_exposure_time = 0x00;
+        cmr_u64 exposureline_num = param;
+        cmr_u64 exposure_time = 0x00;
 
         exposure_time = exposureline_time * exposureline_num / 1000;
-        orig_exposure_time = exposureline_time * exposureline_num;
         sensor_exif_info_ptr->valid.ExposureTime = 1;
 
         if (0x00 == exposure_time) {
             sensor_exif_info_ptr->valid.ExposureTime = 0;
         } else if (1000000 >= exposure_time) {
-            sensor_exif_info_ptr->ExposureTime.numerator = 0x01;
             sensor_exif_info_ptr->ExposureTime.denominator =
-                (1000000.00 / exposure_time + 0.5);
+                (1000000.00 / exposure_time) * 1000 + 0.5;
+            sensor_exif_info_ptr->ExposureTime.numerator = 1000;
         } else {
             cmr_u32 second = 0x00;
             do {
@@ -1582,22 +1570,12 @@ cmr_int sensor_set_exif_common(cmr_handle sns_module_handle, cmr_u32 cmdin,
                 }
             } while (1);
             sensor_exif_info_ptr->ExposureTime.denominator =
-                1000000 / exposure_time;
-            sensor_exif_info_ptr->ExposureTime.numerator =
-                sensor_exif_info_ptr->ExposureTime.denominator * second;
-        }
-        if (0 != sensor_exif_info_ptr->ExposureTime.denominator)
-            regen_exposure_time =
-                1000000000ll * sensor_exif_info_ptr->ExposureTime.numerator /
-                sensor_exif_info_ptr->ExposureTime.denominator;
-        // To check within range of CTS
-        if ((0x00 != exposure_time) &&
-            (((orig_exposure_time - regen_exposure_time) > 100000) ||
-             ((regen_exposure_time - orig_exposure_time) > 100000))) {
-            sensor_exif_info_ptr->ExposureTime.denominator =
                 (1000000.00 / exposure_time) * 1000 + 0.5;
-            sensor_exif_info_ptr->ExposureTime.numerator = 1000;
+            sensor_exif_info_ptr->ExposureTime.numerator =
+                sensor_exif_info_ptr->ExposureTime.denominator * second  + 1000;
         }
+        SENSOR_LOGV("ExposureTime = %d/%d", sensor_exif_info_ptr->ExposureTime.numerator,
+                sensor_exif_info_ptr->ExposureTime.denominator);
         break;
     }
     case SENSOR_EXIF_CTRL_FNUMBER:
@@ -3092,6 +3070,49 @@ static void sensor_drv_special_phy_sensor_info(PHYSICAL_SENSOR_INFO_T *phyPtr,
     }
 }
 
+static cmr_int sensor_drv_get_long_exp_info(struct sensor_drv_context
+                   *sensor_cxt, struct phySensorInfo *phyPtr)
+{
+    cmr_int ret = SENSOR_SUCCESS;
+    SENSOR_VAL_T val;
+    struct sensor_ic_ops *sns_ops = PNULL;
+    cmr_u32 sns_cmd = SENSOR_IOCTL_ACCESS_VAL;
+    struct sensor_ex_info sn_ex_info_slv;
+    memset(&sn_ex_info_slv, 0, sizeof(struct sensor_ex_info));
+
+    val.type = SENSOR_VAL_TYPE_GET_STATIC_INFO;
+    val.pval = &sn_ex_info_slv;
+
+    sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
+    if (sns_ops) {
+	if(!sensor_cxt->sns_ic_drv_handle)
+		sensor_ic_create(sensor_cxt, sensor_cxt->slot_id);
+        ret = sns_ops->ext_ops[sns_cmd].ops(sensor_cxt->sns_ic_drv_handle,
+                                           (cmr_uint)&val);
+      if(!ret) {
+        for(int i = 0; i < sn_ex_info_slv.long_expose_modes_size; i++) {
+            phyPtr->long_expose_modes[i] = sn_ex_info_slv.long_expose_modes[i];
+        }
+        phyPtr->long_expose_modes_size = sn_ex_info_slv.long_expose_modes_size;
+        phyPtr->longExp_need_switch_setting = sn_ex_info_slv.longExp_need_switch_setting;
+        if (phyPtr->longExp_need_switch_setting) {
+            for(int i = 0; i < sn_ex_info_slv.long_exposure_setting_size; i++) {
+                phyPtr->long_exposure_setting[i] = sn_ex_info_slv.long_exposure_setting[i];
+            }
+            phyPtr->long_exposure_threshold = sn_ex_info_slv.long_exposure_threshold;
+        }
+        phyPtr->longExp_valid_frame_num = sn_ex_info_slv.longExp_valid_frame_num;
+      } else {
+         SENSOR_LOGE("get sensor ex info failed");
+         return -1;
+      }
+    } else {
+       SENSOR_LOGE("sns_ops null");
+       return -1;
+    }
+    return 0;
+}
+
 static cmr_int
 sensor_drv_create_phy_sensor_info(struct sensor_drv_context *sensor_cxt,
                                   cmr_u32 slot_id, cmr_u32 phy_id) {
@@ -3142,7 +3163,14 @@ sensor_drv_create_phy_sensor_info(struct sensor_drv_context *sensor_cxt,
     phyPtr->sensor_type = sensor_cxt->sensor_type;
     phyPtr->data_type = 0;
     phyPtr->pdaf_supported = sensor_cxt->static_info->pdaf_supported;
-
+    if(sensor_cxt->static_info->long_expose_supported) {
+       phyPtr->long_expose_supported = sensor_cxt->static_info->long_expose_supported;
+       sensor_drv_get_long_exp_info(sensor_cxt, phyPtr);
+       for(int i = 0;i < phyPtr->long_expose_modes_size;i++) {
+           SENSOR_LOGD("long_expose_modes[%d]=%f, long_expose_supported=%d, long_expose_modes_size=%d",
+               i, phyPtr->long_expose_modes[i], phyPtr->long_expose_supported, phyPtr->long_expose_modes_size);
+       }
+    }
     phyPtr->sensor_role_code = sensor_cxt->xml_info->cfgPtr->sensor_role_code;
     phyPtr->face_type = sensor_cxt->xml_info->cfgPtr->facing;
     phyPtr->angle = sensor_cxt->xml_info->cfgPtr->orientation;
@@ -4996,5 +5024,15 @@ cmr_int sensor_set_HD_mode(cmr_u32 is_HD_mode) {
 
     sensor_is_HD_mode = is_HD_mode;
     SENSOR_LOGI("is_HD_mode:%d", is_HD_mode);
+    return ret;
+}
+
+cmr_int sensor_set_longExp_enable(struct sensor_drv_context *sensor_cxt,
+                           cmr_u32 long_expo_enable) {
+    int ret = SENSOR_SUCCESS;
+    SENSOR_DRV_CHECK_ZERO(sensor_cxt);
+
+    sensor_cxt->is_long_expo = long_expo_enable;
+    SENSOR_LOGV("is_long_expo:%d", sensor_cxt->is_long_expo);
     return ret;
 }
