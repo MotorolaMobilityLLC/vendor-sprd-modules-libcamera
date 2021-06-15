@@ -1046,6 +1046,7 @@ static SENSOR_STATIC_INFO_T s_imx351_static_info[VENDOR_NUM] = {
                      .max_adgain = 16 * 16,
                      .ois_supported = 0,
                      .pdaf_supported = SENSOR_PDAF_TYPE1_ENABLE,
+                     .long_expose_supported = 1,
                      .embedded_line_enable = 0,
                      .exp_valid_frame_num = 1,
                      .clamp_level = 64,

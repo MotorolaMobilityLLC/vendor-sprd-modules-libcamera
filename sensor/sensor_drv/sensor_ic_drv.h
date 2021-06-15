@@ -217,7 +217,7 @@ struct sensor_ev_info_t {
     cmr_u16 preview_shutter;
     float preview_gain;
     cmr_u16 preview_framelength;
-    cmr_u32 preview_exptime;
+    cmr_u64 preview_exptime;
 };
 
 typedef struct sensor_extend_info_tag {
@@ -260,6 +260,9 @@ struct sensor_static_info {
 
     /* Whether support pdaf,1:support,0:none*/
     cmr_u32 pdaf_supported;
+
+    /* Whether support long expose,0:none other: max expose(s)*/
+    cmr_u32 long_expose_supported;
 
     /* Whether embedded line enable,1:support,0:none*/
     cmr_u32 embedded_line_enable;
@@ -366,7 +369,7 @@ typedef struct sensor_video_info_tag {
  **/
 struct sensor_ic_ctrl_cb {
     cmr_int (*set_exif_info)(cmr_handle sns_module_handle, cmr_u32 cmd,
-                             cmr_u32 param);
+                             cmr_u64 param);
     cmr_int (*get_exif_info)(cmr_handle sns_module_handle, void **param);
     cmr_int (*set_mode)(cmr_handle sns_module_handle, cmr_u32 mode);
     cmr_int (*set_mode_wait_done)(cmr_handle sns_module_handle);
@@ -726,6 +729,13 @@ typedef struct phySensorInfo {
     cmr_u16 pdaf_supported;
     char sensor_name[SENSOR_NAME_LEN];
     cmr_u8 mono_sensor;
+    cmr_u32 long_expose_supported;
+    double long_expose_modes[12];
+    cmr_int long_expose_modes_size;
+    cmr_u32 longExp_need_switch_setting;
+    cmr_u32 long_exposure_setting[12];
+    cmr_u64 long_exposure_threshold;
+    cmr_u32 longExp_valid_frame_num;
     cmr_s64 sensor_min_exp;
     cmr_s64 sensor_max_exp;
     float f_num;
