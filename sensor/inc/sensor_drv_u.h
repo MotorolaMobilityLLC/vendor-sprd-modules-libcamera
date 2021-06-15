@@ -863,6 +863,7 @@ cmr_int sensor_set_HD_mode(cmr_u32 is_HD_mode) ;
 cmr_int sensor_set_longExp_enable(struct sensor_drv_context *sensor_cxt,
                            cmr_u32 long_expo_enable);
 void sensor_rid_save_sensor_name(SENSOR_HWINFOR_E mag, char *sensor_info);
+
 #ifdef __cplusplus
 }
 #endif
