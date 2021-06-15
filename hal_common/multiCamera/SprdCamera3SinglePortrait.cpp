@@ -1186,6 +1186,9 @@ bool SprdCamera3SinglePortrait::CaptureThread::threadLoop() {
                 free_camera_metadata(mSavedCapReqsettings);
                 mSavedCapReqsettings = NULL;
             }
+            if (mSinglePortrait->mThumbReq.frame_number) {
+                CallBackSnapResult(CAMERA3_BUFFER_STATUS_ERROR);
+            }
             HAL_LOGD("SINGLE_PORTRAIT_MSG_EXIT");
             return false;
         } break;
@@ -2998,6 +3001,8 @@ int SprdCamera3SinglePortrait::initialize(
     m_pFarJpegBuffer = NULL;
     mFlushing = false;
     mInitThread = false;
+    mhasCallbackStream = false;
+    mneedCbPreviewSnap = false;
     mCaptureThread->mAlgorithmFlag = false;
     mReqState = PREVIEW_REQUEST_STATE;
     SprdCamera3MultiBase::initialize(MODE_BLUR, hwiMain);
@@ -3734,7 +3739,9 @@ void SprdCamera3SinglePortrait::CaptureThread::CallBackSnapResult(int status) {
     camera3_stream_buffer_t result_buffers;
     bzero(&result, sizeof(camera3_capture_result_t));
     bzero(&result_buffers, sizeof(camera3_stream_buffer_t));
-
+    if (mSinglePortrait->mFlushing) {
+        status = CAMERA3_BUFFER_STATUS_ERROR;
+    }
     result_buffers.stream = mSinglePortrait->mThumbReq.preview_stream;
     result_buffers.buffer = mSinglePortrait->mThumbReq.buffer;
 
