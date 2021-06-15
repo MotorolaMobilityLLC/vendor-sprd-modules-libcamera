@@ -10,15 +10,15 @@
 #define __SPRD_FACEBEAUTY_API_H__
 
 #if (defined( WIN32 ) || defined( WIN64 )) && (defined FBAPI_EXPORTS)
-#define FBMOTO_EXPORTS __declspec(dllexport)
+#define FBV1_EXPORTS __declspec(dllexport)
 #elif (defined(__ANDROID__))
-#define FBMOTO_EXPORTS __attribute__((visibility("default")))
+#define FBV1_EXPORTS __attribute__((visibility("default")))
 #else
-#define FBMOTO_EXPORTS
+#define FBV1_EXPORTS
 #endif
 
 #ifndef FBAPI
-#define FBAPI(rettype) extern FBMOTO_EXPORTS rettype
+#define FBAPI(rettype) extern FBV1_EXPORTS rettype
 #endif
 
 typedef enum{
