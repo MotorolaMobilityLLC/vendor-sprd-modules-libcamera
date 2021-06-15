@@ -769,6 +769,7 @@ struct sensor_drv_context {
     cmr_u32 is_HD_mode;
     cmr_u32 module_vendor_id;
     cmr_u32 otp_version;
+    cmr_u32 is_long_expo;
     cmr_s64 sensor_min_exp;
     cmr_s64 sensor_max_exp;
 };
@@ -818,7 +819,7 @@ cmr_int sensor_stream_ctrl_common(struct sensor_drv_context *sensor_cxt,
                                   cmr_u32 on_off);
 
 cmr_int sensor_set_exif_common(cmr_handle sns_module_handle, cmr_u32 cmdin,
-                               cmr_u32 param);
+                               cmr_u64 param);
 
 cmr_int sensor_set_snspid_common(cmr_handle sns_module_handle,
         cmr_u8 sensor_id, cmr_u8 *snspid, cmr_u8 snspid_size);
@@ -859,8 +860,9 @@ cmr_int sensor_write_calibration_otp(struct sensor_drv_context *sensor_cxt,
 cmr_int sensor_pdaf_format_convertor(void *buffer_handle, cmr_int pdaf_supported,
                                      cmr_u32 *param);
 cmr_int sensor_set_HD_mode(cmr_u32 is_HD_mode) ;
+cmr_int sensor_set_longExp_enable(struct sensor_drv_context *sensor_cxt,
+                           cmr_u32 long_expo_enable);
 void sensor_rid_save_sensor_name(SENSOR_HWINFOR_E mag, char *sensor_info);
-
 #ifdef __cplusplus
 }
 #endif

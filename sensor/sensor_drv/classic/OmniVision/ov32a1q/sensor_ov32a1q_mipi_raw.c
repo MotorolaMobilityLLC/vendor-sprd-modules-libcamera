@@ -28,6 +28,12 @@
 #endif
 #include "otp_parser.h"
 
+static double ov32a1q_longExp_mode[] = {0.5, 1, 2, 3, 4, 5, 6, 7, 8};
+static cmr_u32 ov32a1q_longExp_valid_frame_num = 3;
+static cmr_u32 ov32a1q_longExp_need_switch_setting = 1;
+static cmr_u32 ov32a1q_longExp_setting[] = {0, 0, 0, 1, 0};
+static cmr_u64 ov32a1q_longExp_threshold = 80000000;
+
 /*==============================================================================
  * Description:
  * write register value to sensor
@@ -389,6 +395,16 @@ static cmr_int ov32a1q_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
            sizeof(static_info->fov_info));
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
+    ex_info->long_expose_supported = static_info->long_expose_supported;
+    if(ex_info->long_expose_supported) {
+		ex_info->long_expose_modes = ov32a1q_longExp_mode;
+		ex_info->long_expose_modes_size = ARRAY_SIZE(ov32a1q_longExp_mode);
+		ex_info->long_exposure_setting = ov32a1q_longExp_setting;
+		ex_info->long_exposure_setting_size = ARRAY_SIZE(ov32a1q_longExp_setting);
+             ex_info->longExp_valid_frame_num = ov32a1q_longExp_valid_frame_num;
+             ex_info->long_exposure_threshold = ov32a1q_longExp_threshold;
+             ex_info->longExp_need_switch_setting = ov32a1q_longExp_need_switch_setting;
+    }
     ov32a1q_drv_get_exp_range(ex_info);
     SENSOR_LOGI("sensor_min_exp %lld, sensor_max_exp: %lld", ex_info->sensor_min_exp, ex_info->sensor_max_exp);
     sensor_ic_print_static_info((cmr_s8 *)SENSOR_NAME, ex_info);
@@ -903,17 +919,17 @@ static cmr_int ov32a1q_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
                 sns_drv_cxt->sensor_ev_info.preview_exptime,
                 (unsigned int)sns_drv_cxt->sensor_ev_info.preview_gain);
 
-    if (sns_drv_cxt->ops_cb.set_mode)
-        sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, capture_mode);
-    if (sns_drv_cxt->ops_cb.set_mode_wait_done)
-        sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
-
-    if (preview_mode == capture_mode) {
+    if (preview_mode == capture_mode || ov32a1q_longExp_setting[capture_mode]) {
         cap_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
         cap_exptime = sns_drv_cxt->sensor_ev_info.preview_exptime;
         cap_gain = sns_drv_cxt->sensor_ev_info.preview_gain;
         goto snapshot_info;
     }
+
+    if (sns_drv_cxt->ops_cb.set_mode)
+        sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, capture_mode);
+    if (sns_drv_cxt->ops_cb.set_mode_wait_done)
+        sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
 
     prv_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
     prv_exptime = sns_drv_cxt->sensor_ev_info.preview_exptime;
@@ -958,22 +974,44 @@ static cmr_int ov32a1q_drv_write_exposure(cmr_handle handle, cmr_uint param) {
     cmr_u16 exposure_line = 0x00;
     cmr_u16 dummy_line = 0x00;
     cmr_u16 size_index = 0x00;
-    cmr_u32 exp_time = 0x00;
+    cmr_u64 exp_time = 0x00;
+    cmr_u64 tmp_value = 0x00;
 
     struct sensor_ex_exposure *ex = (struct sensor_ex_exposure *)param;
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_HANDLE(ex);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_drv_context *sensor_cxt =
+        (struct sensor_drv_context *)sns_drv_cxt->caller_handle;
 
     exposure_line = ex->exposure;
     dummy_line = ex->dummy;
     size_index = ex->size_index;
     exp_time = ex->exp_time;
 
-    ov32a1q_drv_calc_exposure(handle, exposure_line, dummy_line, size_index, exp_time,
-                              &ov32a1q_aec_info);
-    ov32a1q_drv_write_reg2sensor(handle, ov32a1q_aec_info.frame_length);
-    ov32a1q_drv_write_reg2sensor(handle, ov32a1q_aec_info.shutter);
+    if (!ov32a1q_longExp_setting[sensor_cxt->sensor_mode]) {
+        ov32a1q_drv_calc_exposure(handle, exposure_line, dummy_line, size_index, exp_time,
+                                      &ov32a1q_aec_info);
+        ov32a1q_drv_write_reg2sensor(handle, ov32a1q_aec_info.frame_length);
+        ov32a1q_drv_write_reg2sensor(handle, ov32a1q_aec_info.shutter);
+    } else {
+        SENSOR_LOGI("use longExp, exp_time:%lld",exp_time);
+
+        tmp_value = (exp_time - 33320000) * 9 / 105000;
+
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3208, 0x00);
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3412, (tmp_value >> 24)  & 0xFF);
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3413, (tmp_value >> 16)  & 0xFF);
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3414, (tmp_value >> 8)  & 0xFF);
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3415, tmp_value & 0xFF);
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3208, 0x10);
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3208, 0xa0);
+
+        if (sns_drv_cxt->ops_cb.set_exif_info) {
+            sns_drv_cxt->ops_cb.set_exif_info(
+                sns_drv_cxt->caller_handle, SENSOR_EXIF_CTRL_EXPOSURETIME_BYTIME, exp_time);
+        }
+    }
 
     return ret_value;
 }
@@ -1059,6 +1097,7 @@ static cmr_int ov32a1q_drv_stream_on(cmr_handle handle, cmr_uint param) {
     if (!strcmp(value1, "1")) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5081, 0x01);
     }
+    
     cmr_uint sensor_mode = 0;
     sns_drv_cxt->ops_cb.get_mode(sns_drv_cxt->caller_handle, &sensor_mode);
     if (sensor_mode > 2)
