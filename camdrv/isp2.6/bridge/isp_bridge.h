@@ -135,11 +135,14 @@ struct awb_otp_param {
 
 struct sensor_info {
 	cmr_s16 min_exp_line;
+	cmr_s16 max_exp_line;
 	cmr_s16 max_again;
 	cmr_s16 min_again;
 	cmr_s16 sensor_gain_precision;
 	cmr_u32 line_time;
 	cmr_u32 frm_len_def;
+	cmr_u16 ae_table_min_gain;
+	cmr_u16 ae_table_max_gain;
 };
 
 struct aem_info {

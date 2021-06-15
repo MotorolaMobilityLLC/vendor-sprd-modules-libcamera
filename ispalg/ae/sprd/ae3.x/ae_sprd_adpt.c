@@ -693,8 +693,8 @@ static cmr_s32 ae_sync_process(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_dat
 			_aem_stat_preprocess_dulpslave(&slave_aem_info[0], cxt->slave0_aem_stat, stats_data_slave[0].stats_data);
 
 		master_ae_sync_info_ptr->monoboottime = stats_data_master.monoboottime;
-		master_ae_sync_info_ptr->max_gain = info_master.max_again;
-		master_ae_sync_info_ptr->min_gain = info_master.min_again;
+		master_ae_sync_info_ptr->max_gain = info_master.ae_table_max_gain;
+		master_ae_sync_info_ptr->min_gain = info_master.ae_table_min_gain;
 		master_ae_sync_info_ptr->min_exp_line =info_master.min_exp_line;
 		master_ae_sync_info_ptr->sensor_gain_precision = info_master.sensor_gain_precision;
 		master_ae_sync_info_ptr->ev_setting.line_time = info_master.line_time;
@@ -728,8 +728,8 @@ static cmr_s32 ae_sync_process(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_dat
 
 		slave0_ae_sync_info_ptr->monoboottime = stats_data_slave[0].monoboottime;
 		slave0_ae_sync_info_ptr->ev_setting.line_time = info_slave[0].line_time;
-		slave0_ae_sync_info_ptr->max_gain = info_slave[0].max_again;
-		slave0_ae_sync_info_ptr->min_gain = info_slave[0].min_again;
+		slave0_ae_sync_info_ptr->max_gain = info_slave[0].ae_table_max_gain;
+		slave0_ae_sync_info_ptr->min_gain = info_slave[0].ae_table_min_gain;
 		slave0_ae_sync_info_ptr->min_exp_line =info_slave[0].min_exp_line;
 		slave0_ae_sync_info_ptr->sensor_gain_precision = info_slave[0].sensor_gain_precision;
 		slave0_ae_sync_info_ptr->frm_len_def = info_slave[0].frm_len_def;
@@ -834,9 +834,10 @@ static cmr_s32 ae_write_to_sensor_sync_mapping(struct ae_ctrl_cxt *cxt, struct a
 		for(cmr_u32 i = 0; i < 3 * 1024; i++) {
 			master_ae_sync_info_ptr->aem[i] = cxt->sync_aem[i]>>2;//10bit->8bit(lib use 8 bits)
 		}
-		master_ae_sync_info_ptr->max_gain = info_master.max_again;
-		master_ae_sync_info_ptr->min_gain = info_master.min_again;
-		master_ae_sync_info_ptr->min_exp_line =info_master.min_exp_line;
+		master_ae_sync_info_ptr->max_gain = info_master.ae_table_max_gain;
+		master_ae_sync_info_ptr->min_gain = info_master.ae_table_min_gain;
+		master_ae_sync_info_ptr->min_exp_line = info_master.min_exp_line;
+		master_ae_sync_info_ptr->max_exp_line = info_master.max_exp_line;
 		master_ae_sync_info_ptr->sensor_gain_precision = info_master.sensor_gain_precision;
 		master_ae_sync_info_ptr->ev_setting.line_time = info_master.line_time;
 		master_ae_sync_info_ptr->ev_setting.exp_line = exp_data_sync->lib_data.exp_line;
@@ -880,9 +881,10 @@ static cmr_s32 ae_write_to_sensor_sync_mapping(struct ae_ctrl_cxt *cxt, struct a
 		ISP_LOGV("next_id %d ",cxt->sync_state.next_sensor_role );
 
 		slave_ae_sync_info_ptr->ev_setting.line_time = info_slave.line_time;
-		slave_ae_sync_info_ptr->max_gain = info_slave.max_again;
-		slave_ae_sync_info_ptr->min_gain = info_slave.min_again;
-		slave_ae_sync_info_ptr->min_exp_line =info_slave.min_exp_line;
+		slave_ae_sync_info_ptr->max_gain = info_slave.ae_table_max_gain;
+		slave_ae_sync_info_ptr->min_gain = info_slave.ae_table_min_gain;
+		slave_ae_sync_info_ptr->min_exp_line = info_slave.min_exp_line;
+		slave_ae_sync_info_ptr->max_exp_line = info_slave.max_exp_line;
 		slave_ae_sync_info_ptr->sensor_gain_precision = info_slave.sensor_gain_precision;
 		slave_ae_sync_info_ptr->frm_len_def = info_slave.frm_len_def;
 		memcpy(&slave_ae_sync_info_ptr->blk_size, &cxt->monitor_cfg.blk_size, sizeof(struct ae_size));
@@ -994,17 +996,24 @@ static cmr_s32 ae_write_to_sensor_normal_mapping(struct ae_ctrl_cxt *cxt, struct
 		in_param.sync_param[cxt->sensor_role]->ev_setting.exp_time = exp_data_sync->lib_data.exp_time;
 		in_param.sync_param[cxt->sensor_role]->ev_setting.frm_len =  exp_data_sync->lib_data.frm_len;
 
-		in_param.sync_param[cxt->sensor_role]->max_gain = info_master.max_again;
-		in_param.sync_param[cxt->sensor_role]->min_gain = info_master.min_again;
-		in_param.sync_param[cxt->sensor_role]->min_exp_line =info_master.min_exp_line;
-		in_param.sync_param[cxt->sensor_role]->sensor_gain_precision = info_master.sensor_gain_precision;
-
 		in_param.sync_param[CAM_SENSOR_MASTER]->min_exp_line = info_master.min_exp_line;
 		in_param.sync_param[CAM_SENSOR_SLAVE0]->min_exp_line = info_slave[0].min_exp_line;
 		in_param.sync_param[CAM_SENSOR_SLAVE1]->min_exp_line = info_slave[1].min_exp_line;
+		in_param.sync_param[CAM_SENSOR_MASTER]->max_exp_line = info_master.max_exp_line;
+		in_param.sync_param[CAM_SENSOR_SLAVE0]->max_exp_line = info_slave[0].max_exp_line;
+		in_param.sync_param[CAM_SENSOR_SLAVE1]->max_exp_line = info_slave[1].max_exp_line;
+		in_param.sync_param[CAM_SENSOR_MASTER]->min_gain = info_master.ae_table_min_gain;
+		in_param.sync_param[CAM_SENSOR_SLAVE0]->min_gain = info_slave[0].ae_table_min_gain;
+		in_param.sync_param[CAM_SENSOR_SLAVE1]->min_gain = info_slave[1].ae_table_min_gain;
+		in_param.sync_param[CAM_SENSOR_MASTER]->max_gain = info_master.ae_table_max_gain;
+		in_param.sync_param[CAM_SENSOR_SLAVE0]->max_gain = info_slave[0].ae_table_max_gain;
+		in_param.sync_param[CAM_SENSOR_SLAVE1]->max_gain = info_slave[1].ae_table_max_gain;
 		in_param.sync_param[CAM_SENSOR_MASTER]->ev_setting.line_time = info_master.line_time;
 		in_param.sync_param[CAM_SENSOR_SLAVE0]->ev_setting.line_time = info_slave[0].line_time;
 		in_param.sync_param[CAM_SENSOR_SLAVE1]->ev_setting.line_time = info_slave[1].line_time;
+		in_param.sync_param[CAM_SENSOR_MASTER]->sensor_gain_precision = info_master.sensor_gain_precision;
+		in_param.sync_param[CAM_SENSOR_SLAVE0]->sensor_gain_precision = info_slave[0].sensor_gain_precision;
+		in_param.sync_param[CAM_SENSOR_SLAVE1]->sensor_gain_precision = info_slave[1].sensor_gain_precision;
 
 		ae_sync_in_ae_lib_data_dump(in_param.sync_param[cxt->sensor_role]);
 
@@ -4214,34 +4223,6 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 
 	ISP_LOGD("sync: is_multi_mode:%d, is_master:%d, sensor_role:%d", cxt->is_multi_mode, cxt->is_master, cxt->sensor_role);
 
-	if (cxt->is_multi_mode) {
-		/* save master & slave sensor info */
-		struct sensor_info sensor_info;
-		//cmr_u32 in = 1;
-
-		sensor_info.max_again = cxt->sensor_max_gain;
-		sensor_info.min_again = cxt->sensor_min_gain;
-		sensor_info.sensor_gain_precision = cxt->sensor_gain_precision;
-		sensor_info.min_exp_line = cxt->min_exp_line;
-		sensor_info.line_time = cxt->cur_status.adv_param.cur_ev_setting.line_time;
-		sensor_info.frm_len_def = (cmr_u32)(AEC_LINETIME_PRECESION / (1.0 * work_info->resolution_info.snr_setting_max_fps * cxt->cur_status.adv_param.cur_ev_setting.line_time));
-
-		bool flag_CAM_SENSOR1;
-		bool flag_CAM_SENSOR2;
-		bool flag_CAM_SENSOR3;
-		bool flag_CAM_MODE;
-
-
-		flag_CAM_SENSOR1 = (CAM_SENSOR_MASTER == cxt->sensor_role);
-		flag_CAM_SENSOR2 = (CAM_SENSOR_SLAVE0 == cxt->sensor_role);
-		flag_CAM_SENSOR3 = (CAM_SENSOR_SLAVE1 == cxt->sensor_role);
-		flag_CAM_MODE = ae_abtain_or_flag(flag_CAM_SENSOR1,flag_CAM_SENSOR2,flag_CAM_SENSOR3);
-
-		if (flag_CAM_MODE) {
-			rtn = (cmr_s32)(cxt->ptr_isp_br_ioctrl(cxt->sensor_role, SET_MODULE_INFO, &sensor_info, NULL));
-
-		}
-	}
 	cxt->start_id = AE_START_ID;
 	cxt->monitor_cfg.mode = AE_STATISTICS_MODE_CONTINUE;
 	cxt->monitor_cfg.skip_num = 0;
@@ -4341,6 +4322,37 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	ae_lib_ioctrl(cxt->misc_handle, AE_LIB_GET_SCENE_PARAM, &scene_param_in, &cxt->ae_tbl_param);
 	ae_target_lum = cxt->ae_tbl_param.target_lum;
 	cxt->cur_param_target_lum = cxt->ae_tbl_param.target_lum;
+
+	if (cxt->is_multi_mode) {
+		/* save master & slave sensor info */
+		struct sensor_info sensor_info;
+		//cmr_u32 in = 1;
+
+		sensor_info.ae_table_max_gain = cxt->ae_tbl_param.max_gain;
+		sensor_info.ae_table_min_gain = cxt->ae_tbl_param.min_gain;
+		sensor_info.max_again = cxt->sensor_max_gain;
+		sensor_info.min_again = cxt->sensor_min_gain;
+		sensor_info.sensor_gain_precision = cxt->sensor_gain_precision;
+		sensor_info.min_exp_line = cxt->ae_tbl_param.min_exp / cxt->cur_status.adv_param.cur_ev_setting.line_time;
+		sensor_info.max_exp_line = cxt->ae_tbl_param.max_exp / cxt->cur_status.adv_param.cur_ev_setting.line_time;
+		sensor_info.line_time = cxt->cur_status.adv_param.cur_ev_setting.line_time;
+		sensor_info.frm_len_def = (cmr_u32)(AEC_LINETIME_PRECESION / (1.0 * work_info->resolution_info.snr_setting_max_fps * cxt->cur_status.adv_param.cur_ev_setting.line_time));
+
+		bool flag_CAM_SENSOR1;
+		bool flag_CAM_SENSOR2;
+		bool flag_CAM_SENSOR3;
+		bool flag_CAM_MODE;
+
+		flag_CAM_SENSOR1 = (CAM_SENSOR_MASTER == cxt->sensor_role);
+		flag_CAM_SENSOR2 = (CAM_SENSOR_SLAVE0 == cxt->sensor_role);
+		flag_CAM_SENSOR3 = (CAM_SENSOR_SLAVE1 == cxt->sensor_role);
+		flag_CAM_MODE = ae_abtain_or_flag(flag_CAM_SENSOR1,flag_CAM_SENSOR2,flag_CAM_SENSOR3);
+
+		if (flag_CAM_MODE) {
+			rtn = cxt->ptr_isp_br_ioctrl(cxt->sensor_role, SET_MODULE_INFO, &sensor_info, NULL);
+		}
+	}
+
 	if ((cxt->last_cam_mode & 0xff) == CAMERA_MODE_MANUAL) {
 		cxt->last_enable = 0;
 		ISP_LOGD("last_cam_mode %d, last_enable %d\n", cxt->last_cam_mode,cxt->last_enable);

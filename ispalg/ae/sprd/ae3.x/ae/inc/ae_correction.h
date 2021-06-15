@@ -137,6 +137,8 @@ struct ae_adv_param {
 	cmr_u8 flicker;			/* 50hz 0 60hz 1 */
 	cmr_u8 scene_mode;		/* pano sports night */
 	cmr_u8 is_faceID;
+	cmr_u64 base_exp;
+	cmr_u32 base_gain;
 	struct ae_compensation_param comp_param;
 
 	cmr_u8 af_status;			/*AF trigger info */
@@ -251,6 +253,8 @@ struct ae_lib_calc_out  {
 	cmr_u8 nzl_cap_flag;
 	cmr_u64 nzl_cap_exp;
 	cmr_u32 nzl_cap_gain;
+	cmr_u64 base_exp;
+	cmr_u32 base_gain;
 };
 
 struct ae_alg_id_info {
