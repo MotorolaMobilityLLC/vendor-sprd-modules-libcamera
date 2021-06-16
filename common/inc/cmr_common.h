@@ -2223,7 +2223,7 @@ struct visible_region_info {
 };
 
 struct ae_params {
-    cmr_s64 exp_time;
+    cmr_u64 exp_time;
     cmr_s32 sensitivity;
     cmr_u8 ae_mode;
     cmr_s32 frame_number;
@@ -2235,7 +2235,7 @@ struct ae_params {
 };
 
 struct tmp_cts_ae_params{
-    cmr_u32 exp_time;
+    cmr_u64 exp_time;
     cmr_u32 sensitivity;
     cmr_u32 ae_mode;/*0:auto 1:shutter&&iso 2:shutter first 3:iso first*/
     cmr_s32 frame_number;

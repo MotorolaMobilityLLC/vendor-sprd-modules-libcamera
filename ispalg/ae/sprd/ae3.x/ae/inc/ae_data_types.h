@@ -28,6 +28,8 @@
 #define AE_EV_LEVEL_MAX 16
 #define AE_LIB_SCENE_MAX 8
 #define AE_PIECEWISE_SAMPLE2_NUM 5
+#define FA_SHAPE_POINTNUM 7
+
 
 #ifndef _AE_COMMON_DATA_TYPE_DEF
 #define _AE_COMMON_DATA_TYPE_DEF
@@ -472,12 +474,14 @@ struct ae_face_data_type {
 	cmr_s32 angle;
 	cmr_s32 yaw_angle;
 	cmr_s32 roll_angle;
+	int data[FA_SHAPE_POINTNUM * 2];
+	cmr_s32 fascore;
 };
 
 struct ae_ev_setting_param {
 	cmr_u32 cam_id;
 	cmr_u32 ae_idx;
-	cmr_u32 exp_time;
+	cmr_u64 exp_time;
 	cmr_u32 line_time;
 	cmr_u32 exp_line;	
 	cmr_u32 dmy_line;
@@ -507,7 +511,7 @@ struct ae_mode_param {
 	*/
 	enum ae_mode_type mode;
 	union {
-		cmr_u32 exp_gain[2];            /* 0: exp_time; 1: gain or ISO value*/
+		cmr_u64 exp_gain[2];            /* 0: exp_time; 1: gain or ISO value*/
 		cmr_u32 ae_idx;                 /* set ae-table-index */		
 	} value;
 };
