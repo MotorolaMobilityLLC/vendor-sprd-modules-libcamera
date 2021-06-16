@@ -164,8 +164,8 @@ int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
     new_mem->width = w;
     new_mem->height = h;
     new_mem->type = (camera_buffer_type_t)type;
-    HAL_LOGD("w=%d,h=%d,mIommuEnabled=%d,phy_addr=0x%p", w, h, mIommuEnabled,
-             new_mem->phy_addr);
+    HAL_LOGD("w=%d,h=%d,mIommuEnabled=%d,phy_addr=0x%p,native_handle=%p", w, h,
+            mIommuEnabled, new_mem->phy_addr, native_handle);
 
     return NO_ERROR;
 }
@@ -490,12 +490,13 @@ SprdCamera3MultiBase::popBufferList(List<new_mem_t *> &list,
     Mutex::Autolock l(mBufferListLock);
     List<new_mem_t *>::iterator j = list.begin();
     for (; j != list.end(); j++) {
-        ret = &((*j)->native_handle);
-        if (ret && (*j)->type == type) {
+        if ((*j)->type == type) {
+            ret = &((*j)->native_handle);
+            HAL_LOGV("address=%p,handle=%p", ret, (*j)->native_handle);
             break;
         }
     }
-    if (ret == NULL || j == list.end()) {
+    if (ret == NULL) {
         HAL_LOGV("popBufferList failed!");
         return ret;
     }
@@ -513,12 +514,13 @@ buffer_handle_t *SprdCamera3MultiBase::popBufferList(List<new_mem_t *> &list,
     Mutex::Autolock l(mBufferListLock);
     List<new_mem_t *>::iterator j = list.begin();
     for (; j != list.end(); j++) {
-        ret = &((*j)->native_handle);
-        if (ret && (*j)->width == width && (*j)->height == height) {
+        if ((*j)->width == width && (*j)->height == height) {
+            ret = &((*j)->native_handle);
+            HAL_LOGV("address=%p,handle=%p", ret, (*j)->native_handle);
             break;
         }
     }
-    if (ret == NULL || j == list.end()) {
+    if (ret == NULL) {
         HAL_LOGE("popBufferList failed!");
         return ret;
     }
