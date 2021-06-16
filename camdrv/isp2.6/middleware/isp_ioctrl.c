@@ -5440,6 +5440,7 @@ static cmr_int ispctl_set_hdr_log(cmr_handle isp_alg_handle, void *param_ptr)
 	}
 
 	memcpy((void *)cxt->hdr_cxt.log_hdr, info->addr, info->size);
+	free(info->addr);
 
 	return ret;
 }

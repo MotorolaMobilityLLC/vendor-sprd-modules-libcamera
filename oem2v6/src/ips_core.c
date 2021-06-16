@@ -1070,6 +1070,7 @@ static cmr_int ipmpro_hdr(struct ips_context *ips_ctx,
 			req->dbg_info[IPS_TYPE_HDR].data_size = frm_param->hdr_param.out_exif_size;
 		}
 	}
+	free(frm_param->hdr_param.out_exif_ptr);
 
 	return ret;
 }
