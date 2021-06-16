@@ -4850,7 +4850,7 @@ cmr_int sensor_read_calibration_otp(struct sensor_drv_context *sensor_cxt,
     cmr_u8 dual_flag_tmp = 0;
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
     char property_value[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.bokeh.online.cali.gld", property_value, "0");
+    property_get("persist.vendor.cam.bokeh.online.cali.gld", property_value, "1");
 
     SENSOR_LOGI("E");
 
