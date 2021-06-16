@@ -65,6 +65,7 @@ extern "C" {
 		cmr_s32 fdr_tuning_size;
 		void *hdr_tuning_param;
 		cmr_s32 hdr_tuning_size;
+		cmr_u32 long_expose_support;
 	};
 
 	struct ae_init_out {

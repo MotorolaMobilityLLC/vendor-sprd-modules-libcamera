@@ -172,7 +172,7 @@ struct ae_match_data {
 };
 
 struct ae_sync_actual_data {
-	cmr_u32 exp_time;
+	cmr_u64 exp_time;
 	cmr_u32 exp_line;
 	cmr_u32 ae_gain;
 	cmr_u32 dmy_line;
@@ -185,7 +185,7 @@ struct ae_sync_actual_data {
 struct ae_lib_output_data {
 	cmr_u32 line_time;
 	cmr_u32 exp_line;
-	cmr_u32 exp_time;
+	cmr_u64 exp_time;
 	cmr_s32 dummy;
 	cmr_s32 frm_len;
 	cmr_u32 gain;			/*gain = sensor_gain * isp_gain */
@@ -202,7 +202,7 @@ struct ae_rect_data {
 
 struct ae_sync_lib_outout_data {
 	cmr_u32 ae_idx;
-	cmr_u32 exp_time;
+	cmr_u64 exp_time;
 	cmr_u32 line_time;
 	cmr_u32 exp_line;
 	cmr_u32 dmy_line;
