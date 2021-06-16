@@ -32,8 +32,6 @@ int sprd_fdr_adapter_open(void **ctx, fdr_open_param *param)
     if (!strcmp("1", strProp))
         param->merge_param.merge_mode = 1;
 
-    if (g_run_type == SPRD_CAMALG_RUN_TYPE_VDSP && !sprd_caa_vdsp_check_supported())
-        g_run_type = SPRD_CAMALG_RUN_TYPE_CPU;
     property_get("persist.vendor.cam.fdr.run_type", strProp , "");
     if (!strcmp("cpu", strProp))
         g_run_type = SPRD_CAMALG_RUN_TYPE_CPU;
