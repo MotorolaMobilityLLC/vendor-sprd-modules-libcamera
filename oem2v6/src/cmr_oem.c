@@ -9648,10 +9648,12 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
         CMR_LOGE("failed to get app mode %ld", ret);
     }
     CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
-    if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO) {
+    if ((setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO) || cxt->_3rd_3dnr_flag
+        || (setting_param.cmd_type_value == CAMERA_MODE_TIMELAPSE)) {
         char value[PROPERTY_VALUE_MAX];
         property_get("persist.vendor.cam.preview.3dnr_enable", value, "true");
-        if(!strcmp(value,"true") && param_ptr->cap_inf_cfg.cfg.sence_mode == DCAM_SCENE_MODE_PREVIEW) {
+        if(!strcmp(value,"true") && (param_ptr->cap_inf_cfg.cfg.sence_mode == DCAM_SCENE_MODE_PREVIEW
+            || param_ptr->cap_inf_cfg.cfg.sence_mode == DCAM_SCENE_MODE_CAPTURE_CALLBACK)) {
             param_ptr->cap_inf_cfg.cfg.need_3dnr = 1;
         }
     }
@@ -10770,7 +10772,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         if (ISP_AE_MODE_MAX == isp_param) {
             set_isp_flag = 0;
         }
-        CMR_LOGD("ae scene mode %d", param_ptr->cmd_value);
+        CMR_LOGD("ae scene mode %ld", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_EXPOSURE_TIME:
         CMR_LOGD("exposure time %d", param_ptr->cmd_value);
@@ -14589,6 +14591,17 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
         }
         break;
     }
+
+    case CAMERA_PARAM_3RD_3DNR_ENABLED: {
+        cxt->_3rd_3dnr_flag = param;
+        break;
+    }
+
+    case CAMERA_PARAM_SET_TOP_APP_ID: {
+        cxt->app_id = (enum top_app_id)param;
+        break;
+    }
+
     default:
         ret = camera_set_setting(oem_handle, id, param);
         break;

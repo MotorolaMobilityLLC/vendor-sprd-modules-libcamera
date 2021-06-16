@@ -124,6 +124,12 @@ typedef int64_t nsecs_t;
 #define MAXSENSITIVITY 3328
 
 typedef struct {
+    top_app_id id;
+    char PackageName[50];
+} TopAppS;
+
+
+typedef struct {
     uint8_t correction_mode;
     uint8_t aberration_mode;
     uint8_t available_aberration_modes[3];
@@ -407,6 +413,7 @@ typedef struct {
     int32_t ultrawide_id;
     uint8_t sprd_flash_lcd_mode;
     int32_t top_app_id;
+    char mTopID[50];
     uint8_t availabe_auto_3dnr;
     uint8_t sprd_is_3dnr_scene;
     uint8_t sprd_is_lowev_scene;
