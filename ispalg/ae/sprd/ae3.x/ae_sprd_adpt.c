@@ -2170,6 +2170,9 @@ static cmr_s32 ae_set_fd_param(struct ae_ctrl_cxt *cxt, cmr_handle param)
 				cxt->cur_status.adv_param.face_data.face_data[i].angle = fd->face_area[i].angle;
 				cxt->cur_status.adv_param.face_data.face_data[i].yaw_angle = fd->face_area[i].yaw_angle;
 				cxt->cur_status.adv_param.face_data.face_data[i].roll_angle = fd->face_area[i].roll_angle;
+				memcpy(&(cxt->cur_status.adv_param.face_data.face_data[i].data), &(fd->face_area[i].data),
+				sizeof(fd->face_area[i].data));
+				cxt->cur_status.adv_param.face_data.face_data[i].fascore = fd->face_area[i].fascore;
 			}
 		} else {
 			cxt->cur_status.adv_param.face_data.face_num = 0;
@@ -2183,6 +2186,8 @@ static cmr_s32 ae_set_fd_param(struct ae_ctrl_cxt *cxt, cmr_handle param)
 				cxt->cur_status.adv_param.face_data.face_data[i].angle = 0;
 				cxt->cur_status.adv_param.face_data.face_data[i].yaw_angle = 0;
 				cxt->cur_status.adv_param.face_data.face_data[i].roll_angle = 0;
+				memset(&(cxt->cur_status.adv_param.face_data.face_data[i].data), 0, sizeof(cxt->cur_status.adv_param.face_data.face_data[i].data));
+				cxt->cur_status.adv_param.face_data.face_data[i].fascore = 0;
 			}
 		}
 	} else {
@@ -4761,6 +4766,18 @@ static cmr_s32 ae_set_fps_info(struct ae_ctrl_cxt *cxt, void *param)
 	return AE_SUCCESS;
 }
 
+static cmr_s32 ae_set_af_start(struct ae_ctrl_cxt *cxt, cmr_u32 *param)
+{
+	if (1 == *param) {
+		cxt->cur_status.adv_param.af_start_flag = 1;
+	}else{
+		cxt->cur_status.adv_param.af_start_flag = 0;
+	}
+	ISP_LOGV("ae_set_af_status %d param %d", cxt->cur_status.adv_param.af_start_flag, *param);
+
+	return AE_SUCCESS;
+}
+
 static cmr_s32 ae_get_fdr_param(struct ae_ctrl_cxt *cxt, void *result)
 {
 	cmr_s32 rtn = AE_SUCCESS;
@@ -6730,6 +6747,10 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 
 	case AE_SET_FPS:
 		rtn = ae_set_fps_info(cxt, param);
+		break;
+
+	case AE_SET_AF_START:
+		rtn = ae_set_af_start(cxt, param);
 		break;
 
 	case AE_SET_PAUSE:
