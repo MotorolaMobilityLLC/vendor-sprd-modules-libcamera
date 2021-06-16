@@ -242,8 +242,6 @@ int swa_hdr_process(void * ipmpro_hanlde,
 	hdr_param->out_exif_size = get_exif_size.exif_size;
 	SWA_LOGD("exif_info size = %d", hdr_param->out_exif_size);
 
-	free(get_exif_param.exif_info);
-
 	return ret;
 }
 
