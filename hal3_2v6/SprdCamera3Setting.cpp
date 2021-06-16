@@ -47,7 +47,6 @@ uint8_t SprdCamera3Setting::mSensorFocusEnable[] = {0, 0, 0, 0, 0, 0};
 uint8_t SprdCamera3Setting::mSensorType[] = {0, 0, 0, 0, 0, 0};
 char SprdCamera3Setting::mSensorName[][SENSOR_NAME_LEN];
 uint16_t SprdCamera3Setting::mpdaf_type[] = {0, 0, 0, 0, 0, 0};
-
 /**********************Macro Define**********************/
 #ifdef CONFIG_CAMERA_FACE_DETECT
 #ifdef CONFIG_COVERED_SENSOR
@@ -152,6 +151,18 @@ static cmr_u32 alreadyGetSensorStaticInfo[CAMERA_ID_COUNT] = {0, 0, 0, 0, 0, 0};
 
 static front_flash_type front_flash[] = {
     {"2", "lcd"}, {"1", "led"}, {"2", "flash"}, {"1", "none"},
+};
+
+static TopAppS topAppList[] = {
+    { TOP_APP_WECHAT, "com.tencent.mm" },
+    // { TOP_APP_WTFACTORY, ""},
+    { TOP_APP_QQ, "com.tencent.mobileqq"},
+    { TOP_APP_FACEBOOK, "com.facebook.katana"},
+    { TOP_APP_INSTAGRAM, "com.instagram.android"},
+    { TOP_APP_MESSENGER, "com.facebook.orca"},
+    { TOP_APP_SNAPCHAT, "com.snapchat.android"},
+    { TOP_APP_WHATSAPP, "com.whatsapp"},
+    { TOP_APP_QQINT, "com.tencent.mobileqqi"},
 };
 
 #if 0
@@ -4462,8 +4473,9 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     int32_t sprdAppmodeId = -1;
     requestInfo.update(ANDROID_SPRD_APP_MODE_ID, &sprdAppmodeId, 1);
 
-    int32_t topAppId = 0;
-    requestInfo.update(ANDROID_SPRD_TOP_APP_ID, &topAppId, 1);
+    uint8_t topAppId[50] = {0};
+    requestInfo.update(ANDROID_SPRD_TOP_APP_ID, topAppId,
+        sizeof(topAppId)/sizeof(uint8_t));
 
     uint8_t sprdFilterType = 0;
     requestInfo.update(ANDROID_SPRD_FILTER_TYPE, &sprdFilterType, 1);
@@ -4779,9 +4791,26 @@ int SprdCamera3Setting::updateWorkParameters(
     }
 
     if (frame_settings.exists(ANDROID_SPRD_TOP_APP_ID)) {
-        valueI32 = frame_settings.find(ANDROID_SPRD_TOP_APP_ID).data.i32[0];
-        s_setting[mCameraId].sprddefInfo.top_app_id = valueI32;
-        HAL_LOGV("mTopAppId=%d", s_setting[mCameraId].sprddefInfo.top_app_id);
+        int i = 0;
+        s_setting[mCameraId].sprddefInfo.top_app_id = 0;
+        while(frame_settings.find(ANDROID_SPRD_TOP_APP_ID).data.u8[i] != 0) {
+            valueU8 = frame_settings.find(ANDROID_SPRD_TOP_APP_ID).data.u8[i];
+            s_setting[mCameraId].sprddefInfo.mTopID[i] = (char) valueU8;
+            i++;
+            if(i > 50)
+                break;
+        }
+        s_setting[mCameraId].sprddefInfo.mTopID[i] = '\0';
+        for(int found = 0;
+            found < sizeof(topAppList)/sizeof(TopAppS); found++) {
+            if(!strncmp(topAppList[found].PackageName,
+                       s_setting[mCameraId].sprddefInfo.mTopID,
+                       strlen(topAppList[found].PackageName))) {
+                HAL_LOGD("mTopID %d", topAppList[found].id);
+                s_setting[mCameraId].sprddefInfo.top_app_id = topAppList[found].id;
+                break;
+            }
+        }
     }
 
     if (frame_settings.exists(ANDROID_SPRD_SENSOR_ORIENTATION)) {

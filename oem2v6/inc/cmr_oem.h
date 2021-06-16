@@ -542,6 +542,10 @@ struct camera_context {
     cmr_u8 nightscepro_flag;
     cmr_uint auto3dnr_flag;
     bool multicam_highres_mode;
+    cmr_uint flash_mode;
+    cmr_uint need_sr;
+    cmr_uint _3rd_3dnr_flag;
+    enum top_app_id app_id;
 };
 
 struct prev_ai_scene_info {
