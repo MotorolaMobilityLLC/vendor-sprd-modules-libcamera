@@ -11268,6 +11268,8 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
             param_ptr->cmd_value = ISP_INTERVAL;
         } else if(setting_param.cmd_type_value == CAMERA_MODE_REFOCUS) {
             param_ptr->cmd_value = ISP_BOKEHMODE;
+        } else if(setting_param.cmd_type_value == CAMERA_MODE_PORTRAIT_PHOTO) {
+            param_ptr->cmd_value = ISP_PORTRAIT;
         } else if (setting_param.cmd_type_value == -1) {
             switch (cxt->app_id) {
             case TOP_APP_FACEBOOK:
