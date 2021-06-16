@@ -6636,7 +6636,7 @@ camera_metadata_t *SprdCamera3Setting::reportMetadataToFramework
     camMetadata->update(ANDROID_SENSOR_FRAME_DURATION,
                        &(tmp_cts_isp_params.ae_cts_params.frame_duration), 1);
     camMetadata->update(ANDROID_SENSOR_EXPOSURE_TIME,
-                       &(tmp_cts_isp_params.ae_cts_params.exp_time), 1);
+                       (int64_t *)&(tmp_cts_isp_params.ae_cts_params.exp_time), 1);
     HAL_LOGV("report AE Control exp_time %lld ", tmp_cts_isp_params.ae_cts_params.exp_time);
     HAL_LOGV("report AE Control sensitivity %d sensitivity range [%d,%d]",
         tmp_cts_isp_params.ae_cts_params.sensitivity, ksensitivity_range[0], ksensitivity_range[1]);

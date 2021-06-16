@@ -128,6 +128,7 @@ struct ae_adv_param {
 	struct ae_compensation_param comp_param;
 
 	cmr_u8 af_status;			/*AF trigger info */
+	cmr_u8 af_start_flag;
 	cmr_u8 log_level;
 	cmr_u8 is_snapshot;
 	cmr_u8 prof_mode;		/*in professional mode*/
@@ -168,6 +169,8 @@ struct ae_lib_calc_in {
 	struct ae_debug_info debug_info;
 	/*ATM crtl*/
 	cmr_u32 atm_lock;
+	/*long shutter support flag*/
+	cmr_u8 LS_spt;
 };
 
 struct ae_lib_calc_out  {
@@ -217,6 +220,9 @@ struct ae_lib_calc_out  {
 	cmr_u32 privated_data;
 	cmr_u32 face_flag;		/*face status flag*/
 	cmr_u32 cvg_skip_flag;
+	cmr_u8 nzl_cap_flag;
+	cmr_u64 nzl_cap_exp;
+	cmr_u32 nzl_cap_gain;
 };
 
 struct ae_alg_id_info {
