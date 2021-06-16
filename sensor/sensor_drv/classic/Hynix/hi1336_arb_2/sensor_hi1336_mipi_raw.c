@@ -504,7 +504,7 @@ static void get_back_cam_efuse_id(cmr_handle handle)
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    hi1336_drv_write_reg2sensor(handle, &hi1336_init_tab);
+    hi1336_drv_write_reg2sensor(handle, &hi1336_efuse_id_tab);
 
     hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x0B02, 0x01, BITS_ADDR16_REG8);//Fast standy on
     hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, 0x40>>1, 0x0809, 0x00, BITS_ADDR16_REG8);//Stream off
