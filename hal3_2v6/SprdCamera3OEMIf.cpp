@@ -12189,7 +12189,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
 
     char value2[PROPERTY_VALUE_MAX];
     if(controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR && mAf_start_time > 0 &&
-        mMultiCameraMode != MODE_REFOCUS){
+        mMultiCameraMode != MODE_REFOCUS && mMultiCameraMode != MODE_BOKEH){
        property_get("persist.vendor.cam.hdr.wait.af_time", value2, "0");
        if(mAf_stop_time > mAf_start_time) {
             lock_af = 1;
@@ -12224,7 +12224,8 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
         mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW ||
         mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_HW ||
         mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) &&
-        mAf_start_time > 0 && mMultiCameraMode != MODE_REFOCUS) {
+        mAf_start_time > 0 && mMultiCameraMode != MODE_REFOCUS &&
+        mMultiCameraMode != MODE_BOKEH) {
         property_get("persist.vendor.cam.mfnr.wait.af_time", value2, "0");
         if(mAf_stop_time > mAf_start_time) {
             lock_af = 1;
