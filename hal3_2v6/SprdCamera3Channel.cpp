@@ -1498,7 +1498,7 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             HAL_LOGV("FACE DECTION %d", statisticsInfo.face_detect_mode);
             if (statisticsInfo.face_detect_mode ==
                     ANDROID_STATISTICS_FACE_DETECT_MODE_OFF &&
-                !isFaceBeautyOn(sprddefInfo)) {
+                !isFaceBeautyOn(sprddefInfo) && !(sprddefInfo->top_app_id & mOEMIf->mWhitelists)) {
                 mOEMIf->faceDectect(0);
             } else
                 mOEMIf->faceDectect(1);

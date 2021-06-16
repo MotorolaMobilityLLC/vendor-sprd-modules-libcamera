@@ -253,6 +253,7 @@ static nsecs_t s_start_timestamp = 0;
 static nsecs_t s_end_timestamp = 0;
 static int s_use_time = 0;
 static nsecs_t cam_init_begin_time = 0;
+static top_app_id whitelist[] = {TOP_APP_WECHAT, TOP_APP_QQ, TOP_APP_FACEBOOK, TOP_APP_INSTAGRAM, TOP_APP_MESSENGER, TOP_APP_SNAPCHAT, TOP_APP_WHATSAPP, TOP_APP_QQINT};
 bool gIsApctCamInitTimeShow = false;
 bool gIsApctRead = false;
 struct mlog_infotag mlog_info[CAMERA_ID_COUNT]; /* total as physic camera id */
@@ -712,6 +713,11 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mVideoAFBCFlag = 0;
     EisErr = false;
     mAeTouchCancel = false;
+
+    mWhitelists = 0;
+    for (int i = 0; i < sizeof(whitelist)/sizeof(whitelist[0]); i++) {
+        mWhitelists |= whitelist[i];
+    }
 
     HAL_LOGI(":hal3: Constructor X");
 }
@@ -3320,7 +3326,11 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     }
 
     mTopAppId = sprddefInfo->top_app_id;
-    if (mTopAppId == TOP_APP_WECHAT) {
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SET_TOP_APP_ID,
+                 (cmr_uint)sprddefInfo->top_app_id);
+    HAL_LOGI("mTopAppId is %d, mWhitelists is %d", mTopAppId, mWhitelists);
+    if (mTopAppId & mWhitelists) {
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_3RD_3DNR_ENABLED, 1);
         faceDectect(1);
         if (mPreviewWidth == 640 && mPreviewHeight == 480 &&
             mCallbackWidth == 640 && mCallbackHeight == 480) {
@@ -3330,6 +3340,14 @@ int SprdCamera3OEMIf::startPreviewInternal() {
                 mChannel2FaceBeautyFlag = 1;
             }
         }
+    }
+    // open mfnr for 3rd party app
+    if (mTopAppId & mWhitelists) {
+        SPRD_DEF_Tag *sprdInfo;
+        sprdInfo = mSetting->getSPRDDEFTagPTR();
+        sprdInfo->sprd_auto_3dnr_enable = CAMERA_3DNR_AUTO;
+        SetCameraParaTag(ANDROID_SPRD_AUTO_3DNR_ENABLED);
+        CMR_LOGI("3rd party app ,open mfnr");
     }
 
     if (!initPreview()) {
@@ -3397,7 +3415,11 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mZslNum = 5;
         mZslMaxFrameNum = 5;
     }
-    HAL_LOGI("mZslNum %d", mZslNum);
+
+    if (mTopAppId & mWhitelists) {
+        mZslNum = 5;
+        mZslMaxFrameNum = 5;
+    }
 
     if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW) {
         mVideoProcessedWithPreview = true;
@@ -8474,6 +8496,9 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     case ANDROID_SPRD_AUTO_3DNR_ENABLED: {
         SPRD_DEF_Tag *sprdInfo;
         sprdInfo = mSetting->getSPRDDEFTagPTR();
+        if (mTopAppId & mWhitelists) {
+            sprdInfo->sprd_auto_3dnr_enable = 2;
+        }
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_AUTO_3DNR_ENABLED,
                  sprdInfo->sprd_auto_3dnr_enable);
     } break;
@@ -8926,7 +8951,7 @@ int SprdCamera3OEMIf::Callback_ZslFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
     SPRD_DEF_Tag *sprddefInfo;
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
 
-    if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW || mSprd3dnrType == CAMERA_3DNR_TYPE_NIGHT_DNS ||
+    if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW || mSprd3dnrType == CAMERA_3DNR_TYPE_NIGHT_DNS ||  (mTopAppId & mWhitelists) ||
         sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO||(getMultiCameraMode() == MODE_BOKEH && mCameraId == mMasterId) ||
         getMultiCameraMode() == MODE_BLUR || sprddefInfo->high_resolution_mode == 1) {
         freeCameraMemForGpu(phy_addr, vir_addr, fd, sum);
@@ -8966,7 +8991,7 @@ int SprdCamera3OEMIf::Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum,
     *vir_addr = 0;
     *fd = 0;
 
-    if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW || mSprd3dnrType == CAMERA_3DNR_TYPE_NIGHT_DNS ||
+    if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW || mSprd3dnrType == CAMERA_3DNR_TYPE_NIGHT_DNS || (mTopAppId & mWhitelists) ||
         (sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO)|| (getMultiCameraMode() == MODE_BOKEH && mCameraId == mMasterId) ||
         getMultiCameraMode() == MODE_BLUR || sprddefInfo->high_resolution_mode == 1) {
         ret = allocCameraMemForGpu(size, sum, phy_addr, vir_addr, fd);
@@ -11575,6 +11600,18 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
         goto exit;
     }
 
+    if (mTopAppId & mWhitelists) {
+        SPRD_DEF_Tag *sprdInfo;
+        sprdInfo = mSetting->getSPRDDEFTagPTR();
+        if(sprdInfo->sprd_is_3dnr_scene == 1) {
+            sprdInfo->sprd_3dnr_enabled = 1;
+        } else {
+            sprdInfo->sprd_3dnr_enabled = 0;
+        }
+        SetCameraParaTag(ANDROID_SPRD_3DNR_ENABLED);
+        CMR_LOGI("3rd party app ,snapshot with mfnr");
+    }
+
     /*bug1180023:telegram start capture do not wait focus done*/
     if (sprddefInfo->sprd_appmode_id == -1) {
         HAL_LOGD("af mode:%d", controlInfo.af_mode);
@@ -11688,6 +11725,9 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
         MODE_BOKEH == mMultiCameraMode || MODE_BLUR == mMultiCameraMode) &&
         (mSprdAppmodeId != -1) && (false == mRecordingMode)))){
         mCNRMode = 0;
+    }
+    if (mTopAppId & mWhitelists) {
+        mCNRMode = 1;
     }
     HAL_LOGD("lightportrait_type = %d, mCNRMode = %d %d", lightportrait_type, mCNRMode,getMultiCameraMode());
 
