@@ -308,6 +308,7 @@ class SprdCamera3HWI {
     Condition mRequestSignal;
     bool mIsSkipFrm;
 
+    static Mutex sLock;
     static unsigned int mCameraSessionActive;
     static const int64_t kPendingTime = 1000000;       // 1ms
     static const int64_t kPendingTimeOut = 5000000000; // 5s

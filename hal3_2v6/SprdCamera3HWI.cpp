@@ -87,6 +87,7 @@ using namespace android;
 
 namespace sprdcamera {
 
+Mutex SprdCamera3HWI::sLock;
 unsigned int SprdCamera3HWI::mCameraSessionActive = 0;
 multiCameraMode SprdCamera3HWI::mMultiCameraMode = MODE_SINGLE_CAMERA;
 static PoolManager& mPoolManager = PoolManager::getInstance();
@@ -313,19 +314,24 @@ int SprdCamera3HWI::openCamera(struct hw_device_t **hw_device) {
 #endif
     // single camera mode can only open one camera .multicamera mode can only
     // open two cameras.
-    if ((mCameraSessionActive == 1 && !(isMultiCameraMode(mMultiCameraMode))) ||
-         mCameraSessionActive > 2) {
-	// wait for previous session to close if active
-	int count = 10;
-	while (count> 0 && mCameraSessionActive == 1) {
-		usleep (30 * 1000); // sleep 30ms
-		count--;
-	}
+    {
+        Mutex::Autolock sl(sLock);
 
-	if (mCameraSessionActive == 1 || mCameraSessionActive> 2) {
-		HAL_LOGE("multiple simultaneous camera instance not supported");
-		return -EUSERS;
-	}
+        if ((mCameraSessionActive == 1 && !(isMultiCameraMode(mMultiCameraMode))) ||
+            mCameraSessionActive > 2) {
+        // wait for previous session to close if active
+            int count = 10;
+            while (count> 0 && mCameraSessionActive == 1) {
+                usleep (30 * 1000); // sleep 30ms
+                count--;
+            }
+
+            if (mCameraSessionActive == 1 || mCameraSessionActive > 2) {
+                HAL_LOGE("multiple simultaneous camera instance not supported");
+                return -EUSERS;
+            }
+        }
+        mCameraSessionActive++;
     }
 
     if (mCameraOpened) {
@@ -337,11 +343,12 @@ int SprdCamera3HWI::openCamera(struct hw_device_t **hw_device) {
     if (ret) {
         *hw_device = NULL;
         HAL_LOGE("openCamera failed");
+        Mutex::Autolock sl(sLock);
+        if (mCameraSessionActive > 0)
+            mCameraSessionActive--;
         return -1;
     }
-
     *hw_device = &mCameraDevice.common;
-    mCameraSessionActive++;
 
     HAL_LOGD("camera3->open X mCameraSessionActive %d", mCameraSessionActive);
     return ret;
@@ -467,10 +474,13 @@ int SprdCamera3HWI::closeCamera() {
         ispvideo_RegCameraFunc(5, NULL);
     }
 
-    if (mCameraSessionActive == 0) {
-        mMultiCameraMode = MODE_SINGLE_CAMERA;
-        mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_MULTI_CAMERAMODE,
-                              &mMultiCameraMode, NULL);
+    {
+        Mutex::Autolock sl(sLock);
+        if (mCameraSessionActive == 0) {
+            mMultiCameraMode = MODE_SINGLE_CAMERA;
+            mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_MULTI_CAMERAMODE,
+                                &mMultiCameraMode, NULL);
+        }
     }
 
     mOEMIf->closeCamera();
@@ -2952,19 +2962,22 @@ int SprdCamera3HWI::close_camera_device(struct hw_device_t *device) {
 
     g_cam_device = NULL;
 
-    if (mCameraSessionActive > 0)
-        mCameraSessionActive--;
+    {
+        Mutex::Autolock sl(sLock);
+        if (mCameraSessionActive > 0)
+            mCameraSessionActive--;
 
-    if(MODE_3D_CALIBRATION == mMultiCameraMode ||
-        MODE_BOKEH_CALI_GOLDEN == mMultiCameraMode) {
-        property_set("vendor.cam.dualmode", "");
+        if(MODE_3D_CALIBRATION == mMultiCameraMode ||
+            MODE_BOKEH_CALI_GOLDEN == mMultiCameraMode) {
+            property_set("vendor.cam.dualmode", "");
+        }
+        if (mCameraSessionActive == 0) {
+            HAL_LOGI("fdr set multi mode to single");
+            mMultiCameraMode = MODE_SINGLE_CAMERA;
+        }
+        HAL_LOGI(":hal3: camera3->close X mCameraSessionActive %d",
+                mCameraSessionActive);
     }
-    if (mCameraSessionActive == 0) {
-        HAL_LOGI("fdr set multi mode to single");
-        mMultiCameraMode = MODE_SINGLE_CAMERA;
-    }
-    HAL_LOGI(":hal3: camera3->close X mCameraSessionActive %d",
-             mCameraSessionActive);
 
 exit:
     return ret;
