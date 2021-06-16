@@ -191,6 +191,8 @@ struct ae_sync_actual_data {
 	cmr_u32 frame_len_def;
 	cmr_u32 sensor_gain;
 	cmr_u32 isp_gain;
+	cmr_u64 base_exp;
+	cmr_u32 base_gain;
 };
 
 struct ae_lib_output_data {
