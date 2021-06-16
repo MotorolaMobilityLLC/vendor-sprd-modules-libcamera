@@ -995,6 +995,8 @@ static cmr_s32 ae_write_to_sensor_normal_mapping(struct ae_ctrl_cxt *cxt, struct
 		in_param.sync_param[cxt->sensor_role]->ev_setting.dmy_line = exp_data_sync->lib_data.dummy;
 		in_param.sync_param[cxt->sensor_role]->ev_setting.exp_time = exp_data_sync->lib_data.exp_time;
 		in_param.sync_param[cxt->sensor_role]->ev_setting.frm_len =  exp_data_sync->lib_data.frm_len;
+		in_param.sync_param[cxt->sensor_role]->ev_setting.base_exp = cxt->cur_result.base_exp;
+		in_param.sync_param[cxt->sensor_role]->ev_setting.base_gain = cxt->cur_result.base_gain;
 
 		in_param.sync_param[CAM_SENSOR_MASTER]->min_exp_line = info_master.min_exp_line;
 		in_param.sync_param[CAM_SENSOR_SLAVE0]->min_exp_line = info_slave[0].min_exp_line;
@@ -1024,15 +1026,18 @@ static cmr_s32 ae_write_to_sensor_normal_mapping(struct ae_ctrl_cxt *cxt, struct
 		if(info_master.line_time && info_slave[0].line_time && info_slave[1].line_time)
 			rtn = ae_lib_frame_sync_calculation(cxt->misc_handle, &in_param, &out_param_lib);
 
-		ISP_LOGV("sync:0 lib out ae_gain:%d, exp_time:%"PRIu64", exp_line:%d,line_time:%d",
+		ISP_LOGV("sync:0 lib out ae_gain:%d, exp_time:%"PRIu64", exp_line:%d,line_time:%d,base_exp:%"PRIu64",base_gain:%d",
 		        out_param_lib.ev_setting[0].ae_gain, out_param_lib.ev_setting[0].exp_time,
-		        out_param_lib.ev_setting[0].exp_line,out_param_lib.ev_setting[0].line_time );
-		ISP_LOGV("sync:2 lib out ae_gain:%d, exp_time:%"PRIu64", exp_line:%d,line_time:%d",
+		        out_param_lib.ev_setting[0].exp_line,out_param_lib.ev_setting[0].line_time,
+		        out_param_lib.ev_setting[0].base_exp,out_param_lib.ev_setting[0].base_gain);
+		ISP_LOGV("sync:2 lib out ae_gain:%d, exp_time:%"PRIu64", exp_line:%d,line_time:%d,base_exp:%"PRIu64",base_gain:%d",
 		        out_param_lib.ev_setting[1].ae_gain, out_param_lib.ev_setting[1].exp_time,
-		        out_param_lib.ev_setting[1].exp_line,out_param_lib.ev_setting[1].line_time );
-		ISP_LOGV("sync:3 lib out ae_gain:%d, exp_time:%"PRIu64", exp_line:%d,line_time:%d",
+		        out_param_lib.ev_setting[1].exp_line,out_param_lib.ev_setting[1].line_time,
+		        out_param_lib.ev_setting[1].base_exp,out_param_lib.ev_setting[1].base_gain);
+		ISP_LOGV("sync:3 lib out ae_gain:%d, exp_time:%"PRIu64", exp_line:%d,line_time:%d,base_exp:%"PRIu64",base_gain:%d",
 		        out_param_lib.ev_setting[2].ae_gain, out_param_lib.ev_setting[2].exp_time,
-		        out_param_lib.ev_setting[2].exp_line,out_param_lib.ev_setting[2].line_time );
+		        out_param_lib.ev_setting[2].exp_line,out_param_lib.ev_setting[2].line_time,
+		        out_param_lib.ev_setting[2].base_exp,out_param_lib.ev_setting[2].base_gain);
 
 		//memcpy(&out_param_parse.ev_setting[0], &out_param_lib.ev_setting[0], sizeof(struct ae_ev_setting_param));
 		//memcpy(&out_param_parse.ev_setting[1], &out_param_lib.ev_setting[1], sizeof(struct ae_ev_setting_param));
@@ -1053,6 +1058,8 @@ static cmr_s32 ae_write_to_sensor_normal_mapping(struct ae_ctrl_cxt *cxt, struct
 			ae_sync_output.frm_len = out_param_lib.ev_setting[i].frm_len;
 			ae_sync_output.sensor_gain = ae_info[i].gain;
 			ae_sync_output.isp_gain = dcam_gain[i];
+			ae_sync_output.base_exp = out_param_lib.ev_setting[i].base_exp;
+			ae_sync_output.base_gain = out_param_lib.ev_setting[i].base_gain;
 			cxt->ptr_isp_br_ioctrl(i, SET_SYNC_SLAVE_ACTUAL_DATA, &ae_sync_output, NULL);
 		}
 		/*current sensor should use write_date from q for writing sensor */
@@ -6645,6 +6652,19 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	cxt->cur_status.adv_param.cur_ev_setting.dmy_line = cxt->exp_data.actual_data.dummy;
 	cxt->cur_status.adv_param.cur_ev_setting.ae_gain = (cmr_s32) (1.0 * cxt->exp_data.actual_data.isp_gain * cxt->exp_data.actual_data.sensor_gain / 4096.0 + 0.5);
 
+	if(cxt->cur_status.adv_param.lock == AE_STATE_LOCKED) {
+		struct ae_sync_actual_data ae_dynamic_sync_result = {0};
+		cxt->ptr_isp_br_ioctrl(cxt->sensor_role, GET_SYNC_SLAVE_ACTUAL_DATA, NULL, &ae_dynamic_sync_result);
+		cxt->cur_status.adv_param.base_exp = ae_dynamic_sync_result.base_exp;
+		cxt->cur_status.adv_param.base_gain = ae_dynamic_sync_result.base_gain;
+		cxt->cur_status.adv_param.cur_ev_setting.frm_len = ae_dynamic_sync_result.frm_len;
+		cxt->cur_status.adv_param.cur_ev_setting.exp_line = ae_dynamic_sync_result.exp_line;
+		cxt->cur_status.adv_param.cur_ev_setting.exp_time = ae_dynamic_sync_result.exp_time;
+		cxt->cur_status.adv_param.cur_ev_setting.dmy_line = ae_dynamic_sync_result.dmy_line;
+		cxt->cur_status.adv_param.cur_ev_setting.ae_gain = ae_dynamic_sync_result.ae_gain;
+		ISP_LOGD("YJW:base_exp %"PRIu64",base_gain %d\n",cxt->cur_status.adv_param.base_exp,cxt->cur_status.adv_param.base_gain);
+	}
+
 	backup_expline = cxt->cur_status.adv_param.cur_ev_setting.exp_line;
 	backup_gain = cxt->cur_status.adv_param.cur_ev_setting.ae_gain;
 	backup_expgain = backup_expline*backup_gain;
@@ -6935,11 +6955,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 			}
 		}
 	}else if(cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW_SYNC) {
-		if(cxt->cur_status.adv_param.lock == AE_STATE_LOCKED) {
-			ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
-			cxt->sync_stable = 1;
-			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_SYNC_STABLE, &cxt->sync_stable);
-		} else if((0 == cxt->sync_state.sync_flag)&&(cxt->sync_state.ref_id == cxt->camera_id)) {
+		if(((0 == cxt->sync_state.sync_flag)&&(cxt->sync_state.ref_id == cxt->camera_id)) || (cxt->cur_status.adv_param.lock == AE_STATE_LOCKED)) {
 			ae_update_result_before_mapping(cxt, &cxt->exp_data, 0);
 			ae_write_to_sensor_normal_mapping(cxt, &cxt->exp_data);
 			slave_sensor_active = 0;
@@ -6951,6 +6967,10 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 			cxt->cur_status.tar_cam_id = cxt->sync_state.next_id;
 			cxt->cur_status.exp_time = 0;
 			cxt->cur_status.ae_gain = 0;
+			if(cxt->cur_status.adv_param.lock == AE_STATE_LOCKED) {
+				cxt->sync_stable = 1;
+				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_SYNC_STABLE, &cxt->sync_stable);
+			}
 		} else {
 			if(cxt->sync_state.ref_id == cxt->camera_id) {
 				if(1 == slave_sensor_active) {
