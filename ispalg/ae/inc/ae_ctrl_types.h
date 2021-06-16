@@ -197,6 +197,8 @@ extern "C" {
 		AE_CB_FDR_START,
 		AE_CB_FDR_STATUS,
 		AE_CB_PROCESS_RESULT,
+		AE_CB_LONG_EXP_START,
+		AE_CB_SYNC_STABLE,
 		AE_CB_MAX
 	};
 	enum ae_cb_result_notify_hal {
@@ -205,6 +207,7 @@ extern "C" {
 		AE_CB_RESULT_BLS_ENABLE,
 		AE_CB_RESULT_BV_VALUE,
 		AE_CB_RESULT_FACA_LUM,
+		AE_CB_RESULT_LONG_EXP,
 		AE_CB_RESULT_MAX
 	};
 
@@ -386,7 +389,7 @@ extern "C" {
 		cmr_u32 exposure;
 		cmr_u32 dummy;
 		cmr_u32 size_index;
-		cmr_u32 exp_time;
+		cmr_u64 exp_time;
 	};
 
 	struct ae_gain {
@@ -586,7 +589,7 @@ extern "C" {
 		struct ae_face face_area[AE_FD_NUM];
 	};
 	struct cts_ae_params{
-		cmr_u32 exp_time;
+		cmr_u64 exp_time;
 		cmr_u32 sensitivity;
 		cmr_u32 ae_mode;/*0:auto 1:shutter&&iso 2:shutter first 3:iso first*/
 		cmr_s32 frame_number;

@@ -31,7 +31,7 @@ extern "C" {
 		cmr_u32 cur_index;
 		cmr_u32 line_time;
 		cmr_u32 exp_line;
-		cmr_u32 exp_time;
+		cmr_u64 exp_time;
 		cmr_s32 dummy;
 		cmr_s32 frm_len;
 		cmr_s32 frm_len_def;
@@ -61,7 +61,7 @@ extern "C" {
 
 	//adjust ctrl callback parameter
 	struct ae_adjust_param {
-		cmr_u32 exp_time;
+		cmr_u64 exp_time;
 		cmr_u32 total_gain;
 		cmr_u32 iso;
 		cmr_u32 isp_gain;
@@ -72,7 +72,7 @@ extern "C" {
 	struct ae_exposure_param_switch {
 		cmr_u32 target_offset;
 		cmr_u32 exp_line;
-		cmr_u32 exp_time;
+		cmr_u64 exp_time;
 		cmr_s32 dummy;
 		cmr_u32 frm_len;
 		cmr_u32 frm_len_def;
@@ -86,7 +86,7 @@ extern "C" {
 	struct ae_exposure_param_switch_m {
 		cmr_u32 target_offset;
 		cmr_u32 exp_line;
-		cmr_u32 exp_time;
+		cmr_u64 exp_time;
 		cmr_s32 dummy;
 		cmr_u32 frm_len;
 		cmr_u32 frm_len_def;
@@ -322,8 +322,8 @@ extern "C" {
 		/*
 		 *Save exposure & iso value on manual ae mode
 		 */
-		cmr_u32 manual_exp_time;
-		cmr_u32 manual_exp_line_bkup;
+		cmr_u64 manual_exp_time;
+		cmr_u64 manual_exp_line_bkup;
 		cmr_u32 manual_iso_value;
 		cmr_u8 manual_ae_mode;
 		/*
@@ -483,6 +483,7 @@ extern "C" {
 		hdr_callback_t hdr_callback;
 		hdr_callback_t hdr_callback_backup;
 		cmr_s32 fd_on_off;
+		cmr_u8 long_exp_frame_cnt;
 		cmr_u32 end_id;
 		/*touch flash hold */
 		cmr_u32 touch_hold_cnt;
