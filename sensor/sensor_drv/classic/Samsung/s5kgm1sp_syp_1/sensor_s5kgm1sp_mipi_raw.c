@@ -283,8 +283,9 @@ static cmr_int s5kgm1sp_drv_save_snspid(cmr_handle handle) {
 static cmr_int s5kgm1sp_drv_identify(cmr_handle handle, cmr_int param) {
     cmr_u16 pid_value = 0x00;
     cmr_u16 mid_value = 0x00;
-	uint8_t cmd_val[5] = { 0x00 };
+    uint8_t cmd_val[5] = { 0x00 };
     cmr_int ret_value = SENSOR_FAIL;
+    uint16_t cmd_len = 0;
 
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -296,6 +297,13 @@ static cmr_int s5kgm1sp_drv_identify(cmr_handle handle, cmr_int param) {
     hw_sensor_read_i2c(sns_drv_cxt->hw_handle, 0xB0 >> 1, (uint8_t *)&cmd_val[0], 2);
 
     mid_value = cmd_val[0];
+
+    cmd_val[0] = 0xc000 >> 8;
+    cmd_val[1] = 0xc000 & 0xff;
+    cmd_val[2] = 0x02;
+    cmd_len = 3;
+    ret_value = hw_sensor_write_i2c(sns_drv_cxt->hw_handle, 0xA0 >> 1,
+                                  (uint8_t *)&cmd_val[0], cmd_len);
 
     SENSOR_LOGI("Identify: pid_value = %x, mid_value = %x", pid_value, mid_value);
 
