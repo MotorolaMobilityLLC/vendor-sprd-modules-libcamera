@@ -1776,6 +1776,7 @@ static cmr_int get_ips_thread(struct ips_context *ips_ctx, struct ips_thread_con
 	cmr_u32 i, found = 0;
 	struct ips_thread_context *cur = NULL;
 
+	pthread_mutex_lock(&ips_ctx->thrd_lock);
 search:
 	for (i = 0; i < ips_ctx->thread_cnt; i++) {
 		cur = &ips_ctx->ips_threads[i];
@@ -1810,6 +1811,7 @@ search:
 	}
 
 exit:
+	pthread_mutex_unlock(&ips_ctx->thrd_lock);
 	CMR_LOGD("X. ret %ld, thread %p\n", ret, *dst);
 	return ret;
 }
