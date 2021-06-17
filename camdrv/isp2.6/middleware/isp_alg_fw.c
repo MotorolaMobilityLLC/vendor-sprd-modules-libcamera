@@ -6990,29 +6990,25 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_SLAVE_SENSOR_MODE, &sn_mode, NULL);
 	}
 
-	/*for get awb param in nigthtpro*/
-	if (cxt->ops.awb_ops.deinit && cxt->awb_cxt.handle){
-		cxt->ops.awb_ops.deinit(&cxt->awb_cxt.handle);
-		cxt->awb_cxt.handle = NULL;
-	}
-
 	if (cxt->app_mode == CAMERA_MODE_FDR) {
+		/*for get awb param in nigthtpro*/
+		if (cxt->ops.awb_ops.deinit && cxt->awb_cxt.handle){
+			cxt->ops.awb_ops.deinit(&cxt->awb_cxt.handle);
+			cxt->awb_cxt.handle = NULL;
+		}
 		cxt->awb_cxt.param.param_size = cxt->data_size[1];
 		cxt->awb_cxt.param.tuning_param = cxt->data_ptr[1];
 		cxt->awb_cxt.param.bypass = cxt->bypass[1];
-	} else {
-		cxt->awb_cxt.param.param_size = cxt->data_size[0];
-		cxt->awb_cxt.param.tuning_param = cxt->data_ptr[0];
-		cxt->awb_cxt.param.bypass = cxt->bypass[0];
-	}
-	ISP_LOGV("awb_param(0, 1) (%p %d) (%p %d) cur_param(%p  %d)" ,
+
+		ISP_LOGV("awb_param(0, 1) (%p %d) (%p %d) cur_param(%p  %d)" ,
 			cxt->data_ptr[0], cxt->data_size[0],
 			cxt->data_ptr[1],cxt->data_size[1],
 			cxt->awb_cxt.param.tuning_param, cxt->awb_cxt.param.param_size);
 
-	if (cxt->ops.awb_ops.init) {
-		ret = cxt->ops.awb_ops.init(&cxt->awb_cxt.param, &cxt->awb_cxt.handle);
-		ISP_TRACE_IF_FAIL(ret, ("fail to do awb_ctrl_init"));
+		if (cxt->ops.awb_ops.init) {
+			ret = cxt->ops.awb_ops.init(&cxt->awb_cxt.param, &cxt->awb_cxt.handle);
+			ISP_TRACE_IF_FAIL(ret, ("fail to do awb_ctrl_init"));
+		}
 	}
 
 	/* initialize isp pm */
