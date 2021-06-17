@@ -141,6 +141,18 @@ struct pdaf_coordinate_tab s5kgm1sp_pd_coordinate_table[] = {
     },
     {.number = 4,
      .pos_info = {1, 0, 1, 0},
+    },
+    {.number = 4,
+     .pos_info = {1, 0, 1, 0},
+    },
+    {.number = 4,
+     .pos_info = {1, 0, 1, 0},
+    },
+    {.number = 4,
+     .pos_info = {1, 0, 1, 0},
+    },
+    {.number = 4,
+     .pos_info = {1, 0, 1, 0},
     }
 };
 
@@ -212,14 +224,16 @@ static cmr_int s5kgm1sp_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     pdaf_info->sns_orientation = 0;
     pdaf_info->sns_mode = pd_sns_mode;
     pdaf_info->vch2_info.bypass = 0;
-    pdaf_info->vch2_info.vch2_vc = 0;
+    pdaf_info->vch2_info.vch2_vc = 0x00;
     pdaf_info->vch2_info.vch2_data_type = 0x30;
-    pdaf_info->vch2_info.vch2_mode = 0x03;  //data tpye
+    pdaf_info->vch2_info.vch2_mode = 0x01;  //data tpye
     pdaf_info->descriptor = &s5kgm1sp_pd_seprator_helper;
-    pdaf_info->pd_data_size = pdaf_info->pd_block_num_x *
-                              pdaf_info->pd_block_num_y *
-                              NUMBER_OF_ARRAY(s5kgm1sp_pd_is_right) * 5;
+    // pdaf_info->pd_data_size = pdaf_info->pd_block_num_x *
+    //                           pdaf_info->pd_block_num_y *
+    //                           NUMBER_OF_ARRAY(s5kgm1sp_pd_is_right) * 5;
     pdaf_info->pdaf_format_converter = s5kgm1sp_drv_pdaf_data_process;
+    pdaf_info->pd_data_size = pdaf_info->pd_block_num_x * pdaf_info->pd_block_num_y
+				* pd_pos_is_right_size * 5;
     return SENSOR_SUCCESS;
 }
 cmr_int s5kgm1sp_drv_pdaf_data_process(void *buffer_handle) {
