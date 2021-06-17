@@ -321,6 +321,11 @@ typedef enum {
     DCAMERA_EFFECT_MAX
 } DCAMERA_PARAM_EFFECT_E;
 
+enum sensor_tuning_parameter_switchment {
+    SENSOR_TUNING_PARAM_DEFAULT,
+    SENSOR_TUNING_PARAM_BOKEH,
+};
+
 typedef enum { SENSOR_OTP_TYPE, MODULE_OTP_TYPE, OTP_TYPE_MAX } CAMERA_OTP_TYPE;
 
 struct otp_data_tag {
@@ -830,7 +835,7 @@ cmr_int sensor_set_mode_done_common(cmr_handle sns_module_handle);
 
 cmr_int sensor_drv_ioctl(cmr_handle sns_module_handle, enum sns_cmd cmd,
                          void *param);
-
+void sensor_drv_switch_to_specific_tuning_param(int tag);
 SENSOR_EXP_INFO_T *Sensor_GetInfo(void);
 SENSOR_EXP_INFO_T *Sensor_GetInfo_withid(cmr_u32 id);
 

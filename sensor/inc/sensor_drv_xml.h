@@ -108,6 +108,7 @@ typedef struct xml_camera_module_cfg {
 
     /*+++tuning parameter section+++*/
     xml_camera_tuning_info_t tuning_info;
+    xml_camera_tuning_info_t bokeh_tuning_info;
     /*---tuning parameter section---*/
 } xml_camera_module_cfg_t;
 
