@@ -37,7 +37,7 @@ static struct otp_info_t *s_s5k4h7_otp_info_ptr = &s_s5k4h7_qtech_otp_info;
 #endif
 
 #define VENDOR_NUM 1
-#define SENSOR_NAME "s5k4h7yx03"
+#define SENSOR_NAME "s5k4h7_syp"
 #define MAJOR_I2C_SLAVE_ADDR 0x20 /* 8bit slave address*/
 #define MINOR_I2C_SLAVE_ADDR 0x5A
 
