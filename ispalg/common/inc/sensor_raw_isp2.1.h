@@ -33,8 +33,9 @@
 
 #define MAX_NRTYPE_NUM ISP_BLK_TYPE_MAX
 
-#define MAX_SCENEMODE_NUM 16
+#define MAX_SCENEMODE_NUM 32
 #define MAX_SPECIALEFFECT_NUM 16
+#define MAX_BCHSSCENEMODE_NUM 16
 
 #define SENSOR_AWB_CALI_NUM 0x09
 #define SENSOR_PIECEWISE_SAMPLE_NUM 0x10
@@ -1154,14 +1155,14 @@ struct sensor_yuv_precdn_level {
 struct sensor_bright_param {
 	cmr_s8 factor[16];
 	cmr_u32 cur_index;
-	cmr_s8 scenemode[MAX_SCENEMODE_NUM];
+	cmr_s8 scenemode[MAX_BCHSSCENEMODE_NUM];
 };
 
 //Contrast
 struct sensor_contrast_param {
 	cmr_u8 factor[16];
 	cmr_u32 cur_index;
-	cmr_u8 scenemode[MAX_SCENEMODE_NUM];
+	cmr_u8 scenemode[MAX_BCHSSCENEMODE_NUM];
 };
 
 //Hist in YUV domain
@@ -1701,7 +1702,7 @@ struct sensor_saturation_param {
 	cmr_u8 csa_factor_v[16];
 	cmr_u32 index_u;
 	cmr_u32 index_v;
-	cmr_u8 scenemode[2][MAX_SCENEMODE_NUM];
+	cmr_u8 scenemode[2][MAX_BCHSSCENEMODE_NUM];
 };
 
 //Hue Adjustment
