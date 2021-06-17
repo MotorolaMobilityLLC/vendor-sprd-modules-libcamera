@@ -2401,6 +2401,23 @@ void SprdCamera3OEMIf::setCamPreviewFps(struct cmr_range_fps_param &fps_param) {
         fps_param.max_fps = atoi(fps_prop);
     }
 
+    char sync_prop[PROPERTY_VALUE_MAX];
+    property_get("vendor.cam.hw.framesync.on", sync_prop, "0");
+    if(atoi(sync_prop) == 0){
+        if (mMultiCameraMode == MODE_BOKEH && mSprdAppmodeId != -1) {
+            char value[PROPERTY_VALUE_MAX];
+            int bokeh_val_max = 0;
+            int bokeh_val_min = 0;
+            property_get("persist.vendor.cam.bokeh.preview.fps", value, "2010");
+            if (atoi(value) != 0) {
+                bokeh_val_min = atoi(value) % 100;
+                bokeh_val_max = atoi(value) / 100;
+                fps_param.min_fps = bokeh_val_min > 5 ? bokeh_val_min : 5;
+                fps_param.max_fps = bokeh_val_max;
+            }
+        }
+    }
+
     // to set preview fps by setprop
     char prop[PROPERTY_VALUE_MAX];
     int val_max = 0;
