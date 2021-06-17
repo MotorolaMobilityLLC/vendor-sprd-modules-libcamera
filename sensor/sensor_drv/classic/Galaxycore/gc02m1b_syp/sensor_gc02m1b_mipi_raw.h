@@ -516,7 +516,7 @@ static struct sensor_module_info s_gc02m1b_module_info_tab[VENDOR_NUM] = {
          .iovdd_val = SENSOR_AVDD_1800MV,
          .dvdd_val = SENSOR_AVDD_1800MV,
 
-         .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
+         .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_R,
 
          .preview_skip_num = 1,
          .capture_skip_num = 1,
