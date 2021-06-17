@@ -1799,10 +1799,17 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data) {
 
     if (cxt->req_param.is_mfsr) {
         struct cmr_buf buf;
+        int iret = 0;
         buf.fd = cxt->mfsr_dst_frm.fd;
-        put_free_buffer(&cxt->buf_queue, &buf);
+        iret = put_free_buffer(&cxt->buf_queue, &buf);
+        if (iret) {
+            CMR_LOGE("fail to put buffer fd 0x%x", buf.fd);
+        }
         buf.fd = cxt->mfsr_detail_frm.fd;
-        put_free_buffer(&cxt->buf_queue, &buf);
+        iret = put_free_buffer(&cxt->buf_queue, &buf);
+        if (iret) {
+            CMR_LOGE("fail to put buffer fd 0x%x", buf.fd);
+        }
     }
 
     if (cxt->err_code) {
