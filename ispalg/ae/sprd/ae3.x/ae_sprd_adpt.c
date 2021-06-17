@@ -6652,7 +6652,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	cxt->cur_status.adv_param.cur_ev_setting.dmy_line = cxt->exp_data.actual_data.dummy;
 	cxt->cur_status.adv_param.cur_ev_setting.ae_gain = (cmr_s32) (1.0 * cxt->exp_data.actual_data.isp_gain * cxt->exp_data.actual_data.sensor_gain / 4096.0 + 0.5);
 
-	if(cxt->cur_status.adv_param.lock == AE_STATE_LOCKED) {
+	if((cxt->cur_status.adv_param.lock == AE_STATE_LOCKED) && (cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW_SYNC)) {
 		struct ae_sync_actual_data ae_dynamic_sync_result = {0};
 		cxt->ptr_isp_br_ioctrl(cxt->sensor_role, GET_SYNC_SLAVE_ACTUAL_DATA, NULL, &ae_dynamic_sync_result);
 		cxt->cur_status.adv_param.base_exp = ae_dynamic_sync_result.base_exp;
