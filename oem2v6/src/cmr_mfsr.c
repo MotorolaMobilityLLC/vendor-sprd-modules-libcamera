@@ -472,7 +472,7 @@ static cmr_int mfsr_post_transfer_frame(cmr_handle class_handle,
 	sprd_camalg_image_t image_detail;
 
 	if (class_handle == NULL || in == NULL) {
-		CMR_LOGE("fail to get input %p %p %p\n", class_handle, in);
+		CMR_LOGE("fail to get input %p %p\n", class_handle, in);
 		return -1;
 	}
 
