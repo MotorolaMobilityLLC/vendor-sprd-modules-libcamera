@@ -555,7 +555,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 
 	ISP_LOGV("PDALGO Converter. Sensor[%d] Mode[%d]", cxt->pd_gobal_setting.dSensorSetting, cxt->pd_gobal_setting.dSensorMode);
 
-	ATRACE_BEGIN("PDAlgo_Calc_process_convert");
+	ATRACE_BEGIN("PDAlgo_Calc_process_convert type2");
 
 	if (cxt->pdaf_type == 2) {
 
@@ -577,6 +577,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 			dump_raw(cxt->frame_id, cxt->pdaf_type, cxt->pPD_left, cxt->pPD_right, NULL, roi_pixel_num_x, roi_pixel_num_y);
 		}
 	}
+	ATRACE_END();
 	//For IMX362 Dual PD Mode4
 	if (cxt->pd_gobal_setting.dSensorMode == SENSOR_ID_4 && 4 == cxt->pdaf_type) {
 #if(0)
