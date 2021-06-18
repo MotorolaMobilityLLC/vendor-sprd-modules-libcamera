@@ -4661,7 +4661,7 @@ static cmr_int sensor_drv_check_cmei(cmr_u8 dual_flag) {
     case CALIBRATION_FLAG_BOKEH:
         cmei_size = read_calibration_cmei(CALIBRATION_FLAG_BOKEH, bokeh_cmei_buf);
         if(bokeh_cmei_size == cmei_size) {
-            for (i = 64; i++; i < 128) {
+            for (i = 64; i < 128; i++){
                 if (8 != bokeh_cmei_buf[i]) {
                     ontim_88888_sensor = 1;
                 }
