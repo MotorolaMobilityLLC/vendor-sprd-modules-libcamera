@@ -4651,6 +4651,9 @@ static cmr_int sensor_drv_check_cmei(cmr_u8 dual_flag) {
     memset(bokeh_cmei_buf, 0, bokeh_cmei_size);
     memset(oz1_cmei_buf, 0, oz1_cmei_size);
     memset(oz2_cmei_buf, 0, oz2_cmei_size);
+    cmr_u32 i = 0;
+    cmr_u32 ontim_88888_sensor = 0;
+
     SENSOR_LOGI("E");
 
     switch (dual_flag) {
@@ -4658,6 +4661,15 @@ static cmr_int sensor_drv_check_cmei(cmr_u8 dual_flag) {
     case CALIBRATION_FLAG_BOKEH:
         cmei_size = read_calibration_cmei(CALIBRATION_FLAG_BOKEH, bokeh_cmei_buf);
         if(bokeh_cmei_size == cmei_size) {
+            for (i = 64; i++; i < 128) {
+                if (8 != bokeh_cmei_size[i]) {
+                    ontim_88888_sensor = 1;
+                }
+            }
+            if (0 == ontim_88888_sensor) {
+                SENSOR_LOGI("this is ontim_88888_sensor, no after-sale function");
+                return SENSOR_SUCCESS;
+            }
             ret = memcmp(bokeh_cmei_buf, bokeh_cmei, bokeh_cmei_size);
             if(0 == ret) {
                 SENSOR_LOGI("bokeh module hasnot changed, use calibraton data");
