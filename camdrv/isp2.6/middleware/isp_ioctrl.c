@@ -2071,7 +2071,6 @@ static cmr_u32 convert_scene_flag_for_ae(cmr_u32 scene_flag)
 {
 	cmr_u32 convert_scene_flag = 0;
 	switch (scene_flag) {
-	case ISP_BOKEHMODE:
 	case ISP_AUTO:
 		convert_scene_flag = AE_SCENE_NORMAL;
 		break;
@@ -2080,6 +2079,9 @@ static cmr_u32 convert_scene_flag_for_ae(cmr_u32 scene_flag)
 		break;
 	case ISP_SPORT:
 		convert_scene_flag = AE_SCENE_SPORT;
+		break;
+	case ISP_BOKEHMODE:
+		convert_scene_flag = AE_SCENE_PORTRAIT;
 		break;
 	case ISP_PORTRAIT:
 		convert_scene_flag = AE_SCENE_PORTRAIT;
