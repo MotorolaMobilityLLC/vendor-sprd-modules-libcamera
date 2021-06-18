@@ -1,6 +1,4 @@
-/*versionid=0x000C000F*/
-/*maxGain=0.00*/
-/*param0.&BasePoint=1&*/
+/*param0.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
@@ -353,7 +351,7 @@
 	0x0001,
 }
 ,
-/*param1.&BasePoint=1&*/
+/*param1.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
@@ -706,7 +704,7 @@
 	0x0001,
 }
 ,
-/*param2.&BasePoint=1&*/
+/*param2.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
@@ -1059,7 +1057,7 @@
 	0x0001,
 }
 ,
-/*param3.&BasePoint=1&*/
+/*param3.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
@@ -1412,7 +1410,7 @@
 	0x0001,
 }
 ,
-/*param4.&BasePoint=1&*/
+/*param4.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
@@ -1765,7 +1763,7 @@
 	0x0001,
 }
 ,
-/*param5.&BasePoint=1&*/
+/*param5.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
@@ -2118,7 +2116,7 @@
 	0x0001,
 }
 ,
-/*param6.&BasePoint=1&*/
+/*param6.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
@@ -2471,7 +2469,7 @@
 	0x0001,
 }
 ,
-/*param7.&BasePoint=1&*/
+/*param7.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
@@ -2824,7 +2822,7 @@
 	0x0001,
 }
 ,
-/*param8.&BasePoint=1&*/
+/*param8.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
@@ -3177,7 +3175,7 @@
 	0x0001,
 }
 ,
-/*param9.&BasePoint=1&*/
+/*param9.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
@@ -3530,7 +3528,7 @@
 	0x0001,
 }
 ,
-/*param10.&BasePoint=1&*/
+/*param10.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
@@ -3883,7 +3881,7 @@
 	0x0001,
 }
 ,
-/*param11.&BasePoint=1&*/
+/*param11.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
@@ -4158,29 +4156,29 @@
 
 		},
 		/*max_Radius*/
-		0x1B9E,
+		0x1601,
 		/*max_Radius_factor*/
 		0x03F2,
 		/*Radius*/
-		0x0474,
+		0x038C,
 		/*Radius_factor*/
 		0x017C,
 		/*imgCenterX*/
-		0x0800,
+		0x0660,
 		/*imgCenterY*/
-		0x0600,
+		0x04C8,
 		/*range_index*/
 		0x04,
 		/*range_s*/
 		{
-			0x03,0x02,0x01,0x00/*0-3*/
+			0x03,0x04,0x05,0x06/*0-3*/
 		},
 		/*dist_weight*/
 		{
-			0x0F,0x08,0x01/*0-2*/
+			0x0F,0x08,0x07/*0-2*/
 		},
 		/*ynr_blf_enable*/
-		0x00000000,
+		0x00000001,
 
 	},
 	/*addback*/
@@ -4236,7 +4234,7 @@
 	0x0000,
 }
 ,
-/*param12.&BasePoint=1&*/
+/*param12.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
@@ -4589,16 +4587,16 @@
 	0x0000,
 }
 ,
-/*param13.&BasePoint=1&*/
+/*param13.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
 	{
 		/*sal_enable*/
-		0x00000000,
+		0x00000001,
 		/*lum_thresh*/
 		{
-			0x46,0x82/*0-1*/
+			0x3C,0x50/*0-1*/
 		},
 		/*sal_offset*/
 		{
@@ -4856,11 +4854,11 @@
 		/*blf_range*/
 		{
 			/*s0_low*/
-			0x00000003,
+			0x00000000,
 			/*s0_mid*/
-			0x00000002,
+			0x00000000,
 			/*s0_high*/
-			0x00000001,
+			0x00000000,
 
 		},
 		/*max_Radius*/
@@ -4879,11 +4877,11 @@
 		0x03,
 		/*range_s*/
 		{
-			0x00,0x01,0x02,0x03/*0-3*/
+			0x03,0x04,0x05,0x06/*0-3*/
 		},
 		/*dist_weight*/
 		{
-			0x0F,0x09,0x02/*0-2*/
+			0x0F,0x08,0x07/*0-2*/
 		},
 		/*ynr_blf_enable*/
 		0x00000001,
@@ -4904,7 +4902,7 @@
 		/*[0x1]*/
 		{
 			/*addback_enable*/
-			0x0001,
+			0x0000,
 			/*addback_ratio*/
 			0x40,
 			/*addback_clip*/
@@ -4914,7 +4912,7 @@
 		/*[0x2]*/
 		{
 			/*addback_enable*/
-			0x0001,
+			0x0000,
 			/*addback_ratio*/
 			0x40,
 			/*addback_clip*/
@@ -4924,7 +4922,7 @@
 		/*[0x3]*/
 		{
 			/*addback_enable*/
-			0x0001,
+			0x0000,
 			/*addback_ratio*/
 			0x40,
 			/*addback_clip*/
@@ -4942,7 +4940,7 @@
 	0x0000,
 }
 ,
-/*param14.&BasePoint=1&*/
+/*param14.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
@@ -5295,16 +5293,16 @@
 	0x0000,
 }
 ,
-/*param15.&BasePoint=1&*/
+/*param15.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
 	{
 		/*sal_enable*/
-		0x00000000,
+		0x00000001,
 		/*lum_thresh*/
 		{
-			0x46,0x82/*0-1*/
+			0x3C,0x50/*0-1*/
 		},
 		/*sal_offset*/
 		{
@@ -5585,11 +5583,11 @@
 		0x04,
 		/*range_s*/
 		{
-			0x07,0x04,0x05,0x06/*0-3*/
+			0x03,0x04,0x05,0x06/*0-3*/
 		},
 		/*dist_weight*/
 		{
-			0x0F,0x01,0x01/*0-2*/
+			0x0F,0x08,0x07/*0-2*/
 		},
 		/*ynr_blf_enable*/
 		0x00000001,
@@ -5600,7 +5598,7 @@
 		/*[0x0]*/
 		{
 			/*addback_enable*/
-			0x0001,
+			0x0000,
 			/*addback_ratio*/
 			0x58,
 			/*addback_clip*/
@@ -5648,7 +5646,7 @@
 	0x0000,
 }
 ,
-/*param16.&BasePoint=1&*/
+/*param16.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
@@ -6001,7 +5999,7 @@
 	0x0000,
 }
 ,
-/*param17.&BasePoint=1&*/
+/*param17.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
@@ -6354,7 +6352,7 @@
 	0x0000,
 }
 ,
-/*param18.&BasePoint=1&*/
+/*param18.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
@@ -6707,7 +6705,7 @@
 	0x0000,
 }
 ,
-/*param19.&BasePoint=1&*/
+/*param19.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
@@ -7060,7 +7058,7 @@
 	0x0000,
 }
 ,
-/*param20.&BasePoint=1&*/
+/*param20.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
@@ -7413,7 +7411,7 @@
 	0x0000,
 }
 ,
-/*param21.&BasePoint=1&*/
+/*param21.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
@@ -7766,7 +7764,7 @@
 	0x0000,
 }
 ,
-/*param22.&BasePoint=1&*/
+/*param22.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
@@ -8119,7 +8117,7 @@
 	0x0000,
 }
 ,
-/*param23.&BasePoint=1&*/
+/*param23.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
@@ -8472,7 +8470,7 @@
 	0x0000,
 }
 ,
-/*param24.&BasePoint=1&*/
+/*param24.*/
 /*sharkl5_sensor_ynr_level*/
 {
 	/*ynr_sal_str*/
