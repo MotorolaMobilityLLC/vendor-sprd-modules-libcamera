@@ -1767,7 +1767,7 @@ cmr_int sensor_set_exif_common(cmr_handle sns_module_handle, cmr_u32 cmdin,
 
     case SENSOR_EXIF_CTRL_WHITEBALANCE:
         sensor_exif_info_ptr->valid.WhiteBalance = 1;
-        if (param)
+        if (param > 1)
             sensor_exif_info_ptr->WhiteBalance = 1;
         else
             sensor_exif_info_ptr->WhiteBalance = 0;
