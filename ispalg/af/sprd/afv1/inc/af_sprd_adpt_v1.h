@@ -383,6 +383,7 @@ typedef struct _af_ctrl {
 	af_squeue queue;
 	cmr_u16 focus_distance_cnt;
 	cmr_u32 focus_distance_result[3];
+	struct afctrl_aiscene_info ai_scene_info;
 } af_ctrl_t;
 
 cmr_handle sprd_afv1_init(void *in, void *out);
