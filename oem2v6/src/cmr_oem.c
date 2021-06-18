@@ -11464,6 +11464,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_cmd = ISP_CTRL_AWB_MODE;
         set_exif_flag = 1;
         exif_cmd = SENSOR_EXIF_CTRL_LIGHTSOURCE;
+        setting_cxt->awb_cmd_value = param_ptr->cmd_value;
         isp_param = camera_param_to_isp(COM_ISP_SET_AWB_MODE, param_ptr);
         CMR_LOGD("awb mode %" PRIu64 "isp param %" PRIu64 "", param_ptr->cmd_value, isp_param);
         break;
@@ -18395,14 +18396,14 @@ cmr_int camera_set_af_params(cmr_handle oem_handle, void *param) {
 
 void camera_local_set_exif_iso_value(cmr_handle oem_handle, cmr_u32 iso_value) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct setting_context *setting_cxt = &cxt->setting_cxt;
     CMR_LOGD("exif iso_value:%d", iso_value);
     cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                         SENSOR_EXIF_CTRL_ISOSPEEDRATINGS,
                         iso_value);
-    cmr_u32 white_balance = 1;
     cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                         SENSOR_EXIF_CTRL_WHITEBALANCE,
-                        white_balance);
+                        setting_cxt->awb_cmd_value);
 }
 
 void camera_local_set_exif_exp_time(cmr_handle oem_handle, cmr_s64 exp_time) {

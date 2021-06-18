@@ -287,6 +287,7 @@ struct setting_context {
     cmr_u32 is_active;
     cmr_u32 is_auto_iso;
     cmr_uint iso_value;
+    cmr_u64 awb_cmd_value;
 };
 #ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
 struct mm_dvfs_context {
