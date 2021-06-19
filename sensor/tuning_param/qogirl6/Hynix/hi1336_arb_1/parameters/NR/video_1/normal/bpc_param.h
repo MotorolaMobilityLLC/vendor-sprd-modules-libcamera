@@ -447,9 +447,9 @@
 		/*highoffset*/
 		0x00,
 		/*hv_ratio*/
-		0x0028,
+		0x0010,
 		/*rd_ration*/
-		0x001E,
+		0x0010,
 
 	},
 	/*ppi_block*/
