@@ -20,7 +20,7 @@
 
 
 #define VENDOR_NUM           1
-#define SENSOR_NAME          "ov02b1b_syp_mipi_raw"
+#define SENSOR_NAME          "ov02b1b_syp_1"
 
 #define I2C_SLAVE_ADDR       0x7A     /*0x20*//* 8bit slave address*/
 
@@ -383,7 +383,8 @@ static SENSOR_STATIC_INFO_T s_ov02b1b_syp_static_info[VENDOR_NUM] = {
         .exp_valid_frame_num = 1,
         .clamp_level = 64,
         .adgain_valid_frame_num = 1,
-        .fov_info = {{4.614f, 3.444f}, 4.222f}}
+        .fov_info = {{4.614f, 3.444f}, 4.222f},
+        .mono_sensor = 1}
     }
     /*If there are multiple modules,please add here*/
 };
