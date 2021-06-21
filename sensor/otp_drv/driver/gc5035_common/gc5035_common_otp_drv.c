@@ -887,12 +887,24 @@ static cmr_int gc5035_common_otp_drv_calibration(cmr_handle otp_drv_handle)
 	otp_calib_items_t *cali_items = &(gc5035_common_drv_entry.otp_cfg.cali_items);
 
 	if (cali_items) {
+		cnce_clear_otp_check_result(otp_cxt->dev_name);
+
 		if (cali_items->is_pdafc && cali_items->is_pdaf_self_cal) {
 			gc5035_common_pdaf_calibration(otp_drv_handle);
 		}
 		/* calibration at sensor or isp */
 		if (cali_items->is_awbc && cali_items->is_awbc_self_cal) {
-			gc5035_common_awb_calibration(otp_drv_handle);
+			ret = gc5035_common_awb_calibration(otp_drv_handle);
+
+			cnce_save_otp_check_result(otp_cxt->dev_name, "af", 0x4);
+			cnce_save_otp_check_result(otp_cxt->dev_name, "awb", ret);
+			cnce_save_otp_check_result(otp_cxt->dev_name, "lsc", 0x4);
+			cnce_save_otp_check_result(otp_cxt->dev_name, "pdaf", 0X4);
+			cnce_save_otp_check_result(otp_cxt->dev_name, "xtalk_4in1", 0X4);
+			cnce_save_otp_check_result(otp_cxt->dev_name, "dpc_4in1", 0X4);
+			cnce_save_otp_check_result(otp_cxt->dev_name, "spw", 0X4);
+			cnce_save_otp_check_result(otp_cxt->dev_name, "bokeh", 0X4);
+			cnce_save_otp_check_result(otp_cxt->dev_name, "wt", 0X4);
 		}
 		if (cali_items->is_lsc && cali_items->is_lsc_self_cal) {
 			gc5035_common_lsc_calibration(otp_drv_handle);
