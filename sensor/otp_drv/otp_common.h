@@ -17,6 +17,8 @@ cmr_int sensor_otp_decompress_gain(cmr_u16 *src, cmr_u32 src_bytes,
 void sensor_otp_change_pattern(cmr_u32 pattern, cmr_u16 *interlaced_gain,
                                cmr_u16 *chn_gain[4], cmr_u16 gain_num);
 cmr_int sensor_otp_dump_raw_data(cmr_u8 *buffer, int size, char *dev_name);
+cmr_int cnce_save_otp_check_result(char *dev_name, cmr_u8* check_type, cmr_int result);
+cmr_int cnce_clear_otp_check_result(char *dev_name);
 
 cmr_int sensor_otp_dump_data2txt(cmr_u8 *buffer, int size, char *dev_name);
 
