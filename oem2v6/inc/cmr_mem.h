@@ -20,6 +20,7 @@
 extern "C" {
 #endif
 
+#include <cutils/list.h>
 #include "cmr_common.h"
 
 enum isp_raw_format{
@@ -43,6 +44,45 @@ struct cmr_cap_2_frm {
     alloc_mem_ptr alloc_mem;
     free_mem_ptr free_mem;
 };
+
+
+struct cmr_buf {
+	struct listnode list;
+	int fd;
+	void *gpu_handle;
+	cmr_u32 cache;
+	cmr_u32 mem_type;
+	cmr_u32 mem_size;
+	cmr_u32 used;
+	cmr_uint vaddr;
+	cmr_uint paddr;
+};
+
+struct cmr_queue {
+	cmr_u32 type;
+	cmr_u32 max;
+	cmr_u32 limit_size;
+	cmr_u32 cnt;
+	cmr_u32 free_cnt;
+	cmr_u32 total_size;
+	void *lock;
+	struct listnode header;
+};
+
+int check_free_buffer(struct cmr_queue *q, uint32_t size, uint32_t *cnt);
+int get_free_buffer(struct cmr_queue *q, uint32_t size, struct cmr_buf *dst);
+int put_free_buffer(struct cmr_queue *q, struct cmr_buf *dst);
+int get_buf_gpuhandle(struct cmr_queue *q, int32_t buf_fd, void **gpu_hanlde);
+
+int inc_buffer_q(struct cmr_queue *q, struct memory_param *mops, uint32_t size, uint32_t *cnt);
+int dec_buffer_q(struct cmr_queue *q, struct memory_param *mops, uint32_t size, uint32_t *cnt);
+int inc_gbuffer_q(struct cmr_queue *q, struct memory_param *mops,
+        uint32_t width, uint32_t height, uint32_t *cnt);
+
+int init_buffer_q(struct cmr_queue *q, uint32_t max, uint32_t type);
+int deinit_buffer_q(struct cmr_queue *q, struct memory_param *mops);
+int clear_buffer_queue(struct cmr_queue *q, struct memory_param *mops);
+
 
 int camera_set_largest_pict_size(cmr_u32 camera_id, cmr_u16 width,
                                  cmr_u16 height);

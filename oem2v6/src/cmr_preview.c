@@ -1655,8 +1655,10 @@ cmr_int cmr_preview_update_zoom(cmr_handle preview_handle, cmr_u32 camera_id,
     if (ZOOM_LEVEL == param->mode) {
         CMR_LOGD("update zoom, zoom_level %ld", param->zoom_level);
     } else {
-        CMR_LOGD("update zoom, zoom_ratio=%f prev=%f, video=%f, cap=%f",
+        CMR_LOGD("zoom_ratio=%f, crop (%d %d %d %d), prev=%f, video=%f, cap=%f",
                  param->zoom_info.zoom_ratio,
+                 param->zoom_info.crop_region.start_x, param->zoom_info.crop_region.start_y,
+                 param->zoom_info.crop_region.width, param->zoom_info.crop_region.height,
                  param->zoom_info.prev_aspect_ratio,
                  param->zoom_info.video_aspect_ratio,
                  param->zoom_info.capture_aspect_ratio);
@@ -2577,8 +2579,10 @@ cmr_int prev_thread_proc(struct cmr_msg *message, void *p_data) {
         if (ZOOM_LEVEL == zoom_param->mode) {
             CMR_LOGD("update zoom, zoom_level %ld", zoom_param->zoom_level);
         } else {
-            CMR_LOGD("update zoom, zoom_ratio=%f, prev=%f, video=%f, cap=%f",
+            CMR_LOGD("zoom_ratio=%f, crop (%d %d %d %d), prev=%f, video=%f, cap=%f",
                      zoom_param->zoom_info.zoom_ratio,
+                     zoom_param->zoom_info.crop_region.start_x, zoom_param->zoom_info.crop_region.start_y,
+                     zoom_param->zoom_info.crop_region.width, zoom_param->zoom_info.crop_region.height,
                      zoom_param->zoom_info.prev_aspect_ratio,
                      zoom_param->zoom_info.video_aspect_ratio,
                      zoom_param->zoom_info.capture_aspect_ratio);
@@ -13717,6 +13721,7 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
 
     trim_sz.width = sn_mode_info->scaler_trim.width;
     trim_sz.height = sn_mode_info->scaler_trim.height;
+    cxt->sn_cxt.cur_sn_size = *sensor_size;
 
     /*caculate trim rect*/
     if (ZOOM_INFO != zoom_param->mode) {

@@ -78,6 +78,8 @@ struct CAMERA_MEM_CB_TYPE_STAT mem_cb_stat[CAMERA_MEM_CB_TYPE_MAX] = {
     {CAMERA_SNAPSHOT, CACHE_TRUE},
     {CAMERA_SNAPSHOT_ZSL, CACHE_TRUE},
     {CAMERA_VIDEO, CACHE_TRUE},
+    {CAMERA_BUF_CACHE, CACHE_TRUE},
+    {CAMERA_BUF_UNCACHE, CACHE_FASLE},
     {CAMERA_PREVIEW_RESERVED, CACHE_TRUE},
     {CAMERA_SNAPSHOT_ZSL_RESERVED_MEM, CACHE_TRUE},
     {CAMERA_SNAPSHOT_ZSL_RESERVED, CACHE_TRUE},
@@ -257,6 +259,8 @@ static top_app_id whitelist[] = {TOP_APP_WECHAT, TOP_APP_QQ, TOP_APP_FACEBOOK, T
 bool gIsApctCamInitTimeShow = false;
 bool gIsApctRead = false;
 struct mlog_infotag mlog_info[CAMERA_ID_COUNT]; /* total as physic camera id */
+camera_memory_dbg_t g_mem_dbg;
+camera_memory_dbg_t *p_mem_dbg = &g_mem_dbg;
 
 bool SprdCamera3OEMIf::mZslCaptureExitLoop = false;
 multi_camera_zsl_match_frame *SprdCamera3OEMIf::mMultiCameraMatchZsl = NULL;
@@ -593,6 +597,9 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     cam_MemIonQueue.clear();
     cam_MemGpuQueue.clear();
 
+    mIonQueue.count = 0;
+    mIonQueue.BufList.clear();
+
     mPreviewWidth = 0;
     mPreviewHeight = 0;
     mVideoWidth = 0;
@@ -844,8 +851,8 @@ void SprdCamera3OEMIf::closeCamera() {
 
     mJpegDebugQ.clear();
     mReleaseFLag = true;
-    HAL_LOGI(":hal3: X CamId=%d TotalIonSize=%d TotalGpuSize=%d",
-              mCameraId, mTotalIonSize, mTotalGpuSize);
+    HAL_LOGI(":hal3: X CamId=%d TotalIonSize=%d TotalGpuSize=%d, total_size %d",
+              mCameraId, mTotalIonSize, mTotalGpuSize, p_mem_dbg->total_size);
 }
 
 int SprdCamera3OEMIf::getCameraId() const { return mCameraId; }
@@ -2974,7 +2981,7 @@ sprd_camera_memory_t *SprdCamera3OEMIf::allocCameraMem(int buf_size,
     size_t mem_size = 0;
     MemIon *pHeapIon = NULL;
 
-    HAL_LOGD("buf_size %d, num_bufs %d", buf_size, num_bufs);
+    HAL_LOGD("buf_size %d, num_bufs %d, cached %d\n", buf_size, num_bufs, is_cache);
     sprd_camera_memory_t *memory =
         (sprd_camera_memory_t *)malloc(sizeof(sprd_camera_memory_t));
     if (NULL == memory) {
@@ -3024,6 +3031,7 @@ sprd_camera_memory_t *SprdCamera3OEMIf::allocCameraMem(int buf_size,
     memory->ion_heap = pHeapIon;
     memory->fd = pHeapIon->getHeapID();
     memory->dev_fd = pHeapIon->getIonDeviceFd();
+    memory->cached = is_cache;
     // memory->phys_addr is offset from memory->fd, always set 0 for yaddr
     memory->phys_addr = 0;
     memory->phys_size = mem_size;
@@ -3032,7 +3040,11 @@ sprd_camera_memory_t *SprdCamera3OEMIf::allocCameraMem(int buf_size,
     HAL_LOGD("fd=0x%x, phys_addr=0x%lx, virt_addr=%p, size=0x%lx, heap=%p, TotalIonSize=%d",
              memory->fd, memory->phys_addr, memory->data, memory->phys_size,
              pHeapIon, mTotalIonSize);
-
+    if (mem_size > 0) {
+        Mutex::Autolock l(&p_mem_dbg->Lock);
+        p_mem_dbg->total_cnt++;
+        p_mem_dbg->total_size += (cmr_u32)mem_size;
+    }
     return memory;
 
 getpmem_fail:
@@ -3046,6 +3058,9 @@ getpmem_fail:
 void SprdCamera3OEMIf::freeCameraMem(sprd_camera_memory_t *memory) {
     if (memory) {
         if (memory->ion_heap) {
+            Mutex::Autolock l(&p_mem_dbg->Lock);
+            p_mem_dbg->total_cnt--;
+            p_mem_dbg->total_size -= (cmr_u32)memory->phys_size;
             mTotalIonSize = mTotalIonSize - (memory->phys_size);
             HAL_LOGD(
                 "fd=0x%x, phys_addr=0x%lx, virt_addr=%p, size=0x%lx, heap=%p, TotalIonSize=%d",
@@ -3114,6 +3129,38 @@ void SprdCamera3OEMIf::freeAllCameraMem() {
         mCommonHeapReserved = NULL;
     }
 #endif
+
+    // free base common ION buffer.
+    // This Q should be empty here because memory owner(who apply for malloc it) should free them before this function called
+    // If any buffer is freed here, the buffer owner MUST notice it, because it ''IS'' memory leak actually.
+    // It is not the duty of memory manager to handle this type of memory leak.
+    for (List<IonBufNode>::iterator itor1 = mIonQueue.BufList.begin();
+			itor1 != mIonQueue.BufList.end(); itor1++) {
+        if (itor1->mIonHeap != NULL) {
+            HAL_LOGD("mem_type=%d mIonHeap=%p, fd=0x%x, ghandle %p, addr %p\n",
+			itor1->mem_type, itor1->mIonHeap, itor1->mIonHeap->fd,
+			itor1->mIonHeap->graphicBuffer_handle, itor1->mIonHeap->data);
+            if (itor1->mIonHeap->graphicBuffer_handle) {
+                memory->unmap(&(itor1->mIonHeap->native_handle), NULL);
+                itor1->mIonHeap->graphicBuffer.clear();
+                itor1->mIonHeap->graphicBuffer = NULL;
+                mTotalGpuSize -= (cmr_u32)itor1->mIonHeap->phys_size;
+                if (itor1->mIonHeap->phys_size > 0) {
+                    Mutex::Autolock l(&p_mem_dbg->Lock);
+                    p_mem_dbg->total_cnt--;
+                    p_mem_dbg->total_size -= (cmr_u32)itor1->mIonHeap->phys_size;
+                }
+                free(itor1->mIonHeap);
+            } else {
+                freeCameraMem(itor1->mIonHeap);
+            }
+            itor1->mIonHeap = NULL;
+        }
+    }
+
+    mIonQueue.count = 0;
+    mIonQueue.BufList.clear();
+
     // free all ION buffer
     for (List<MemIonQueue>::iterator itor1 = cam_MemIonQueue.begin();
                                       itor1 != cam_MemIonQueue.end();) {
@@ -3138,6 +3185,11 @@ void SprdCamera3OEMIf::freeAllCameraMem() {
                               NULL);
             }
             mTotalGpuSize = mTotalGpuSize - (itor2->mGpuHeap.buf_size);
+            if (itor2->mGpuHeap.buf_size > 0) {
+                Mutex::Autolock l(&p_mem_dbg->Lock);
+                p_mem_dbg->total_cnt--;
+                p_mem_dbg->total_size -= (cmr_u32)itor2->mGpuHeap.buf_size;
+            }
             itor2->mGpuHeap.bufferhandle.clear();
             itor2->mGpuHeap.bufferhandle = NULL;
             itor2 = cam_MemGpuQueue.erase(itor2);
@@ -3155,8 +3207,8 @@ void SprdCamera3OEMIf::freeAllCameraMem() {
     if ((mTotalIonSize != 0) || (mTotalGpuSize != 0))
         HAL_LOGE("ION/GPU buffer memory leak!!!");
 
-    HAL_LOGI(":hal3: X CamId=%d TotalIonSize=%d TotalGpuSize=%d",
-              mCameraId, mTotalIonSize, mTotalGpuSize);
+    HAL_LOGI(":hal3: X CamId=%d TotalIonSize=%d TotalGpuSize=%d, total_size %d",
+              mCameraId, mTotalIonSize, mTotalGpuSize, p_mem_dbg->total_size);
 }
 
 bool SprdCamera3OEMIf::initPreview() {
@@ -3488,8 +3540,8 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     // used for single camera need raw stream
     // queueRawBuffers();
 
-    HAL_LOGI("X CamId=%d TotalIonSize=%d TotalGpuSize=%d",
-              mCameraId, mTotalIonSize, mTotalGpuSize);
+    HAL_LOGI("X CamId=%d TotalIonSize=%d TotalGpuSize=%d, total_size %d",
+              mCameraId, mTotalIonSize, mTotalGpuSize, p_mem_dbg->total_size);
 
     return NO_ERROR;
 }
@@ -5385,6 +5437,11 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         goto exit;
     }
 
+    if (frame->zsl_private) {
+        HAL_LOGV("is_mfsr.  set mExitCurZslLoop = 1");
+        mExitCurZslLoop = 1;
+    }
+
     if (0 != frame->sensor_info.exposure_time_denominator) {
         exposureTime = 1000000000ll *
                        frame->sensor_info.exposure_time_numerator /
@@ -5441,11 +5498,11 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         Mutex::Autolock l(&mJpegDebugQLock);
         List<ZslBufferQueue>::iterator itor;
         ZslBufferQueue node;
-        camera_frame_type *frame;
         cmr_s32 frame_id = -1;
 
         HAL_LOGD("Cam%d JpegQueue size %d\n", mCameraId, mJpegDebugQ.size());
         if (mJpegDebugQ.size() > 0) {
+            camera_frame_type *frame;
             itor = mJpegDebugQ.begin()++;
             node = static_cast<ZslBufferQueue>(*itor);
             frame = &node.frame;
@@ -5453,7 +5510,10 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
             HAL_LOGD("Cam%d JpegQueue pop fd 0x%x,  frame_id %d, frame_num %d\n",
                         mCameraId, frame->fd, frame->frame_num, frame->buf_id);
             frame_id = (cmr_s32)frame->frame_num;
-	}
+        } else {
+            HAL_LOGD("Cam%d, is_mfsr %d, frame_id %d\n", mCameraId, frame->zsl_private, frame->frame_num);
+            frame_id = (cmr_s32)frame->frame_num;
+        }
 
         // add isp debug info for userdebug version
         ret = mHalOem->ops->camera_get_isp_info(mCameraHandle, &ispInfoAddr,
@@ -5845,7 +5905,23 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
         }
         break;
     }
+
     case CAMERA_EVT_CB_SNAPSHOT_JPEG_DONE: {
+        ZslBufferQueue zslFrame;
+
+        HAL_LOGD("mZSLQueue size : %d", mZSLQueue.size());
+        bzero(&zslFrame, sizeof(zslFrame));
+        /* flush unused frames and set buffer to driver */
+        while (mZSLQueue.size() > 0) {
+            zslFrame = popZSLQueue();
+            if (zslFrame.frame.y_vir_addr == 0 || zslFrame.frame.fd == 0)
+                break;
+            mHalOem->ops->camera_set_zsl_buffer(mCameraHandle,
+                zslFrame.frame.y_phy_addr, zslFrame.frame.y_vir_addr, zslFrame.frame.fd);
+            zslFrame.frame.y_vir_addr = 0;
+            zslFrame.frame.fd = 0;
+        }
+
         exitFromPostProcess();
         break;
     }
@@ -8864,6 +8940,10 @@ int SprdCamera3OEMIf::freeCameraMemForGpu(cmr_uint *phy_addr,
             return ret;
         }
         if (mZslGraphicsHandle[i].graphicBuffer != NULL) {
+            Mutex::Autolock l(&p_mem_dbg->Lock);
+            p_mem_dbg->total_cnt--;
+            p_mem_dbg->total_size -= (cmr_u32)mZslGraphicsHandle[i].buf_size;
+
             mZslGraphicsHandle[i].graphicBuffer.clear();
             mZslGraphicsHandle[i].graphicBuffer = NULL;
             mTotalGpuSize = mTotalGpuSize - mZslGraphicsHandle[i].buf_size;
@@ -8880,7 +8960,7 @@ int SprdCamera3OEMIf::freeCameraMemForGpu(cmr_uint *phy_addr,
     }
     mZslHeapNum = 0;
     releaseZSLQueue();
-    HAL_LOGD("TotalGpuSize=%d", mTotalGpuSize);
+    HAL_LOGD("TotalGpuSize=%d, total_size %d", mTotalGpuSize, p_mem_dbg->total_size);
     return 0;
 }
 
@@ -8897,9 +8977,6 @@ int SprdCamera3OEMIf::allocCameraMemForGpu(cmr_u32 size, cmr_u32 sum,
     uint32_t yuvTextUsage = GraphicBuffer::USAGE_HW_TEXTURE |
                             GraphicBuffer::USAGE_SW_READ_OFTEN |
                             GraphicBuffer::USAGE_SW_WRITE_OFTEN;
-    if (!mIommuEnabled) {
-        yuvTextUsage |= GRALLOC_USAGE_VIDEO_BUFFER;
-    }
     int usage = (uint64_t)BufferUsage::CPU_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
     SPRD_DEF_Tag *sprddefInfo;
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
@@ -8911,7 +8988,10 @@ int SprdCamera3OEMIf::allocCameraMemForGpu(cmr_u32 size, cmr_u32 sum,
 
     Rect bounds(width, height);
     HAL_LOGD("size %d sum %d mZslHeapNum %d", size, sum, mZslHeapNum);
+    if (!mIommuEnabled)
+        yuvTextUsage |= GRALLOC_USAGE_VIDEO_BUFFER;
 
+    size = (cmr_u32)(width * height * 3 / 2);
     for (i = 0; i < (cmr_int)mZslNum; i++) {
         if (mZslHeapArray[i] == NULL) {
             sprd_camera_memory_t *memory =
@@ -8923,7 +9003,6 @@ int SprdCamera3OEMIf::allocCameraMemForGpu(cmr_u32 size, cmr_u32 sum,
             memset(memory, 0, sizeof(sprd_camera_memory_t));
             mZslHeapArray[i] = memory;
             mZslHeapNum++;
-            mTotalGpuSize = mTotalGpuSize + width * height;
             graphicBuffer = new GraphicBuffer(width, height,
                                               HAL_PIXEL_FORMAT_YCrCb_420_SP, 1,
                                               yuvTextUsage, "sw_3dnr");
@@ -8943,16 +9022,19 @@ int SprdCamera3OEMIf::allocCameraMemForGpu(cmr_u32 size, cmr_u32 sum,
             mZslGraphicsHandle[i].graphicBuffer = graphicBuffer;
             mZslGraphicsHandle[i].graphicBuffer_handle = graphicBuffer.get();
             mZslGraphicsHandle[i].native_handle = nativeHandle;
-            mZslGraphicsHandle[i].buf_size = width * height;
-            HAL_LOGD("graphicBuffer_handle 0x%p, fd=0x%x, addr=0x%x",
-                     mZslGraphicsHandle[i].graphicBuffer_handle, mZslHeapArray[i]->fd,
-                     (cmr_uint)mZslHeapArray[i]->data);
+            mZslGraphicsHandle[i].buf_size = size;
+            mTotalGpuSize = mTotalGpuSize + size;
+            if (size > 0) {
+                Mutex::Autolock l(&p_mem_dbg->Lock);
+                p_mem_dbg->total_cnt++;
+                p_mem_dbg->total_size += size;
+            }
         }
         *phy_addr++ = (cmr_uint)mZslHeapArray[i]->phys_addr;
         *vir_addr++ = (cmr_uint)mZslHeapArray[i]->data;
         *fd++ = mZslHeapArray[i]->fd;
     }
-    HAL_LOGD("TotalGpuSize=%d", mTotalGpuSize);
+    HAL_LOGD("TotalGpuSize=%d, total_size %d", mTotalGpuSize, p_mem_dbg->total_size);
     return 0;
 
 mem_fail:
@@ -9582,11 +9664,12 @@ int SprdCamera3OEMIf::Callback_GraphicBufferMalloc(
     MemGpuQueue memGpu_queue;
     HAL_LOGV("ultra wide malloc %d, shape: %d x %d, size: %d!", sum, width,
              height, size);
+    size = (cmr_u32)(width * height * 3 / 2);
     for (cmr_u32 i = 0; i < sum; i++) {
         if (mGraphicBufNum >= MAX_GRAPHIC_BUF_NUM)
             goto malloc_failed;
 
-        mTotalGpuSize = mTotalGpuSize + width * height;
+        mTotalGpuSize = mTotalGpuSize + size;
         sp<GraphicBuffer> pbuffer = new GraphicBuffer(
             width, height, HAL_PIXEL_FORMAT_YCrCb_420_SP, yuvTextUsage,
             std::string("Camera3OEMIf GraphicBuffer"));
@@ -9642,8 +9725,13 @@ int SprdCamera3OEMIf::Callback_GraphicBufferMalloc(
             HAL_LOGD("fd=0x%x", (cmr_u32)fd[i]);
         } else
             memGpu_queue.mGpuHeap.private_handle = NULL;
-        memGpu_queue.mGpuHeap.buf_size = width * height;
+        memGpu_queue.mGpuHeap.buf_size = size;
         memGpu_queue.mem_type = type;
+        if (size > 0) {
+            Mutex::Autolock l(&p_mem_dbg->Lock);
+            p_mem_dbg->total_cnt++;
+            p_mem_dbg->total_size += size;
+        }
         cam_MemGpuQueue.push_back(memGpu_queue);
         mGraphicBufNum++;
     }
@@ -9676,6 +9764,11 @@ int SprdCamera3OEMIf::Callback_GraphicBufferFree(
             } else {
                 memory->unmap(&(itor->mGpuHeap.bufferhandle->handle),
                               NULL);
+            }
+            if (itor->mGpuHeap.buf_size > 0) {
+                Mutex::Autolock l(&p_mem_dbg->Lock);
+                p_mem_dbg->total_cnt--;
+                p_mem_dbg->total_size -= itor->mGpuHeap.buf_size;
             }
             mTotalGpuSize = mTotalGpuSize - (itor->mGpuHeap.buf_size);
             itor->mGpuHeap.bufferhandle.clear();
@@ -9848,6 +9941,206 @@ mem_fail:
     return BAD_VALUE;
 }
 
+
+int SprdCamera3OEMIf::ION_Free(enum camera_mem_cb_type type,
+                                         cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 num)
+{
+	cmr_u32 i;
+	SprdCamera3GrallocMemory *memory = new SprdCamera3GrallocMemory();
+	Mutex::Autolock l(&mIonQueue.qLock);
+
+	HAL_LOGD("E. mem_type=%d sum=%d", type, num);
+	if (num == 0) {
+		delete memory;
+		return 0;
+	}
+
+	for (i = 0; i < num; i++) {
+		for (List<IonBufNode>::iterator itor = mIonQueue.BufList.begin();
+					itor != mIonQueue.BufList.end(); itor++) {
+			if ((type == itor->mem_type) && (NULL != itor->mIonHeap) && itor->mIonHeap->fd == fd[i]) {
+				HAL_LOGD("i=%d, type=%d mIonHeap=%p, cached %d, fd=0x%x, ghandle %p, vaddr=0x%lx, 0x%lx\n",
+					i, type, itor->mIonHeap, itor->mIonHeap->cached,
+					fd[i], itor->mIonHeap->graphicBuffer_handle,
+					vir_addr[i], (cmr_uint)itor->mIonHeap->data);
+				if (itor->mIonHeap->graphicBuffer_handle) {
+					memory->unmap(&(itor->mIonHeap->native_handle), NULL);
+					itor->mIonHeap->graphicBuffer.clear();
+					itor->mIonHeap->graphicBuffer = NULL;
+					mTotalGpuSize -= (cmr_u32)itor->mIonHeap->phys_size;
+					if (itor->mIonHeap->phys_size > 0) {
+						Mutex::Autolock l(&p_mem_dbg->Lock);
+						p_mem_dbg->total_cnt--;
+						p_mem_dbg->total_size -= (cmr_u32)itor->mIonHeap->phys_size;
+					}
+					free(itor->mIonHeap);
+				} else {
+					freeCameraMem(itor->mIonHeap);
+				}
+				itor->mIonHeap = NULL;
+				mIonQueue.BufList.erase(itor);
+				mIonQueue.count--;
+				break;
+			}
+		}
+	}
+
+	delete memory;
+	HAL_LOGD("X. mIonQueue len %d, mTotalIonSize=%d, mTotalGpuSize=%d\n",
+		mIonQueue.count, mTotalIonSize, mTotalGpuSize);
+	return 0;
+}
+
+int SprdCamera3OEMIf::ION_Malloc(enum camera_mem_cb_type type,
+                                           cmr_u32 cached, cmr_u32 size, cmr_u32 *num_ptr,
+                                           cmr_uint *phy_addr,
+                                           cmr_uint *vir_addr, cmr_s32 *fd)
+{
+	sprd_camera_memory_t *memory = NULL;
+	IonBufNode memIonNode;
+	cmr_u32 i, j, num;
+
+	num = *num_ptr;
+	HAL_LOGD("mem_type=%d cached %d, size=%d num=%d, mTotalIonSize=%d\n",
+		type, cached, size, num, mTotalIonSize);
+
+	if (size == 0 || num == 0)
+		return 0;
+
+	for (i = 0; i < num; i++) {
+		phy_addr[i] = 0;
+		vir_addr[i] = 0;
+		fd[i] = 0;
+	}
+
+	for (i = 0, j = 0; i < num; i++, j = 0) {
+		memIonNode.mIonHeap = NULL;
+		do {
+			memIonNode.mIonHeap = allocCameraMem(size, 1, cached);
+		} while (memIonNode.mIonHeap == NULL && (j++ < 10));
+
+		if (memIonNode.mIonHeap != NULL) {
+			Mutex::Autolock l(&mIonQueue.qLock);
+
+			memIonNode.mem_type = type;
+			mIonQueue.BufList.push_back(memIonNode);
+			mIonQueue.count++;
+			phy_addr[i] = (cmr_uint)memIonNode.mIonHeap->phys_addr;
+			vir_addr[i] = (cmr_uint)memIonNode.mIonHeap->data;
+			fd[i] = memIonNode.mIonHeap->fd;
+			HAL_LOGD("i=%d, type=%d, vaddr=0x%lx, paddr=0x%lx, fd=0x%x\n",
+				i, type, phy_addr[i], vir_addr[i], fd[i]);
+		} else {
+			HAL_LOGE("fail to alloc buf size = %d, type %d\n", size, type);
+			break;
+		}
+	}
+
+	*num_ptr = i;
+	HAL_LOGD("X, ret num=%d, mTotalIonSize=%d. mIonQueue len %d\n",
+		*num_ptr, mTotalIonSize, mIonQueue.count);
+	return 0;
+}
+
+int SprdCamera3OEMIf::Graphic_Malloc(enum camera_mem_cb_type type,
+                                           cmr_u32 cached, cmr_u32 *size_ptr, cmr_u32 *num_ptr,
+                                           cmr_uint *phy_addr,
+                                           cmr_uint *vir_addr, cmr_s32 *fd,
+                                           void **handle, cmr_u32 width, cmr_u32 height)
+{
+	int ret = 0;
+	IonBufNode memIonNode;
+	cmr_u32 i, j, num;
+	hal_mem_info_t buf_mem_info;
+	uint32_t yuvTextUsage = GraphicBuffer::USAGE_HW_TEXTURE |
+                            GraphicBuffer::USAGE_SW_READ_OFTEN |
+                            GraphicBuffer::USAGE_SW_WRITE_OFTEN;
+	SprdCamera3GrallocMemory *memory = new SprdCamera3GrallocMemory();
+
+	num = *num_ptr;
+	HAL_LOGD("mem_type=%d cached %d, (%d %d), num=%d, mTotalGpuSize=%d\n",
+		type, cached, width, height, num, mTotalGpuSize);
+
+	if (width == 0 || height == 0 || num == 0) {
+		delete memory;
+		return 0;
+	}
+
+	for (i = 0; i < num; i++) {
+		phy_addr[i] = 0;
+		vir_addr[i] = 0;
+		fd[i] = 0;
+		handle[i] = NULL;
+	}
+
+	for (i = 0, j = 0; i < num; i++, j = 0) {
+		Mutex::Autolock l(&mIonQueue.qLock);
+
+		memIonNode.mIonHeap = NULL;
+		do {
+			memIonNode.mIonHeap =
+				(sprd_camera_memory_t *)malloc(sizeof(sprd_camera_memory_t));
+		} while (memIonNode.mIonHeap == NULL && (j++ < 10));
+
+		if (memIonNode.mIonHeap == NULL) {
+			HAL_LOGE("fail to malloc buf base\n");
+			break;
+		}
+		memset(memIonNode.mIonHeap, 0, sizeof(sprd_camera_memory_t));
+		memIonNode.mem_type = type;
+		memIonNode.mIonHeap->cached = 1;
+
+		sp<GraphicBuffer> pbuffer = new GraphicBuffer(
+			width, height, HAL_PIXEL_FORMAT_YCrCb_420_SP, yuvTextUsage,
+			std::string("camhal"));
+		ret = pbuffer->initCheck();
+		if (ret || !pbuffer->handle) {
+			free(memIonNode.mIonHeap);
+			pbuffer = NULL;
+			break;
+		}
+		ret = memory->map(&(pbuffer->handle), &buf_mem_info);
+		if (ret) {
+			free(memIonNode.mIonHeap);
+			pbuffer = NULL;
+			break;
+		}
+
+		size_ptr[i] = width * height * 3 / 2;
+		phy_addr[i] = (cmr_uint)buf_mem_info.addr_phy;
+		vir_addr[i] = (cmr_uint)buf_mem_info.addr_vir;
+		fd[i] = buf_mem_info.fd;
+		handle[i] = pbuffer.get();
+
+		memIonNode.mIonHeap->phys_size = size_ptr[i];
+		memIonNode.mIonHeap->phys_addr = phy_addr[i];
+		memIonNode.mIonHeap->data = (void *)vir_addr[i];
+		memIonNode.mIonHeap->fd = fd[i];
+		memIonNode.mIonHeap->graphicBuffer_handle = handle[i];
+		memIonNode.mIonHeap->graphicBuffer = pbuffer;
+		memIonNode.mIonHeap->native_handle = (native_handle_t *)pbuffer->handle;
+		mTotalGpuSize += size_ptr[i];
+		mIonQueue.BufList.push_back(memIonNode);
+		mIonQueue.count++;
+		if (size_ptr[i] > 0) {
+			Mutex::Autolock l(&p_mem_dbg->Lock);
+			p_mem_dbg->total_cnt++;
+			p_mem_dbg->total_size += size_ptr[i];
+		}
+		HAL_LOGD("i=%d, type=%d, vaddr=0x%lx, fd=0x%x, ghandle %p, (%d %d) buf size %d\n",
+				i, type, vir_addr[i], fd[i], handle[i], width, height, size_ptr[i]);
+	}
+
+	*num_ptr = i;
+	if (i == 0)
+		ret = NO_MEMORY;
+
+	HAL_LOGD("X, ret num=%d, mTotalGpuSize=%d. mIonQueue len %d\n",
+		*num_ptr, mTotalGpuSize, mIonQueue.count);
+	delete memory;
+	return ret;
+}
+
 int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type,
                                     cmr_uint *phy_addr, cmr_uint *vir_addr,
                                     cmr_s32 *fd, cmr_u32 sum,
@@ -9871,6 +10164,8 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type,
         // Performance optimization:move Callback_CaptureFree to closeCamera
         // function
         // ret = camera->Callback_CaptureFree(phy_addr, vir_addr, fd, sum);
+    } else if (CAMERA_BUF_CACHE == type || CAMERA_BUF_UNCACHE == type) {
+        ret = camera->ION_Free(type, vir_addr, fd, sum);
     } else if (CAMERA_SNAPSHOT_ZSL == type) {
         ret = camera->Callback_ZslFree(phy_addr, vir_addr, fd, sum);
     } else if (CAMERA_SNAPSHOT_ZSL_RAW == type) {
@@ -9921,6 +10216,10 @@ int SprdCamera3OEMIf::Callback_IonMalloc(enum camera_mem_cb_type type,
     if (CAMERA_PREVIEW == type || CAMERA_VIDEO == type) {
         //preview & video buffer from framework
         HAL_LOGD("Do not need malloc,mem_type %d buffer from framework", type);
+    } else if (CAMERA_BUF_CACHE == type) {
+        ret = camera->ION_Malloc(type, 1, size, sum_ptr, phy_addr, vir_addr, fd);
+    } else if (CAMERA_BUF_UNCACHE == type) {
+        ret = camera->ION_Malloc(type, 0, size, sum_ptr, phy_addr, vir_addr, fd);
     } else if (CAMERA_SNAPSHOT == type) {
         ret = camera->Callback_CaptureMalloc(size, sum, phy_addr, vir_addr, fd);
     } else if (CAMERA_SNAPSHOT_ZSL == type) {
@@ -9951,10 +10250,10 @@ int SprdCamera3OEMIf::Callback_GpuMalloc(enum camera_mem_cb_type type,
     SprdCamera3RegularChannel *channel = NULL;
     HAL_LOGV("E");
 
-    if (!private_data || !vir_addr || !fd || !size_ptr || !sum_ptr ||
-        (0 == *size_ptr) || (0 == *sum_ptr)) {
-        HAL_LOGE("param error 0x%lx 0x%lx 0x%lx 0x%lx", (cmr_uint)handle,
-                 (cmr_uint)private_data, (cmr_uint)size_ptr, (cmr_uint)sum_ptr);
+    if (!private_data || !vir_addr || !fd || !size_ptr || !sum_ptr
+		|| !handle || !width || !height) {
+        HAL_LOGE("param error %p %p, %p %p, %p %p, %p %p\n", private_data, handle,
+                vir_addr, fd, size_ptr, sum_ptr, width, height);
         return BAD_VALUE;
     }
 
@@ -9966,6 +10265,11 @@ int SprdCamera3OEMIf::Callback_GpuMalloc(enum camera_mem_cb_type type,
         return BAD_VALUE;
     }
     switch (type) {
+    case CAMERA_BUF_CACHE:
+    case CAMERA_BUF_UNCACHE:
+        ret = camera->Graphic_Malloc(type, 1, size_ptr, sum_ptr, phy_addr, vir_addr, fd, handle,
+				(cmr_u32)*width, (cmr_u32)*height);
+        break;
     case CAMERA_PREVIEW_ULTRA_WIDE:
     case CAMERA_VIDEO_ULTRA_WIDE:
     case CAMERA_VIDEO_EIS_ULTRA_WIDE:
@@ -11501,10 +11805,11 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
     // sharkl2-like
     // obj->skipZslFrameForFlashCapture();
 
+    mExitCurZslLoop = 0;
     do {
         ret = 0;
         // for exception exit
-        if (obj->mZslCaptureExitLoop == true) {
+        if (obj->mZslCaptureExitLoop == true || mExitCurZslLoop) {
             HAL_LOGD("zsl loop exit done.");
             break;
         }

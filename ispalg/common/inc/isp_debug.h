@@ -447,6 +447,8 @@ typedef struct _isp_log_info {
 	cmr_u32 microdepth_len;
 	cmr_u32 fdr_off;
 	cmr_u32 fdr_len;
+	cmr_u32 mfsr_off;
+	cmr_u32 mfsr_len;
 	cmr_s32 ver;
 	char AF_version[20];		//AF-yyyymmdd-xx
 	char magic[8];

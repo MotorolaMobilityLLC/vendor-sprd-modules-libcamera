@@ -288,6 +288,11 @@ struct fdr_info {
 	cmr_u32 log_fdr_size;
 };
 
+struct mfsr_info {
+	cmr_u8 *log_mfsr;
+	cmr_u32 log_mfsr_size;
+};
+
 struct hdr_info {
 	cmr_s32 tuning_param_size;
 	void *tuning_param_ptr;
@@ -442,6 +447,7 @@ struct isp_alg_fw_context {
 	struct ai_info ai_cxt;
 	struct fdr_info fdr_cxt;
 	struct hdr_info hdr_cxt;
+	struct mfsr_info mfsr_cxt;
 	struct swalgo_pm_info swpm_ctx;
 	struct sensor_libuse_info *lib_use_info;
 	struct sensor_raw_ioctrl *ioctrl_ptr;
@@ -7582,6 +7588,11 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 	if (cxt->commn_cxt.log_isp) {
 		free(cxt->commn_cxt.log_isp);
 		cxt->commn_cxt.log_isp = NULL;
+	}
+
+	if (cxt->mfsr_cxt.log_mfsr) {
+		free(cxt->mfsr_cxt.log_mfsr);
+		cxt->mfsr_cxt.log_mfsr= NULL;
 	}
 
 	if (cxt->fdr_cxt.log_fdr) {
