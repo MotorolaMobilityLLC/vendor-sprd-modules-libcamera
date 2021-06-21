@@ -316,6 +316,43 @@ cmr_int sensor_otp_dump_raw_data(cmr_u8 *buffer, int size, char *dev_name) {
     return ret;
 }
 
+cmr_int cnce_clear_otp_check_result(char *dev_name) {
+    cmr_int ret = OTP_CAMERA_SUCCESS;
+    char otp_check_bin_ext_path[255];
+
+    snprintf(otp_check_bin_ext_path, sizeof(otp_check_bin_ext_path), "%s%s_otp_check.bin",
+             otp_bin_path, dev_name);
+    OTP_LOGD("Clear otp_check_bin_ext_path:%s", otp_check_bin_ext_path);
+    FILE *fp = fopen(otp_check_bin_ext_path, "w");
+    if (fp != NULL) {
+        fclose(fp);
+    } else {
+        OTP_LOGE("fp is null!");
+        ret = -1;
+    }
+
+    return ret;
+}
+
+cmr_int cnce_save_otp_check_result(char *dev_name, cmr_u8* check_type, cmr_int result) {
+    cmr_int ret = OTP_CAMERA_SUCCESS;
+    char otp_check_bin_ext_path[255];
+
+    snprintf(otp_check_bin_ext_path, sizeof(otp_check_bin_ext_path), "%s%s_otp_check.bin",
+             otp_bin_path, dev_name);
+    OTP_LOGD("otp_check_bin_ext_path:%s", otp_check_bin_ext_path);
+    FILE *fp = fopen(otp_check_bin_ext_path, "ab+");
+    if (fp != NULL) {
+        fprintf(fp, "%s: 0x%ld\n", check_type, result);
+        fclose(fp);
+    } else {
+        OTP_LOGE("fp is null!! dump otp raw data failed");
+        ret = -1;
+    }
+
+    return ret;
+}
+
 cmr_int sensor_otp_dump_data2txt(cmr_u8 *buffer, int size, char *dev_name) {
     cmr_int ret = OTP_CAMERA_SUCCESS, i = 0;
     char value[255];
