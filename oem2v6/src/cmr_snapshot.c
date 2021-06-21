@@ -17,21 +17,24 @@
 #define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
 #include <stdlib.h>
+#include <unistd.h>
+#include <cutils/list.h>
+#include <cutils/trace.h>
+#include <cutils/properties.h>
+
 #include "cmr_snapshot.h"
 #include "cmr_msg.h"
 #include "isp_video.h"
 #include "cmr_ipm.h"
 #include "cmr_oem.h"
-#include <cutils/trace.h>
-#include "cutils/properties.h"
-#include <unistd.h>
-
-//#include "isp_otp.h"
-
+#include "cmr_mem.h"
+#include "cmr_exif.h"
 #define HW_SIMULATION_SLICE_WIDTH 1280
 #define SNP_MSG_QUEUE_SIZE 50
 #define SNP_INVALIDE_VALUE 0xFFFFFFFF
 #define SENSOR_DEFAULT_PIX_WIDTH 0x0a
+#define MAX_INT_VAL (0x7FFFFFFF)
+#define IPS_LIMIT_BUFCNT 32
 
 #define SNP_EVT_BASE (CMR_EVT_SNAPSHOT_BASE + SNPASHOT_EVT_MAX)
 
@@ -232,7 +235,16 @@ struct snp_context {
     sem_t pre_start_encode_sync_sm;
     sem_t scaler_start_sm;
     struct snp_cvt_context cvt;
+
+    struct swa_frame_param mfsr_frm_param;
+    struct img_frm mfsr_in_frm[5];
+    struct img_frm mfsr_detail_frm;
+    struct img_frm mfsr_dst_frm;
+
+    struct memory_param mem_ops;
+    struct cmr_queue buf_queue;
 };
+
 /********************************* internal data type
  * *********************************/
 static cmr_int snp_main_thread_proc(struct cmr_msg *message, void *p_data);
@@ -293,6 +305,7 @@ static cmr_int snp_post_proc_for_raw(cmr_handle snp_handle, void *data);
 static void snp_reset_ctrl_condition(cmr_handle snp_handle);
 static cmr_int snp_post_proc(cmr_handle snp_handle, void *data);
 static cmr_int snp_stop_proc(cmr_handle snp_handle);
+static cmr_int snp_mfsr_proc(cmr_handle snp_handle, void *data);
 static cmr_int snp_start_encode(cmr_handle snp_handle, void *data);
 static cmr_int snp_start_encode_thumb(cmr_handle snp_handle);
 static cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data);
@@ -366,6 +379,143 @@ static int32_t snp_img_padding(struct img_frm *src, struct img_frm *dst,
                                struct cmr_op_mean *mean);
 static cmr_int snp_ipm_process(cmr_handle snp_handle, void *data);
 
+static void convert_frame(struct img_frm *dst, struct frm_info *src)
+{
+	cmr_u32 offset0;
+	dst->base_id = src->base;
+	dst->sec = src->sec;
+	dst->usec = src->usec;
+	dst->fmt = CAM_IMG_FMT_YUV420_NV21;
+	dst->size.width = src->length;
+	dst->size.height = src->height;
+	dst->rect.start_x = 0;
+	dst->rect.start_y = 0;
+	dst->rect.width = src->length;
+	dst->rect.height = src->height;
+	dst->monoboottime = src->monoboottime;
+	dst->frame_number = src->frame_real_id;
+	dst->fd = src->fd;
+	dst->data_end.y_endian = 0;
+	dst->data_end.uv_endian = 2;
+	offset0 = dst->size.width * dst->size.height;
+	dst->addr_vir.addr_y = src->yaddr_vir;
+	dst->addr_vir.addr_u = src->yaddr_vir + offset0;
+	dst->addr_phy.addr_y = src->yaddr;
+	dst->addr_phy.addr_u = src->yaddr + offset0;
+	dst->reserved = (void *)src->zsl_private;
+}
+
+cmr_int snp_mfsr_proc(cmr_handle snp_handle, void *data)
+{
+	cmr_int ret = CMR_CAMERA_SUCCESS;
+	cmr_u32 fmt, w, h, buf_size;
+	int i, iret = 0;
+	struct buffer_cfg buf_cfg;
+	struct frm_info *frame = (struct frm_info *)data;
+	struct snp_context *cxt = (struct snp_context *)snp_handle;
+	struct camera_context *cam_cxt = (struct camera_context *)cxt->oem_handle;
+	struct ipm_context *ipm_cxt = &cam_cxt->ipm_cxt;
+	struct ipm_frame_in ipm_in_param;
+	struct ipm_frame_out ipm_out_param;
+	struct cmr_buf buf;
+	struct img_frm *cur_frm;
+
+	if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {
+		CMR_LOGD("post proc has been cancel");
+		return ret;
+	}
+	frame->length = cxt->req_param.req_size.width;
+	frame->height = cxt->req_param.req_size.height;
+	CMR_LOGD("frm %d, fd 0x%x, addr 0x%lx, fid %d size %dx%d, frm_param 0x%lx",
+		cxt->req_param.snap_cnt, frame->fd, frame->yaddr_vir,
+		frame->frame_real_id, frame->length, frame->height, frame->zsl_private);
+
+	memset(&ipm_in_param, 0, sizeof(struct ipm_frame_in));
+	memset(&ipm_out_param, 0, sizeof(struct ipm_frame_out));
+
+	convert_frame(&ipm_in_param.src_frame, frame);
+	cxt->mfsr_in_frm[cxt->req_param.snap_cnt] = ipm_in_param.src_frame;
+	ipm_in_param.dst_frame = ipm_in_param.src_frame;
+	ipm_out_param.dst_frame = ipm_in_param.src_frame;
+	if (cxt->req_param.snap_cnt > 0)
+		goto next_frm;
+
+	w = cxt->req_param.req_size.width;
+	h = cxt->req_param.req_size.height;
+	buf_size = w * h * 3 / 2;
+	memset(&buf, 0, sizeof(struct cmr_buf));
+	iret = get_free_buffer(&cxt->buf_queue, buf_size, &buf);
+	if (iret) {
+		CMR_LOGE("fail to get buffer fd %d, addr %p\n", buf.fd, (void *)buf.vaddr);
+	}
+
+	cur_frm = &ipm_in_param.dst_frame;
+	cur_frm->fd = buf.fd;
+	cur_frm->addr_vir.addr_y = buf.vaddr;
+	cur_frm->addr_vir.addr_u = buf.vaddr + w * h;
+	cur_frm->reserved = NULL;
+	CMR_LOGD("get mfsr dst buffer fd 0x%x, addr 0x%lx\n", buf.fd, buf.vaddr);
+
+	memset(&buf, 0, sizeof(struct cmr_buf));
+	iret = get_free_buffer(&cxt->buf_queue, buf_size, &buf);
+	if (iret) {
+		CMR_LOGE("fail to get buffer fd %d, addr %p\n", buf.fd, (void *)buf.vaddr);
+	}
+
+	cur_frm = &ipm_out_param.dst_frame;
+	cur_frm->fd = buf.fd;
+	cur_frm->addr_vir.addr_y = buf.vaddr;
+	cur_frm->addr_vir.addr_u = buf.vaddr + w * h;
+	cur_frm->reserved = NULL;
+	CMR_LOGD("get mfsr detail buffer fd 0x%x, addr 0x%lx\n", buf.fd, buf.vaddr);
+
+	if (frame->zsl_private) {
+		memcpy((void *)&cxt->mfsr_frm_param, (void *)frame->zsl_private, sizeof(struct swa_frame_param));
+		free((void *)frame->zsl_private);
+		frame->zsl_private = 0;
+	}
+
+	cxt->mfsr_detail_frm = ipm_out_param.dst_frame;
+	cxt->mfsr_dst_frm = ipm_in_param.dst_frame;
+
+next_frm:
+	ipm_in_param.src_frame.reserved = &cxt->mfsr_frm_param;
+	CMR_LOGD("mfsr_frm_param %p\n", ipm_in_param.src_frame.reserved);
+	ret = ipm_transfer_frame(ipm_cxt->mfsr_handle, &ipm_in_param, &ipm_out_param);
+	if (ret)
+		CMR_LOGE("fail to do mfsr processs\n");
+
+	cxt->req_param.snap_cnt++;
+	if (cxt->req_param.snap_cnt < cxt->req_param.total_num)
+		goto exit;
+
+
+	memset(&buf_cfg, 0, sizeof(struct buffer_cfg));
+	buf_cfg.channel_id = frame->channel_id;
+	buf_cfg.base_id = CMR_BASE_ID(frame->frame_id);
+	buf_cfg.count = 5;
+	buf_cfg.flag = BUF_FLAG_RUNNING;
+	for(i = 0; i < 5; i++) {
+		buf_cfg.addr[i] = cxt->mfsr_in_frm[i].addr_phy;
+		buf_cfg.addr_vir[i] = cxt->mfsr_in_frm[i].addr_vir;
+		buf_cfg.fd[i] = cxt->mfsr_in_frm[i].fd;
+	}
+	cxt->ops.channel_buff_cfg(cxt->oem_handle, &buf_cfg);
+
+	cxt->req_param.total_num = 1;
+	cxt->req_param.snap_cnt = 1;
+
+	ret = camera_local_set_zsl_snapshot_buffer(cxt->oem_handle,
+			cxt->mfsr_dst_frm.addr_phy.addr_y,
+			cxt->mfsr_dst_frm.addr_vir.addr_y,
+			cxt->mfsr_dst_frm.fd);
+	if (ret)
+		CMR_LOGE("fail to set zsl buffer fd 0x%x\n", cxt->mfsr_dst_frm.fd);
+
+exit:
+	return ret;
+}
+
 cmr_int snp_main_thread_proc(struct cmr_msg *message, void *p_data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     cmr_handle snp_handle = (cmr_handle)p_data;
@@ -421,8 +571,6 @@ cmr_int snp_proc_copy_frame(cmr_handle snp_handle, void *data) {
 cmr_int snp_postproc_thread_proc(struct cmr_msg *message, void *p_data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct snp_context *cxt = (struct snp_context *)p_data;
-    struct buffer_cfg buf_cfg;
-    struct frm_info frame = *(struct frm_info *)message->data;
 
     if (!message || !p_data) {
         CMR_LOGE("param error");
@@ -435,16 +583,22 @@ cmr_int snp_postproc_thread_proc(struct cmr_msg *message, void *p_data) {
         ret = CMR_CAMERA_NORNAL_EXIT;
         goto exit;
     }
-    CMR_LOGD("message.msg_type 0x%x, data 0x%lx, fd 0x%x", message->msg_type,
-             (cmr_uint)message->data, frame.fd);
+    CMR_LOGD("message.msg_type 0x%x, data 0x%lx",
+		message->msg_type,(cmr_uint)message->data);
     switch (message->msg_type) {
     case SNP_EVT_POSTPROC_INIT:
         break;
     case SNP_EVT_POSTPROC_START:
-        ret = snp_post_proc((cmr_handle)p_data, message->data);
+        if (cxt->req_param.is_mfsr && cxt->req_param.snap_cnt < cxt->req_param.total_num)
+            ret = snp_mfsr_proc(cxt, message->data);
+        else
+            ret = snp_post_proc((cmr_handle)p_data, message->data);
         break;
     case SNP_EVT_POSTPROC_FREE_FRM:
         if (cxt->ops.channel_buff_cfg) {
+            struct frm_info frame;
+            struct buffer_cfg buf_cfg;
+            frame = *(struct frm_info *)message->data;
             cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
             buf_cfg.channel_id = frame.channel_id;
             buf_cfg.base_id = CMR_BASE_ID(frame.frame_id);
@@ -471,7 +625,7 @@ cmr_int snp_postproc_thread_proc(struct cmr_msg *message, void *p_data) {
     }
 
 exit:
-    CMR_LOGV("X");
+    CMR_LOGD("X");
     return ret;
 }
 
@@ -645,6 +799,14 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data) {
     struct camera_frame_type frame_type;
     void *isp_info_addr = NULL;
     int isp_info_size = 0;
+
+    if (cxt->req_param.is_mfsr) {
+        struct cmr_buf buf;
+        buf.fd = cxt->mfsr_dst_frm.fd;
+        put_free_buffer(&cxt->buf_queue, &buf);
+        buf.fd = cxt->mfsr_detail_frm.fd;
+        put_free_buffer(&cxt->buf_queue, &buf);
+    }
 
     if (cxt->err_code) {
         CMR_LOGE("error exit");
@@ -1092,6 +1254,7 @@ cmr_int snp_start_encode_thumb(cmr_handle snp_handle) {
     CMR_LOGD("jpeg_in_ptr->mean.quality_level=%d",
              jpeg_in_ptr->mean.quality_level);
 
+    memset(&out_enc_cb_param, 0, sizeof(out_enc_cb_param));
     ret = snp_cxt->ops.start_encode(snp_cxt->oem_handle, snp_handle,
                                     &jpeg_in_ptr->src, &jpeg_in_ptr->dst,
                                     &jpeg_in_ptr->mean, &out_enc_cb_param);
@@ -1100,6 +1263,14 @@ cmr_int snp_start_encode_thumb(cmr_handle snp_handle) {
         goto exit;
     }
     camera_take_snapshot_step(CMR_STEP_THUM_ENC_E);
+
+    CMR_LOGD("dstfd %d, p 0x%x, 0x%x, stream cb ptr 0x%x, 0x%x,  size %d, %d %d %d\n",
+		jpeg_in_ptr->dst.fd,
+		jpeg_in_ptr->dst.addr_vir.addr_y, jpeg_in_ptr->dst.addr_phy.addr_y,
+		out_enc_cb_param.stream_buf_phy, out_enc_cb_param.stream_buf_vir,
+		out_enc_cb_param.stream_size, out_enc_cb_param.slice_height,
+		out_enc_cb_param.total_height,
+		out_enc_cb_param.is_thumbnail);
 
     snp_cxt->thumb_stream_size = (cmr_u32)(out_enc_cb_param.stream_size);
     char value[PROPERTY_VALUE_MAX];
@@ -1821,9 +1992,8 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
     sem_wait(&cxt->jpeg_sync_sm);
     ATRACE_END();
 
-    CMR_LOGD("cxt->req_param.is_zsl_snapshot=%d",
-             cxt->req_param.is_zsl_snapshot);
-    CMR_LOGD("cxt->req_param.is_3dnr %d", cxt->req_param.is_3dnr);
+    CMR_LOGD("cxt->req_param.is_zsl_snapshot=%d, 3dnr type %d",
+             cxt->req_param.is_zsl_snapshot, cxt->req_param.is_3dnr);
     if (cxt->req_param.is_zsl_snapshot) {
         if (cxt->req_param.is_3dnr == 1  ||
             cxt->req_param.is_3dnr == 5 ||cxt->req_param.is_3dnr == 8 ||
@@ -1960,6 +2130,10 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
     // camera_snapshot_step_statisic(&image_size);
     frame_type.timestamp = frame->sec * 1000000000LL + frame->usec * 1000LL;
     frame_type.monoboottime = frame->monoboottime;
+    if (cxt->req_param.is_mfsr) {
+        frame_type.frame_num = cxt->mfsr_dst_frm.frame_number;
+        frame_type.zsl_private = 1;
+    }
     memcpy((void *)&frame_type.jpeg_param, (void *)&enc_param,
            sizeof(struct camera_jpeg_param));
     snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_ENCODE_PICTURE,
@@ -2761,8 +2935,10 @@ cmr_int snp_set_ipm_param(cmr_handle snp_handle) {
     }
     ipm_ptr = &chn_param_ptr->ipm[0];
 
-    CMR_LOGD("src addr 0x%lx 0x%lx fd=0x%x", ipm_ptr->src.addr_phy.addr_y,
-             ipm_ptr->src.addr_phy.addr_u, ipm_ptr->src.fd);
+    CMR_LOGD("src fd 0x%x, addr 0x%lx 0x%lx ", ipm_ptr->src.fd, ipm_ptr->src.addr_vir.addr_y,
+             ipm_ptr->src.addr_vir.addr_u);
+    CMR_LOGD("src size %d %d ", ipm_ptr->src.size.width,
+             ipm_ptr->src.size.height);
     return ret;
 }
 
@@ -3031,9 +3207,9 @@ cmr_int snp_set_jpeg_enc_param(cmr_handle snp_handle) {
         jpeg_ptr++;
     }
     jpeg_ptr = &chn_param_ptr->jpeg_in[0];
-    CMR_LOGD("src addr 0x%lx 0x%lx 0x%lx dst 0x%lx, fd 0x%x",
+    CMR_LOGD("src addr 0x%lx 0x%lx dst 0x%lx, fd 0x%x",
              jpeg_ptr->src.addr_phy.addr_y, jpeg_ptr->src.addr_phy.addr_u,
-             jpeg_ptr->src.fd, jpeg_ptr->dst.addr_phy.addr_y, jpeg_ptr->dst.fd);
+             jpeg_ptr->dst.addr_phy.addr_y, jpeg_ptr->dst.fd);
     CMR_LOGD("src size %d %d out size %d %d", jpeg_ptr->src.size.width,
              jpeg_ptr->src.size.height, jpeg_ptr->dst.size.width,
              jpeg_ptr->dst.size.height);
@@ -3632,8 +3808,8 @@ cmr_int snp_set_post_proc_param(cmr_handle snp_handle,
     cxt->cap_cnt = 0;
     cxt->chn_param.is_rot = 0;
     cxt->req_param = *param_ptr;
-    CMR_LOGD("@xin chn %d total num %d", cxt->req_param.channel_id,
-             cxt->req_param.total_num);
+    CMR_LOGD("chn %d total num %d\n", cxt->req_param.channel_id, cxt->req_param.total_num);
+
     if (cxt->req_param.is_video_snapshot || cxt->req_param.is_zsl_snapshot) {
         is_normal_cap = 0;
     } else {
@@ -3968,7 +4144,7 @@ cmr_int snp_send_msg_thumb_thr(cmr_handle snp_handle, cmr_int evt, void *data) {
     struct snp_context *cxt = (struct snp_context *)snp_handle;
     CMR_MSG_INIT(message);
 
-    CMR_LOGD("evt 0x%ld", evt);
+    CMR_LOGD("evt 0x%lx", evt);
     message.msg_type = evt;
     message.sync_flag = CMR_MSG_SYNC_NONE;
     message.alloc_flag = 1;
@@ -4362,6 +4538,11 @@ static cmr_int snp_ipm_process(cmr_handle snp_handle, void *data) {
         ret = -CMR_CAMERA_FAIL;
         return ret;
     }
+    if (snap_cxt->req_param.is_mfsr) {
+        snap_cxt->mfsr_detail_frm.reserved = &snap_cxt->mfsr_frm_param;
+        src->reserved = &snap_cxt->mfsr_detail_frm;
+        src->frame_number = snap_cxt->mfsr_dst_frm.frame_number + 4;
+    }
 
     snap_cxt->ops.ipm_process(oem_cxt, src);
 
@@ -4412,7 +4593,7 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data) {
     CMR_LOGV("cnr_type %d", cnr_type);
 
     snp_set_status(snp_handle, POST_PROCESSING);
-    if ((cxt->req_param.filter_type || cxt->req_param.nr_flag
+    if ((cxt->req_param.filter_type || cxt->req_param.nr_flag || cxt->req_param.is_mfsr
         || cxt->req_param.dre_flag || cxt->req_param.ee_flag)
         && !cxt->req_param.is_yuv_callback_mode) {
         CMR_LOGI("before snp_ipm_process cameraid = %d ",cxt->camera_id);
@@ -5041,7 +5222,7 @@ cmr_int cmr_snapshot_init(struct snapshot_init_param *param_ptr,
                      (cmr_uint)param_ptr->oem_handle);
         }
         ret = CMR_CAMERA_INVALID_PARAM;
-        goto exit;
+        return ret;
     }
 
     *snapshot_handle = (cmr_handle)0;
@@ -5049,9 +5230,10 @@ cmr_int cmr_snapshot_init(struct snapshot_init_param *param_ptr,
     if (NULL == cxt) {
         CMR_LOGE("failed to create snp context");
         ret = -CMR_CAMERA_NO_MEM;
-        goto exit;
+        return ret;
     }
     cmr_bzero(cxt, sizeof(*cxt));
+
     cxt->camera_id = param_ptr->id;
     cxt->oem_handle = param_ptr->oem_handle;
     /*	cxt->ipm_handle = param_ptr->ipm_handle;*/
@@ -5063,18 +5245,22 @@ cmr_int cmr_snapshot_init(struct snapshot_init_param *param_ptr,
     ret = snp_create_thread((cmr_handle)cxt);
     if (ret) {
         CMR_LOGE("failed to create thread %ld", ret);
+        goto thrd_fail;
     }
-exit:
-    CMR_LOGD("done %ld", ret);
-    if (CMR_CAMERA_SUCCESS == ret) {
-        *snapshot_handle = (cmr_handle)cxt;
-        cxt->is_inited = 1;
-    } else {
-        if (cxt) {
-            free((void *)cxt);
-            cxt = NULL;
-        }
-    }
+    memcpy(&cxt->mem_ops, &param_ptr->memory_setting, sizeof(struct memory_param));
+    CMR_LOGD("memops %p,  alloc %p  %p\n",  &cxt->mem_ops,
+            cxt->mem_ops.alloc_mem, param_ptr->memory_setting.alloc_mem);
+
+    *snapshot_handle = (cmr_handle)cxt;
+    cxt->is_inited = 1;
+    CMR_LOGD("done\n");
+    return CMR_CAMERA_SUCCESS;
+
+thrd_fail:
+    snp_local_deinit((cmr_handle)cxt);
+    free((void *)cxt);
+    cxt = NULL;
+    CMR_LOGE("X fail, ret = %ld\n", ret);
     return ret;
 }
 
@@ -5099,6 +5285,9 @@ cmr_int cmr_snapshot_deinit(cmr_handle snapshot_handle) {
             CMR_LOGE("failed to send stop msg to main thr %ld", ret);
         }
     }
+
+    deinit_buffer_q(&cxt->buf_queue, &cxt->mem_ops);
+
     ret = snp_destroy_thread(snapshot_handle);
     if (ret) {
         CMR_LOGE("failed to destroy thr %ld", ret);
@@ -5109,6 +5298,57 @@ cmr_int cmr_snapshot_deinit(cmr_handle snapshot_handle) {
 exit:
     CMR_LOGV("X, ret=%ld", ret);
     return ret;
+}
+
+
+cmr_int cmr_snapshot_prepare(
+		cmr_handle snapshot_handle, struct snapshot_param *param)
+{
+	cmr_int ret = CMR_CAMERA_SUCCESS;
+	cmr_u32 buf_size, free_cnt;
+	struct snp_context *cxt = (struct snp_context *)snapshot_handle;
+	struct camera_context *cam_cxt;
+
+	if (!cxt || !param) {
+		CMR_LOGE("fail to get valid ptr\n");
+		return CMR_CAMERA_FAIL;
+	}
+	cam_cxt = (struct camera_context *)cxt->oem_handle;
+	memcpy(&cxt->req_param, param, sizeof(struct snapshot_param));
+
+	/* free previous buffers */
+	if (cxt->buf_queue.free_cnt) {
+		//balance bufQ,  free all buffers (size < yuv_buf_size)
+		buf_size = MAX_INT_VAL;
+		free_cnt = cxt->buf_queue.free_cnt;
+		CMR_LOGD("should free buf cnt %d\n", free_cnt);
+		dec_buffer_q(&cxt->buf_queue, &cxt->mem_ops, buf_size - 1, &free_cnt);
+	}
+
+	CMR_LOGD("mfsr_force_off %d, free buf cnt %d\n",
+		cam_cxt->mfsr_force_off, cxt->buf_queue.free_cnt);
+
+	if (cam_cxt->mfsr_force_off)
+		return ret;
+
+	/* alloc buffer for mfsr output and detail image */
+	if (cxt->buf_queue.max == 0) {
+		 /* limited buffer count for IPS. TODO - limit total size from boardconfig */
+		ret = init_buffer_q(&cxt->buf_queue, IPS_LIMIT_BUFCNT, 0);
+		if (ret) {
+			CMR_LOGE("fail to init buffer q\n");
+			return CMR_CAMERA_FAIL;
+		}
+	}
+
+	buf_size = param->req_size.width * param->req_size.height * 3 / 2;
+	while (cxt->buf_queue.free_cnt  < 2 && (buf_size > 0)) {
+		free_cnt = 2 - cxt->buf_queue.free_cnt;
+		ret = inc_buffer_q(&cxt->buf_queue, &cxt->mem_ops, buf_size, &free_cnt);
+		CMR_LOGD("yuv/jpeg buffer inc, ret %ld, cnt %d\n", ret, free_cnt);
+	}
+
+	return ret;
 }
 
 cmr_int cmr_snapshot_post_proc(cmr_handle snapshot_handle,
