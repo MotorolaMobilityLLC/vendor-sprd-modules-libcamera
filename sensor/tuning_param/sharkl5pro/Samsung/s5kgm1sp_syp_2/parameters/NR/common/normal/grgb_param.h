@@ -571,7 +571,7 @@
 /*v21_sensor_grgb_level*/
 {
 	/*diff_th*/
-	0x50,
+	0x78,
 	/*hv_edge_thr*/
 	0x28,
 	/*hv_flat_thr*/
@@ -649,7 +649,7 @@
 		/*t_cfg*/
 		{
 			/*grgb_t1_cfg*/
-			0x0100,
+			0x0000,
 			/*grgb_t2_cfg*/
 			0x0200,
 			/*grgb_t3_cfg*/
@@ -665,7 +665,7 @@
 			/*grgb_r2_cfg*/
 			0x04,
 			/*grgb_r3_cfg*/
-			0x00,
+			0x04,
 			/*reserved*/
 			0x00,
 
@@ -753,7 +753,7 @@
 		}
 	},
 	/*bypass*/
-	0x00000001,
+	0x00000000,
 }
 ,
 /*param4.&BasePoint=1&*/
@@ -1039,11 +1039,11 @@
 		/*r_cfg*/
 		{
 			/*grgb_r1_cfg*/
-			0x08,
+			0x0C,
 			/*grgb_r2_cfg*/
-			0x04,
+			0x0A,
 			/*grgb_r3_cfg*/
-			0x04,
+			0x06,
 			/*reserved*/
 			0x00,
 
@@ -1122,9 +1122,9 @@
 			/*grgb_r1_cfg*/
 			0x10,
 			/*grgb_r2_cfg*/
-			0x08,
+			0x0C,
 			/*grgb_r3_cfg*/
-			0x00,
+			0x08,
 			/*reserved*/
 			0x00,
 
