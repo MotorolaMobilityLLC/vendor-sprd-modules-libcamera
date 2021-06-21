@@ -1751,6 +1751,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
 
         if (sprddefInfo->long_expo_enable == 1) {
             mSuperExposeNonzsl = 1;
+            receive_req_max = 1;
         }
 
         // raw capture need non-zsl for now
@@ -2089,7 +2090,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                     break;
                 }
             }
-            if (mFlush || (mOEMIf->getFlushFlag() && sprddefInfo->sprd_eis_enabled)) {
+            if (mFlush || mOEMIf->getFlushFlag()) {
                 HAL_LOGI("mFlush = %d", mFlush);
                 break;
             }
