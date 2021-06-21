@@ -40,6 +40,7 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../sensor/af_drv \
     $(LOCAL_PATH)/../sensor/otp_drv \
     $(LOCAL_PATH)/../arithmetic/inc \
+    $(LOCAL_PATH)/../arithmetic/sprd_mfsr/inc \
     $(LOCAL_PATH)/../$(CPP_DIR)/driver/inc \
     $(LOCAL_PATH)/../$(CPP_DIR)/algo/inc \
     $(LOCAL_PATH)/../arithmetic/sprd_easy_hdr/inc \
@@ -87,6 +88,11 @@ endif
 ifeq ($(strip $(CONFIG_CAMERA_MM_DVFS_SUPPORT)),true)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../oemcommon/mm_dvfs/
 LOCAL_SRC_FILES += ../oemcommon/mm_dvfs/cmr_mm_dvfs.c
+endif
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_MFSR_CAPTURE)),true)
+LOCAL_SRC_FILES += src/cmr_mfsr.c
+LOCAL_SHARED_LIBRARIES += libsprd_mfsr libsprdmfsradapter
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)

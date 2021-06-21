@@ -101,6 +101,12 @@ typedef enum {
     RATE_VERY_FAST,
 } sensor_rate_level_t;
 
+typedef struct camera_memory_dbg {
+    Mutex Lock;
+    cmr_u32 total_cnt;
+    cmr_u32 total_size;
+} camera_memory_dbg_t;
+
 // fd:         ion fd
 // phys_addr:  offset from fd, always set 0
 typedef struct sprd_camera_memory {
@@ -109,10 +115,27 @@ typedef struct sprd_camera_memory {
     cmr_uint phys_size;
     cmr_s32 fd;
     cmr_s32 dev_fd;
+    cmr_u32 cached;
     void *handle;
     void *data;
     bool busy_flag;
+
+    /* for graphic buffer */
+    const native_handle_t *native_handle;
+    sp<GraphicBuffer> graphicBuffer;
+    void *graphicBuffer_handle;
 } sprd_camera_memory_t;
+
+typedef struct {
+    sprd_camera_memory_t *mIonHeap;
+    camera_mem_cb_type mem_type;
+} IonBufNode;
+
+typedef struct {
+    cmr_u32 count;
+    Mutex qLock;
+    List<IonBufNode> BufList;
+} IonBufQueue;
 
 typedef struct {
     sprd_camera_memory_t *mIonHeap;
@@ -629,6 +652,18 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int Callback_CommonMalloc(enum camera_mem_cb_type type, cmr_u32 size,
                              cmr_u32 *sum_ptr, cmr_uint *phy_addr,
                              cmr_uint *vir_addr, cmr_s32 *fd);
+    int ION_Free(enum camera_mem_cb_type type,
+                                         cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 num);
+    int ION_Malloc(enum camera_mem_cb_type type,
+                                           cmr_u32 cached, cmr_u32 size, cmr_u32 *num_ptr,
+                                           cmr_uint *phy_addr,
+                                           cmr_uint *vir_addr, cmr_s32 *fd);
+    int Graphic_Malloc(enum camera_mem_cb_type type,
+                                           cmr_u32 cached, cmr_u32 *size_ptr, cmr_u32 *num_ptr,
+                                           cmr_uint *phy_addr,
+                                           cmr_uint *vir_addr, cmr_s32 *fd,
+                                           void **handle, cmr_u32 width, cmr_u32 height);
+
     static int Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_addr,
                              cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum,
                              void *private_data);
@@ -862,6 +897,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     sprd_camera_memory_t *mRawHeapArray[kRawBufferCount + 1];
     cmr_u32 mCurSnapFd[kZslBufferCount];
 
+    IonBufQueue mIonQueue;
     List<MemIonQueue> cam_MemIonQueue;
     List<MemGpuQueue> cam_MemGpuQueue;
 
@@ -978,6 +1014,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mIsCameraClearQBuf;
     int64_t mLatestFocusDoneTime;
     int32_t mFlush;
+    int32_t mExitCurZslLoop;
     Mutex mPipelineStartLock;
     Condition mPipelineStartSignal;
 

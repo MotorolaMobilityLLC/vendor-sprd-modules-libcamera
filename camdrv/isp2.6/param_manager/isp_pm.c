@@ -265,6 +265,7 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_YUV_NOISEFILTER_V1, 0 }, /* NR block */
 
 	/* software algo blocks */
+	{ ISP_BLK_MFSR, sizeof(struct sensor_mfsr_param) },
 	{ ISP_BLK_FB, sizeof(struct sensor_facebeauty_param) },
 	{ ISP_BLK_AI_PRO_V1, sizeof(struct sensor_ai_param) },
 	{ ISP_BLK_CNR2_V1, 0 }, /* NR block */
@@ -1733,7 +1734,12 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 
 	default:
 	{
+		struct isp_pm_ioctl_input *input = (struct isp_pm_ioctl_input *)in_ptr;
 		switch (cmd) {
+		case ISP_PM_CMD_GET_BLK_PARAM:
+			if (input && input->param_data_ptr)
+				block_id = input->param_data_ptr->id;
+			break;
 		case ISP_PM_CMD_GET_INIT_AE:
 			block_id = ISP_BLK_AE_NEW;
 			break;

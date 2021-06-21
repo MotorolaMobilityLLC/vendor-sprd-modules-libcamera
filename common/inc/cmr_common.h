@@ -496,6 +496,8 @@ enum common_isp_cmd_type {
     COM_ISP_SET_AE_TARGET_REGION,
     COM_ISP_GET_AE_FPS_RANGE,
     COM_ISP_SET_SENSOR_SIZE,
+    COM_ISP_GET_MFSR_PARAM,
+    COM_ISP_SET_MFSR_LOG,
     COM_ISP_GET_CNR3_PARAM,
     COM_ISP_GET_FB_PREV_PARAM,
     COM_ISP_GET_FB_CAP_PARAM,
@@ -635,6 +637,45 @@ typedef enum {
     THREEDNR_HW,
 } sprd_3dnr_mode;
 
+
+#ifndef container_of
+#define container_of(ptr, type, member) \
+    (type *)((char*)(ptr) - offsetof(type, member))
+#endif
+
+/*========= for MFSR   =========*/
+struct swa_mfsr_info {
+	void *data;
+	uint32_t data_size;
+	struct img_size frame_size;
+	struct img_rect frame_crop;
+	void *out_exif_ptr;
+	uint32_t out_exif_size;
+};
+/*========= for MFSR end  =========*/
+
+struct swa_common_info {
+	int32_t cam_id;
+	int32_t dgain;
+	int32_t again;
+	int32_t total_gain;
+	int32_t sn_gain;
+	int32_t exp_time;
+	int32_t bv;
+	int32_t iso;
+	int32_t ct;
+	uint32_t angle;
+	uint32_t sensor_orientation;
+	uint32_t flip_on;
+	uint32_t is_front;
+	float zoom_ratio;
+};
+
+struct swa_frame_param {
+	struct swa_common_info common_param;
+	struct swa_mfsr_info mfsr_param;
+};
+
 struct img_addr {
     cmr_uint addr_y;
     cmr_uint addr_u;
@@ -658,6 +699,7 @@ struct img_frm {
     struct img_addr addr_phy;
     struct img_addr addr_vir;
     cmr_s32 fd;
+    void *gpu_handle;
     struct img_data_end data_end;
     cmr_u32 format_pattern;
     void *reserved;
@@ -743,9 +785,12 @@ struct video_start_param {
 };
 
 struct memory_param {
+    cmr_handle oem_handle;
     cmr_malloc alloc_mem;
     cmr_free free_mem;
     cmr_gpu_malloc gpu_alloc_mem;
+    cmr_invalidate_buf invalidate_cb;
+    cmr_flush_buf flush_cb;
 };
 
 struct isptool_scene_param {
@@ -1206,6 +1251,7 @@ struct common_isp_cmd_param {
         struct isp_sw3dnr_info threednr_param;
         struct isp_dre_level dre_param;
         struct isp_dre_pro_level dre_pro_param;
+        struct isp_blkpm_t isp_blk_param;
         struct isp_ai_img_param ai_img_param;
         struct isp_ai_img_status ai_img_status;
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
@@ -1277,6 +1323,8 @@ enum ipm_class_type {
     IPM_TYPE_FDR = 0x00000003,
     IPM_TYPE_UVDE = 0x00000004,
     IPM_TYPE_YDE = 0x00000008,
+    IPM_TYPE_MFSR = 0x00000005,
+    IPM_TYPE_MFSR_POST = 0x00000006,
     IPM_TYPE_REFOCUS = 0x00000010,
     IPM_TYPE_3DNR = 0x00000020,
     IPM_TYPE_3DNR_PRE = 0x00000040,

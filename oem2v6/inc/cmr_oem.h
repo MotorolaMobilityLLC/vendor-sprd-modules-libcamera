@@ -83,6 +83,8 @@ struct sensor_context {
     EXIF_SPEC_PIC_TAKING_COND_T exif_info;
     struct sensor_ex_info cur_sns_ex_info;
     struct sensor_4in1_info info_4in1;
+    struct img_otp_data warp_otp_data;
+    struct img_size cur_sn_size;
 };
 struct prev_threednr_info {
     struct img_frm frm_preview;
@@ -156,6 +158,8 @@ struct ipmpro_context {
 struct ipm_context {
     cmr_handle ipm_handle;
     cmr_handle hdr_handle;
+    cmr_handle mfsr_handle;
+    cmr_handle mfsr_post_handle;
     cmr_handle filter_handle;
     cmr_handle uvde_handle;
     cmr_handle yde_handle;
@@ -256,7 +260,9 @@ struct snapshot_context {
     cmr_u32 is_fdr;
     cmr_u32 is_3dnr;
     cmr_u32 sprd_3dnr_type;
+    cmr_u32 is_mfsr;
     cmr_u32 total_num;
+    cmr_u32 snap_cnt;
     cmr_u32 snp_mode;
     cmr_u32 is_cfg_rot_cap;
     cmr_u32 cfg_cap_rot;
@@ -279,6 +285,8 @@ struct snapshot_context {
     struct frm_info cur_chn_data;
     struct touch_coordinate touch_xy;
     struct isp_blkpm_t fdr_tuning_param;
+    struct cmr_zoom_param zoom_param;
+    struct cmr_zoom_param zoom_param_1x;
     void *fdr_ae_info;
     void *ae_common_info;
     void *hdr_callback;
@@ -387,7 +395,9 @@ struct camera_context {
     void *client_data;
     cmr_u32 inited;
     cmr_u32 camera_mode;
+    cmr_u32 mfsr_force_off;
     cmr_uint is_discard_frm;
+    sem_t mfsr_sm;
     sem_t hdr_sync_sm;
     sem_t hdr_flag_sm;
     sem_t ai_scene_flag_sm;

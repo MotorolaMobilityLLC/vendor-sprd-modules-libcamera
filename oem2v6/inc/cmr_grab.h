@@ -154,6 +154,7 @@ cmr_int cmr_grab_stop_capture(cmr_handle grab_handle);
 cmr_int cmr_grab_set_alloc_size(cmr_handle grab_handle,
                                cmr_u16 weight, cmr_u16 height);
 
+cmr_int cmr_grab_cfg_ch_crop(cmr_handle grab_handle, cmr_u32 ch_id, struct img_rect *crop);
 
 
 cmr_int cmr_grab_stream_pause(cmr_handle grab_handle);
