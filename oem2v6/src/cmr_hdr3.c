@@ -33,6 +33,7 @@ typedef void *hdr3_inst_t;
 
 #ifdef CONFIG_SPRD_HDR_LIB_VERSION_3
 #include "sprd_hdr_adapter.h"
+#include "sprd_hdr_api.h"
 #endif
 
 #include <cutils/properties.h>
@@ -72,6 +73,8 @@ struct class_hdr3 {
     struct ipm_frame_in frame_in;
     struct class_hdr3_lib_context lib_cxt;
     cmr_uint ev_effect_frame_interval;
+    void *dbg_info_addr;
+    int32_t dbg_info_size;
 };
 
 enum oem_ev_level { OEM_EV_LEVEL_1, OEM_EV_LEVEL_2, OEM_EV_LEVEL_3 };
@@ -494,6 +497,7 @@ static cmr_int hdr3_arithmetic(cmr_handle class_handle,
     cmr_u8 *temp_addr2 = NULL;
     char *p_format = IMAGE_FORMAT;
     struct class_hdr3 *hdr3_handle = (struct class_hdr3 *)class_handle;
+    sprd_hdr_get_exif_info_param_t get_exif_param;
 
 #ifdef CONFIG_SPRD_HDR_LIB_VERSION_3
     sprd_hdr_param_t sprd_hdr_param;
@@ -561,6 +565,20 @@ static cmr_int hdr3_arithmetic(cmr_handle class_handle,
         ret = hdr3_sprd_adapter_process(hdr3_handle, SPRD_HDR_PROCESS_CMD,
                                        (void *)&sprd_hdr_param);
 #endif
+
+        memset(&get_exif_param, 0, sizeof(sprd_hdr_get_exif_info_param_t));
+        get_exif_param.exif_info = (struct hdr_exif_info_t *)malloc(sizeof(hdr_exif_info_t));
+        ret = sprd_hdr_adpt_ctrl(hdr3_handle->lib_cxt.lib_handle, SPRD_HDR_GET_EXIF_INFO_CMD,
+                                    (void *)&get_exif_param);
+        CMR_LOGI("exif_info %p", get_exif_param.exif_info);
+
+        if (ret) {
+            CMR_LOGE("fail to do HDR_GET_EXIF_CMD\n");
+        }
+
+        hdr3_handle->dbg_info_addr = get_exif_param.exif_info;
+        hdr3_handle->dbg_info_size = sizeof(hdr_exif_info_t);
+        CMR_LOGI("exif_info size = %d", hdr3_handle->dbg_info_size);
 
         if (ret != 0) {
             if (ret == 1) {
@@ -644,9 +662,13 @@ static cmr_int hdr3_save_frame(cmr_handle class_handle,
 static cmr_int hdr3_thread_proc(struct cmr_msg *message, void *private_data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct class_hdr3 *class_handle = (struct class_hdr3 *)private_data;
+    cmr_handle oem_handle = NULL;
     cmr_u32 evt = 0;
     struct ipm_frame_out out;
     struct ipm_frame_in *in;
+    ipm_isp_ioctl isp_ioctl;
+    struct isp_info hdr_dbg_info;
+    struct common_isp_cmd_param isp_param;
 
     if (!message || !class_handle) {
         CMR_LOGE("parameter is fail");
@@ -697,6 +719,17 @@ static cmr_int hdr3_thread_proc(struct cmr_msg *message, void *private_data) {
         hdr3_arithmetic(class_handle, &class_handle->dst_addr,
                        class_handle->width, class_handle->height);
         CMR_LOGD("HDR3 thread proc done ");
+
+        isp_ioctl = class_handle->common.ipm_cxt->init_in.ipm_isp_ioctl;
+        oem_handle = class_handle->common.ipm_cxt->init_in.oem_handle;
+        hdr_dbg_info.addr = class_handle->dbg_info_addr;
+        hdr_dbg_info.size = class_handle->dbg_info_size;
+        CMR_LOGD("hdr_dbg_info_addr %p hdr_dbg_info_size %d", hdr_dbg_info.addr, hdr_dbg_info.size);
+        isp_param.cmd_ptr = (void *)&hdr_dbg_info;
+        ret = isp_ioctl(oem_handle, COM_ISP_SET_HDR_LOG, (void *)&isp_param);
+        if (ret) {
+            CMR_LOGE("failed to set hdr log");
+        }
 
         if (class_handle->reg_cb) {
             (class_handle->reg_cb)(IPM_TYPE_HDR3, &out);
