@@ -18,9 +18,9 @@
 	/*uvdiv_chroma*/
 	{
 		/*chroma_max_h*/
-		0x14,
+		0x7F,
 		/*chroma_max_l*/
-		0x0A,
+		0x7F,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -73,17 +73,17 @@
 	/*uvdiv_ratio*/
 	{
 		/*chroma_ratio*/
-		0x40,
+		0x00,
 		/*luma_ratio*/
-		0x40,
+		0x00,
 		/*ratio_0*/
 		0x30,
 		/*ratio_1*/
 		0x38,
 		/*ratio_uv_min*/
-		0x30,
+		0x00,
 		/*ratio_y_min0*/
-		0x40,
+		0x00,
 		/*ratio_y_min1*/
 		0x00,
 		/*reserved*/
