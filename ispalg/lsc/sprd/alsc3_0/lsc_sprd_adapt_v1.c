@@ -1026,8 +1026,13 @@ static cmr_int lsc_parser_otp(struct lsc_adv_init_param *lsc_param, struct lsc_s
 				otp_data_len = lsc_otp_info_ptr->rdm_info.data_size;
 
 				if (otp_data_ptr != NULL && otp_data_len != 0) {
-					lsc_otp_addr = otp_data_ptr + 1 + 16 + 5;
-					lsc_otp_len = otp_data_len - 1 - 16 - 5;
+					if(otp_data_ptr[0] == 0x00){
+					    lsc_otp_addr = otp_data_ptr + 1 + 16 + 5;
+					    lsc_otp_len = otp_data_len - 1 - 16 - 5;
+					}else if(otp_data_ptr[0] == 0x01){
+					    lsc_otp_addr = otp_data_ptr + 1 + 16 + 8;
+					    lsc_otp_len = otp_data_len - 1 - 16 - 8;
+					}
 				} else {
 					ISP_LOGE("lsc otp_data_ptr = %p, otp_data_len = %d. Parser fail !", otp_data_ptr, otp_data_len);
 					goto EXIT;
