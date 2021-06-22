@@ -2,6 +2,17 @@
 	"caselists":[
 		{
 			"ID":0,
+			"README":"example for video ",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"HAL","mcaseid":[0,3,7]}
+					]
+				}
+			]
+		},
+		{
+			"ID":1,
 			"README":"example for switch from front camera to rear camera in DV ",
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
@@ -12,7 +23,7 @@
 			]
 		},
 		{
-			"ID":1,
+			"ID":2,
 			"README":"example for switch from rear camera to front camera in DV ",
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
@@ -23,7 +34,7 @@
 			]
 		},
 		{
-			"ID":2,
+			"ID":3,
 			"README":"example for switch from front camera to rear camera in DV face beauty ",
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
@@ -34,7 +45,7 @@
 			]
 		},
 		{
-			"ID":3,
+			"ID":4,
 			"README":"example for switch from rear camera to front camera in DV face beauty ",
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
@@ -45,7 +56,7 @@
 			]
 		},
 		{
-			"ID":4,
+			"ID":5,
 			"README":"example for switching DC to DV in front camera ",
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
@@ -56,7 +67,7 @@
 			]
 		},
 		{
-			"ID":5,
+			"ID":6,
 			"README":"example for switching DC to DV in rear camera ",
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
@@ -67,7 +78,7 @@
 			]
 		},
 		{
-			"ID":6,
+			"ID":7,
 			"README":"example for switching DV to DC in front camera ",
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
@@ -78,7 +89,7 @@
 			]
 		},
 		{
-			"ID":7,
+			"ID":8,
 			"README":"example for switching DV to DC in rear camera ",
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
@@ -89,7 +100,7 @@
 			]
 		},
 		{
-			"ID":8,
+			"ID":9,
 			"README":"example for video snapshot",
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
@@ -100,7 +111,7 @@
 			]
 		},
 		{
-			"ID":9,
+			"ID":10,
 			"README":"example for video snapshot",
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
@@ -111,7 +122,7 @@
 			]
 		},
 		{
-			"ID":10,
+			"ID":11,
 			"README":"example for video snapshot",
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
@@ -122,7 +133,7 @@
 			]
 		},
 		{
-			"ID":11,
+			"ID":12,
 			"README":"example for slow motion recoding",
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
@@ -133,7 +144,7 @@
 			]
 		},
 		{
-			"ID":12,
+			"ID":13,
 			"README":"example for video recording",
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
@@ -144,7 +155,7 @@
 			]
 		},
 		{
-			"ID":13,
+			"ID":14,
 			"README":"example for write case,including formats of injectDataInfo（Temporarily unavailable） and openSimulator（Temporarily unavailable）",
 			"injectDataInfo":[
 				{"path":"./ccap_1_3264x2448.yuv","imgW":3264, "imgH":2448,"injectType":"OEM_PREV","imgFormat":"yuv"},
@@ -162,7 +173,7 @@
 			]
 		},
 		{
-			"ID":14,
+			"ID":15,
 			"README":"example for video ",
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
@@ -173,23 +184,12 @@
 			]
 		},
 		{
-			"ID":15,
+			"ID":16,
 			"README":"example for professional capture ",
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
 					[
 						{"name":"HAL","mcaseid":[0,3,5,6]}
-					]
-				}
-			]
-		},
-		{
-			"ID":16,
-			"README":"example for video ",
-			"order":[
-				{"index":0,"time":0,"logL":4,"module":
-					[
-						{"name":"HAL","mcaseid":[0,3,7]}
 					]
 				}
 			]
