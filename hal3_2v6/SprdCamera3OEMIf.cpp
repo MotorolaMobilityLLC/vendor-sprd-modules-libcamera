@@ -1568,6 +1568,7 @@ status_t SprdCamera3OEMIf::cancelAutoFocus() {
     ret = mHalOem->ops->camera_cancel_autofocus(mCameraHandle);
 
     WaitForFocusCancelDone();
+	mIsAutoFocus = false;
     {
         CONTROL_Tag controlInfo;
         mSetting->getCONTROLTag(&controlInfo);
@@ -1575,7 +1576,7 @@ status_t SprdCamera3OEMIf::cancelAutoFocus() {
             setAfState(AF_TRIGGER_CANCEL);
         }
     }
-    mIsAutoFocus = false;
+    //mIsAutoFocus = false;
     HAL_LOGD("X");
     return ret;
 }
@@ -2290,7 +2291,7 @@ void SprdCamera3OEMIf::setAfState(enum afTransitionCause cause) {
         break;
     }
 
-    if(newState == ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN || newState == ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN ){
+    if((newState == ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN || newState == ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN)&&(mIsAutoFocus) ){
          mAf_start_time = systemTime(SYSTEM_TIME_BOOTTIME);
 	 HAL_LOGD("mAf_start_time =%lld",mAf_start_time);
     }
