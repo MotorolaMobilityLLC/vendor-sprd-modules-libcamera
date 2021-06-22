@@ -2298,6 +2298,7 @@ static void alsc_do_simulation(void *handle,void *in)
 	lsc_calc_in->ct = alsc_do_simulation->ct;
 	lsc_calc_in->gridx = cxt->gridx;
 	lsc_calc_in->gridy = cxt->gridy;
+	lsc_calc_in->simulation_flag = 1;
 	chnl_gain_num = lsc_calc_in->gain_width*lsc_calc_in->gain_height;
 	memcpy(lsc_calc_in->stat_img.r, alsc_do_simulation->stat_r, MAX_STAT_WIDTH * MAX_STAT_HEIGHT * sizeof(cmr_u32));
 	memcpy(lsc_calc_in->stat_img.gr, alsc_do_simulation->stat_g, MAX_STAT_WIDTH * MAX_STAT_HEIGHT * sizeof(cmr_u32));
@@ -2887,6 +2888,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 		calc_in.gridx = param->gridx;
 		calc_in.gridy = param->gridy;
 		calc_in.smart_lsc_result = cxt->smart_result;
+		calc_in.simulation_flag = 0;
 
 		calc_out.dst_gain = result->dst_gain;
 		calc_out.debug_info_ptr = cxt->lsc_debug_info_ptr;
