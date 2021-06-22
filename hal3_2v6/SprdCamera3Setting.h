@@ -353,6 +353,8 @@ typedef struct {
     int32_t test_pattern_mode;
     float focus_distance;
     int64_t start_offset_time;
+    int64_t result_exposure_time;
+    int32_t result_sensitivity;
 } SENSOR_Tag;
 
 typedef struct { uint8_t use_parital_result; } QUIRKS_Tag;
