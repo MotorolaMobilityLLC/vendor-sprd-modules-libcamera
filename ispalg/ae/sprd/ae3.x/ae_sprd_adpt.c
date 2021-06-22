@@ -3878,7 +3878,7 @@ static void ae_set_ev_adjust_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *pa
 }
 
 static struct ae_exposure_param s_bakup_exp_param[8]={{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0},};
-static struct ae_exposure_param_switch_m s_ae_manual[8] ={{0,0,0,0,0,0,0,0,0,0,0},};
+static struct ae_exposure_param_switch_m s_ae_manual[8] ={{0,0,0,0,0,0,0,0,0,0,0,0},};
 
 static void ae_save_exp_gain_param(struct ae_ctrl_cxt *cxt, struct ae_exposure_param *param, cmr_u32 num, struct ae_exposure_param_switch_m * ae_manual_param)
 {
@@ -4095,6 +4095,7 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			s_ae_manual[cxt->camera_id].manual_level = cxt->manual_level;
 			s_ae_manual[cxt->camera_id].target_luma = cxt->last_exp_param.target_luma;
 			s_ae_manual[cxt->camera_id].face_auto_offset = cxt->last_exp_param.face_auto_offset;
+			s_ae_manual[cxt->camera_id].bv = cxt->last_exp_param.bv;
 			/*
 			if(cxt->manual_exp_time){
 				s_ae_manual[cxt->camera_id].exp_line = cxt->manual_exp_time / cxt->cur_status.adv_param.cur_ev_setting.line_time;
@@ -4487,6 +4488,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			src_exp.target_luma = s_ae_manual[cxt->camera_id].target_luma;
 			src_exp.face_auto_offset = s_ae_manual[cxt->camera_id].face_auto_offset;
 			cxt->manual_level = s_ae_manual[cxt->camera_id].manual_level;
+			cxt->sync_cur_result.cur_bv = cxt->cur_result.cur_bv = s_ae_manual[cxt->camera_id].bv;
 			ISP_LOGD("manual param read from ae_manual.file");
 		} else	if ((0 != s_bakup_exp_param[cxt->camera_id].exp_line)
 			&& (0 != s_bakup_exp_param[cxt->camera_id].exp_time)
