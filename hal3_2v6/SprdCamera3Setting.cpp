@@ -6741,15 +6741,15 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     camMetadata.update(ANDROID_SENSOR_FRAME_DURATION,
                        &(s_setting[mCameraId].sensorInfo.frame_duration), 1);
 
-     if (s_setting[mCameraId].sensorInfo.exposure_time)
+     if (s_setting[mCameraId].sensorInfo.result_exposure_time)
     camMetadata.update(ANDROID_SENSOR_EXPOSURE_TIME,
-                       &(s_setting[mCameraId].sensorInfo.exposure_time), 1);
+                       &(s_setting[mCameraId].sensorInfo.result_exposure_time), 1);
      else
         camMetadata.update(ANDROID_SENSOR_EXPOSURE_TIME,
                        &(kexposure_time_range[mCameraId][0]), 1);
-    if (s_setting[mCameraId].sensorInfo.sensitivity)
+    if (s_setting[mCameraId].sensorInfo.result_sensitivity)
     camMetadata.update(ANDROID_SENSOR_SENSITIVITY,
-                       &(s_setting[mCameraId].sensorInfo.sensitivity), 1);
+                       &(s_setting[mCameraId].sensorInfo.result_sensitivity), 1);
     else
         camMetadata.update(ANDROID_SENSOR_SENSITIVITY,
                        &(ksensitivity_range[0]), 1);
@@ -6932,8 +6932,8 @@ camera_metadata_t *SprdCamera3Setting::reportMetadataToFramework
             tmp_cts_isp_params.ae_cts_params.sensitivity = s_setting[mCameraId].sensor_InfoInfo.sensitivity_range[1];
     }
     s_setting[mCameraId].sensorInfo.frame_duration = tmp_cts_isp_params.ae_cts_params.frame_duration;
-    s_setting[mCameraId].sensorInfo.exposure_time = tmp_cts_isp_params.ae_cts_params.exp_time;
-    s_setting[mCameraId].sensorInfo.sensitivity = tmp_cts_isp_params.ae_cts_params.sensitivity;
+    s_setting[mCameraId].sensorInfo.result_exposure_time = tmp_cts_isp_params.ae_cts_params.exp_time;
+    s_setting[mCameraId].sensorInfo.result_sensitivity = tmp_cts_isp_params.ae_cts_params.sensitivity;
 
     if(tmp_cts_isp_params.af_cts_params.focus_distance >
         s_setting[mCameraId].lensInfo.focus_range[1]) {
@@ -7847,6 +7847,7 @@ int SprdCamera3Setting::getNOISETag(NOISE_Tag *noiseInfo) {
 }
 
 int SprdCamera3Setting::setSENSORTag(SENSOR_Tag sensorInfo) {
+    Mutex::Autolock l(mLock);
     s_setting[mCameraId].sensorInfo = sensorInfo;
     return 0;
 }
@@ -7862,6 +7863,7 @@ void SprdCamera3Setting::getSyncInfo(uint32_t frame_number) {
 }
 
 int SprdCamera3Setting::getSENSORTag(SENSOR_Tag *sensorInfo) {
+    Mutex::Autolock l(mLock);
     *sensorInfo = s_setting[mCameraId].sensorInfo;
     return 0;
 }
