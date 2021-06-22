@@ -346,7 +346,7 @@
 	/*filter_bypass*/
 	0x00,
 	/*median_thr*/
-	0x0028,
+	0x001E,
 	/*bypass*/
 	0x00000000,
 }
