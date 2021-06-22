@@ -1098,6 +1098,13 @@ static cmr_s32 ae_write_to_sensor_normal_mapping(struct ae_ctrl_cxt *cxt, struct
 					cxt->isp_ops.set_rgb_gain_slave1(cxt->isp_ops.isp_handler, rgb_coeff);
 			}
 		}
+		cmr_u64 exp_time = 0;
+		exp_time = (cmr_u64) exp_data_sync->write_data.exp_time;
+		if (NULL != cxt->isp_ops.callback) {
+			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_EXPTIME_NOTIFY, &exp_time);
+		} else {
+			ISP_LOGE("isp_ops.callback is null");
+		}
 
 		ae_info[0].count = 3;
 
@@ -8034,6 +8041,10 @@ cmr_handle ae_sprd_init_v1(cmr_handle param, cmr_handle in_param)
 		cxt->is_multi_mode = ISP_ALG_TRIBLE_W_T_UW;
 	else if (2 == atoi(multi_switch))
 		cxt->is_multi_mode = ISP_ALG_TRIBLE_W_T_UW_SYNC;
+
+	slave_sensor_active = 0;
+	sync_finish = 0;
+	dual_sync_finish = 0;
 
 	ISP_LOGD("done, handle: %p, cam-id %d, flash ver %d, alg_id %d.%d ver [%s]", cxt, cxt->camera_id, cxt->flash_ver, cxt->major_id, cxt->minor_id, AE_ADPT_CTRL_VER);
 
