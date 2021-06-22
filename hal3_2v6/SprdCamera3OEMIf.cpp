@@ -2556,6 +2556,12 @@ void SprdCamera3OEMIf::setCamPreviewFps(struct cmr_range_fps_param &fps_param) {
         }
     }
 
+    //20fps for 3rd app in dark envirment
+    if ((mTopAppId & mWhitelists) && mCameraId == 1) {
+        fps_param.min_fps = 20;
+        fps_param.max_fps = 30;
+    }
+
     // to set preview fps by setprop
     char prop[PROPERTY_VALUE_MAX];
     int val_max = 0;
