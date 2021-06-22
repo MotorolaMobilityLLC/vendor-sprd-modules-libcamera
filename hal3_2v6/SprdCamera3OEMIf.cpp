@@ -4601,6 +4601,7 @@ int SprdCamera3OEMIf::PreviewFramePreviewStream(struct camera_frame_type *frame,
     cmr_uint prebuf_vir = 0;
     cmr_uint callback_phy = 0;
     cmr_uint callback_vir = 0;
+    SENSOR_Tag sensorInfo;
 
     cmr_u32 ae_iso;
     SPRD_DEF_Tag *sprddefInfo = mSetting->getSPRDDEFTagPTR();
@@ -4671,6 +4672,10 @@ int SprdCamera3OEMIf::PreviewFramePreviewStream(struct camera_frame_type *frame,
                         mIsoMap[mPictureFrameNum] = mIsoValue;
                         mExptimeMap[mPictureFrameNum] = mExptimeValue;
                         HAL_LOGD("mPictureFrameNum:%d, mIsoValue:%d, mExptimeValue", mPictureFrameNum, mIsoValue, mExptimeValue);
+                        mSetting->getSENSORTag(&sensorInfo);
+                        sensorInfo.result_sensitivity = mIsoValue;
+                        sensorInfo.result_exposure_time = mExptimeValue;
+                        mSetting->setSENSORTag(sensorInfo);
                         camera_set_exif_iso_value(mCameraHandle, mIsoMap[mPictureFrameNum]);
                         camera_set_exif_exp_time(mCameraHandle, mExptimeMap[mPictureFrameNum]);
                     }
