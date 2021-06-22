@@ -1872,7 +1872,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     //recover normal max pendingList
     if (mFirstRegularRequest && sprddefInfo->sprd_appmode_id != -1) {
         if (SprdCamera3RegularChannel::kMaxBuffers == 8)
-            SprdCamera3RegularChannel::kMaxBuffers = 4;
+            SprdCamera3RegularChannel::kMaxBuffers = sprddefInfo->sprd_appmode_id == CAMERA_MODE_CONTINUE ? 3 : 4;
         mReciveQeqMax = mZslIpsEnable ? mReciveQeqMax : SprdCamera3RegularChannel::kMaxBuffers;
     }
 
