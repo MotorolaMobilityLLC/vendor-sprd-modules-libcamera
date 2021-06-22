@@ -86,6 +86,7 @@ extern "C" {
 		cmr_u32 manual_level;
 		cmr_u32 target_luma;
 		cmr_u32 face_auto_offset;
+		cmr_s32 bv;
 	};
 
 	struct ae_sensor_exp_data {
