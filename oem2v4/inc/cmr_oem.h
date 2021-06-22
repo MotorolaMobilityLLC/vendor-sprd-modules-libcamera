@@ -390,6 +390,8 @@ struct camera_context {
     cmr_u8 nightscepro_flag;
     struct nightpro_context night_cxt;
     bool snp_cancel;
+    void *aux_param;
+    struct isp_afctrl_roi af_roi;
 };
 
 struct prev_threednr_info {

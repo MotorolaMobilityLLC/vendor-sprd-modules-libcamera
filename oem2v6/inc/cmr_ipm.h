@@ -100,6 +100,7 @@ struct ipm_open_in {
     cmr_u32 binning_factor;
     multiCameraMode multi_mode;
     bool is_cap;
+    struct img_rect  af_ctrl_roi;
 };
 
 typedef struct {
