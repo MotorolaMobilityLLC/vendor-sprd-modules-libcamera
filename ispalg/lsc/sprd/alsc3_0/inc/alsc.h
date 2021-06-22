@@ -111,7 +111,8 @@ struct lsc_sprd_calc_in {
 	int gridy;
 	void *smart_lsc_result;
 	unsigned short *preflash_current_without_postgain_table;
-	unsigned int reserved[6];
+	unsigned int simulation_flag;
+	unsigned int reserved[5];
 };
 
 struct lsc_sprd_calc_out {
