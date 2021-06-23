@@ -4267,9 +4267,9 @@
 					/*texture_dec_str*/
 					0x9C,
 					/*addback30*/
-					0x20,
+					0x40,
 					/*addback31*/
-					0x20,
+					0x40,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -4343,9 +4343,9 @@
 					/*texture_dec_str*/
 					0xC0,
 					/*addback30*/
-					0x20,
+					0x40,
 					/*addback31*/
-					0x20,
+					0x40,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -4419,9 +4419,9 @@
 					/*texture_dec_str*/
 					0xC0,
 					/*addback30*/
-					0x20,
+					0x40,
 					/*addback31*/
-					0x20,
+					0x40,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
