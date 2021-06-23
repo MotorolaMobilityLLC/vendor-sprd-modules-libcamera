@@ -7023,6 +7023,9 @@ int SprdCamera3OEMIf::openCamera() {
             phy_sensor->sensor_type == FOURINONE_HW){
                malloc_w = phy_sensor->source_width_max / 2;
                malloc_h = phy_sensor->source_height_max / 2;
+        } else {
+                malloc_w = phy_sensor->source_width_max;
+                malloc_h = phy_sensor->source_height_max;
         }
 
         for (i = 2 ; i <= camera_num; i++){
