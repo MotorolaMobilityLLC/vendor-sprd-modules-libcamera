@@ -953,6 +953,20 @@ cmr_int camera_set_largest_picture_size(cmr_u32 camera_id, cmr_u16 width,
     return ret;
 }
 
+cmr_int camera_set_alloc_picture_size(cmr_handle camera_handle,cmr_u16 width,
+                                        cmr_u16 height) {
+    cmr_int ret = 0;
+    if (!camera_handle) {
+        CMR_LOGE("camera handle is null");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    ret = camera_local_set_alloc_size(camera_handle, width, height);
+
+exit:
+    return ret;
+}
+
 cmr_int dump_jpeg_file(void *virt_addr, unsigned int size, int width,
                        int height) {
     char str_buf[100];
@@ -1311,7 +1325,8 @@ static oem_ops_t oem_module_ops = {
     camera_snapshot_is_need_flash, camera_get_sensor_otp_info,
     camera_get_sensor_vcm_step, camera_set_sensor_close_flag,
     camera_set_reprocess_picture_size, camera_start_capture,
-    camera_stop_capture, camera_set_largest_picture_size, camera_ioctrl,
+    camera_stop_capture, camera_set_largest_picture_size, camera_set_alloc_picture_size,
+    camera_ioctrl,
     camera_reprocess_yuv_for_jpeg, image_sw_algorithm_processing,
     dump_image_with_isp_info, camera_get_focus_point, camera_isp_sw_check_buf,
     camera_isp_sw_proc, camera_raw_post_proc, camera_get_tuning_param,

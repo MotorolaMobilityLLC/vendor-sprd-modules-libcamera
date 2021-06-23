@@ -168,7 +168,8 @@ cmr_int cmr_grab_map_iommu(cmr_handle grab_handle,
                            struct sprd_img_iova *iommu_map_data);
 cmr_int cmr_grab_unmap_iommu(cmr_handle grab_handle,
                            struct sprd_img_iova *iommu_map_data);
-
+cmr_int cmr_grab_set_alloc_size(cmr_handle grab_handle,
+                                 cmr_u16 weight, cmr_u16 height);
 #ifdef __cplusplus
 }
 #endif

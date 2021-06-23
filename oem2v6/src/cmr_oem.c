@@ -4738,6 +4738,17 @@ cmr_int camera_set_security(cmr_handle oem_handle,
     return ret;
 }
 
+cmr_int camera_set_zsl_param(cmr_handle oem_handle,
+                            struct sprd_cap_zsl_param *zsl_param) {
+    cmr_int ret;
+    struct grab_context *grab_cxt = NULL;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    grab_cxt = &cxt->grab_cxt;
+
+    ret = cmr_grab_set_zsl_param(grab_cxt->grab_handle, zsl_param);
+    return ret;
+}
 cmr_int camera_set_hdr_disable(cmr_handle oem_handle, cmr_u32 param) {
     cmr_int ret;
     struct grab_context *grab_cxt = NULL;
@@ -16285,6 +16296,7 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
         capture_param.cap_cnt = 5;
         capture_param.cap_scene = CAPTURE_SW3DNR;
+        capture_param.timestamp = snp_cxt->cap_need_time_stamp;
     } else if (CAMERA_3DNR_TYPE_NIGHT_DNS == camera_get_3dnr_flag(cxt)) {
         capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
         capture_param.cap_cnt = 7;
@@ -16624,6 +16636,16 @@ cmr_int cmr_set_3a_bypass(cmr_handle oem_handle, cmr_u32 value) {
         ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_AEAWB_BYPASS,
                         (void *)&value);
     }
+    return ret;
+}
+
+cmr_int cmr_set_af_bypass(cmr_handle oem_handle, cmr_u32 value) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    CMR_LOGI("af_bypass =%d", value);
+    ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_SET_AF_BYPASS,
+                    (void *)&value);
     return ret;
 }
 

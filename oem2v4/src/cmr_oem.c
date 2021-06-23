@@ -11613,6 +11613,20 @@ exit:
     return ret;
 }
 
+cmr_int camera_local_set_alloc_size(cmr_handle oem_handle, cmr_u16 width, cmr_u16 height) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    ret = cmr_grab_set_alloc_size(cxt->grab_cxt.grab_handle, width , height);
+    if (ret) {
+        CMR_LOGE("cmr_grab_stop_capture failed");
+        goto exit;
+    }
+
+exit:
+    return ret;
+}
+
 void camera_set_oem_multimode(multiCameraMode camera_mode) {
     CMR_LOGD("camera_mode %d", camera_mode);
     is_multi_camera_mode_oem = camera_mode;
