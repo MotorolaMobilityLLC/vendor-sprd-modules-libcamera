@@ -681,6 +681,8 @@ cmr_s32 camera_local_get_iommu_status(cmr_handle oem_handle);
 
 cmr_int camera_set_security(cmr_handle oem_handle,
                             struct sprd_cam_sec_cfg *sec_cfg);
+cmr_int camera_set_zsl_param(cmr_handle oem_handle,
+                            struct sprd_cap_zsl_param *zsl_param);                            
 cmr_int camera_set_hdr_disable(cmr_handle oem_handle, cmr_u32 param);
 
 cmr_int
@@ -741,6 +743,7 @@ cmr_int camera_stream_ctrl(cmr_handle cmr_handle, cmr_u32 on_off);
 cmr_int cmr_get_isp_af_fullscan(cmr_handle oem_handle,
                                 struct isp_af_fullscan_info *af_fullscan_info);
 cmr_int cmr_set_af_pos(cmr_handle oem_handle, cmr_u32 af_pos);
+cmr_int cmr_set_af_bypass(cmr_handle oem_handle, cmr_u32 value);
 cmr_int cmr_set_3a_bypass(cmr_handle oem_handle, cmr_u32 value);
 cmr_int cmr_get_ae_fps(cmr_handle oem_handle, cmr_u32 *ae_fps);
 cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,

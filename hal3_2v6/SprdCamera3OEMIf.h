@@ -1037,6 +1037,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     //for LPT type
     int lightportrait_type;
     uint32_t mMultiCameraId;
+    cmr_u32 mExposureTime;
+    uint32_t mNeed_share_buf;
     bool EisErr;
     bool mMultiCamHighResMode;
 };

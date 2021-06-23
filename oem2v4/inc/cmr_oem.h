@@ -590,6 +590,7 @@ cmr_int camera_set_snp_face_detect_value(cmr_handle oem_handle,
 cmr_int camera_get_bv_info(cmr_handle oem_handle, cmr_u32 *bv_info);
 cmr_int camera_get_ct_info(cmr_handle oem_handle, cmr_u32 *ct_info);
 cmr_int camera_get_iso_info(cmr_handle oem_handle, cmr_u32 *iso_info);
+cmr_int camera_local_set_alloc_size(cmr_handle oem_handle, cmr_u16 width, cmr_u16 height);
 
 #ifdef __cplusplus
 }

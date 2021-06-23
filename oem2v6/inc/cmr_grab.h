@@ -95,6 +95,8 @@ void cmr_grab_post_ynr_evt_reg(cmr_handle grab_handle,
                                cmr_evt_cb grab_post_ynr_evt_cb);
 cmr_int cmr_grab_set_security(cmr_handle grab_handle,
                               struct sprd_cam_sec_cfg *sec_cfg);
+cmr_int cmr_grab_set_zsl_param(cmr_handle grab_handle,
+                              struct sprd_cap_zsl_param *zsl_param);                              
 cmr_int cmr_grab_if_cfg(cmr_handle grab_handle, struct sensor_if *sn_if);
 cmr_int cmr_grab_sn_cfg(cmr_handle grab_handle, struct sn_cfg *config);
 cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
@@ -153,8 +155,9 @@ cmr_int cmr_grab_start_capture(cmr_handle grab_handle,
 cmr_int cmr_grab_stop_capture(cmr_handle grab_handle);
 cmr_int cmr_grab_set_alloc_size(cmr_handle grab_handle,
                                cmr_u16 weight, cmr_u16 height);
-
 cmr_int cmr_grab_cfg_ch_crop(cmr_handle grab_handle, cmr_u32 ch_id, struct img_rect *crop);
+cmr_int cmr_grab_set_alloc_size(cmr_handle grab_handle,
+                               cmr_u16 weight, cmr_u16 height);
 
 
 cmr_int cmr_grab_stream_pause(cmr_handle grab_handle);
