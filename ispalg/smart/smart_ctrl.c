@@ -441,8 +441,8 @@ static cmr_s32 smart_ctl_check_param(struct isp_smart_param *param)
 	struct isp_piecewise_func *func = NULL;
 	struct isp_range *bv_range = NULL;
 
-	if (0 == is_print_log())
-		return rtn;
+	//if (0 == is_print_log())
+	//	return rtn;
 
 	ISP_LOGV("block_num:%d.", param->block_num);
 
