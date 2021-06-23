@@ -955,6 +955,26 @@ cmr_int cmr_grab_set_rt_refocus(cmr_handle grab_handle, cmr_u32 rt_refocus) {
     return ret;
 }
 
+cmr_int cmr_grab_set_alloc_size(cmr_handle grab_handle,cmr_u16 width, cmr_u16 height) {
+    struct cmr_grab *p_grab;
+    cmr_int ret = 0;
+    struct sprd_img_size alloc_size;
+
+    p_grab = (struct cmr_grab *)grab_handle;
+    CMR_CHECK_HANDLE;
+    CMR_CHECK_FD;
+    alloc_size.w = (cmr_u32)width;
+    alloc_size.h = (cmr_u32)height;
+    CMR_LOGD("alloc w =%d,h=%d",width, height);
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_MUL_MAX_SN_SIZE, &alloc_size);
+    if (ret) {
+        CMR_LOGE("failed to stop offline path");
+    }
+    CMR_LOGV("ret = %ld", ret);
+
+    return ret;
+}
+
 cmr_int cmr_grab_deinit_notice(cmr_handle grab_handle) {
     struct cmr_grab *p_grab;
     cmr_int ret = 0;

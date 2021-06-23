@@ -960,6 +960,7 @@ cmr_int camera_set_largest_picture_size(cmr_u32 camera_id, cmr_u16 width,
 
     return ret;
 }
+
 cmr_int camera_set_alloc_picture_size(cmr_handle camera_handle,cmr_u16 width,
                                         cmr_u16 height) {
     cmr_int ret = 0;
@@ -1079,6 +1080,9 @@ static cmr_int ioctrl_camera_stream_ctrl(cmr_handle handle, void *param) {
 static cmr_int ioctrl_set_af_pos(cmr_handle handle, void *param) {
     return cmr_set_af_pos(handle, *(uint32_t *)param);
 }
+static cmr_int ioctrl_set_af_bypass(cmr_handle handle, void *param) {
+    return cmr_set_af_bypass(handle, *(uint32_t *)param);
+}
 static cmr_int ioctrl_set_3a_bypass(cmr_handle handle, void *param) {
     return cmr_set_3a_bypass(handle, *(uint32_t *)param);
 }
@@ -1159,6 +1163,13 @@ static cmr_int ioctrl_sensor_get_stream_status(cmr_handle handle, void *param) {
     ret = cmr_sensor_get_stream_status(cxt->sn_cxt.sensor_handle, cxt->camera_id);
     *((int *)param) = (int)ret;
 
+    return 0;
+}
+static cmr_int ioctrl_camera_set_zsl_param(cmr_handle handle, void *param) {
+    struct  sprd_cap_zsl_param *zsl_param = (struct sprd_cap_zsl_param *)param;
+
+    CMR_LOGD("zsl_num = %d,skip_num=%d", zsl_param->zsl_num,zsl_param->zsk_skip_num);
+    camera_set_zsl_param(handle, zsl_param);
     return 0;
 }
 static cmr_int ioctrl_set_high_res_mode(cmr_handle handle, void *param) {
@@ -1259,6 +1270,7 @@ const static camera_ioctrl_func tb_ioctrl_func[CAMERA_IOCTRL_CMD_MAX] = {
     [CAMERA_IOCTRL_COVERED_SENSOR_STREAM_CTRL] = ioctrl_camera_stream_ctrl,
     [CAMERA_IOCTRL_GET_FULLSCAN_INFO]          = ioctrl_get_isp_af_fullscan,
     [CAMERA_IOCTRL_SET_AF_POS]                 = ioctrl_set_af_pos,
+    [CAMERA_IOCTRL_SET_AF_BYPASS]              = ioctrl_set_af_bypass,
     [CAMERA_IOCTRL_SET_3A_BYPASS]              = ioctrl_set_3a_bypass,
     [CAMERA_IOCTRL_GET_AE_FPS]                 = ioctrl_get_ae_fps,
     [CAMERA_IOCTRL_3DNR_VIDEOMODE]             = ioctrl_set_3dnr_video,
@@ -1315,6 +1327,7 @@ const static camera_ioctrl_func tb_ioctrl_func[CAMERA_IOCTRL_CMD_MAX] = {
     [CAMERA_IOCTRL_SET_MOVE_INFO]              = ioctrl_set_eis_move_info,
     [CAMERA_IOCTRL_WRITE_CALIBRATION_OTP_DATA]	= ioctrl_write_calibration_otp,
     [CAMERA_IOCTRL_SET_MULTICAM_HIGHRES_MODE] = ioctrl_set_multicam_highres_mode,
+    [CAMERA_IOCTRL_SET_ZSL_CAP_PARAM]      = ioctrl_camera_set_zsl_param,
 };
 
 cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {

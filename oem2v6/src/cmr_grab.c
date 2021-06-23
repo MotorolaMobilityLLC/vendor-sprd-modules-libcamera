@@ -313,6 +313,18 @@ cmr_int cmr_grab_set_security(cmr_handle grab_handle,
     return ret;
 }
 
+cmr_int cmr_grab_set_zsl_param(cmr_handle grab_handle,
+                              struct sprd_cap_zsl_param *zsl_param) {
+    cmr_int ret = 0;
+    struct cmr_grab *p_grab;
+    p_grab = (struct cmr_grab *)grab_handle;
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_CAP_ZSL_INFO, zsl_param);
+    if (ret) {
+        CMR_LOGE("failed to set zsl param, ret = %d", ret);
+    }
+    return ret;
+}
+
 cmr_int cmr_grab_set_pulse_line(cmr_handle grab_handle, cmr_u32 line) {
     cmr_int ret = 0;
     cmr_u32 is_on;
