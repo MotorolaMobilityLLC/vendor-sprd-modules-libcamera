@@ -1317,7 +1317,7 @@
 	/*sigma_v*/
 	40.00,
 	/*adpt_med_thr*/
-	0x0028,
+	0x001E,
 	/*median_mode*/
 	0x01,
 	/*uv_joint*/
