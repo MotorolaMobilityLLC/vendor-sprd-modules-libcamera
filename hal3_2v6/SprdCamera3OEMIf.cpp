@@ -620,7 +620,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mIsFDRCapture(0), mIsCameraClearQBuf(0),
       mLatestFocusDoneTime(0), mFaceDetectStartedFlag(0),
       mIsJpegWithBigSizePreview(0), lightportrait_type(0),
-      mMultiCameraId(SPRD_MULTI_CAMERA_BASE_ID),mPortraitSceneFB(false),mNeed_share_buf(1)
+      mMultiCameraId(SPRD_MULTI_CAMERA_BASE_ID),mPortraitSceneFB(false),mNeed_share_buf(1),
+      mIsCapturing(false),mNeedCancelAutoFocus(false)
 
 {
     ATRACE_CALL();
@@ -1750,6 +1751,11 @@ status_t SprdCamera3OEMIf::cancelAutoFocus() {
         return UNKNOWN_ERROR;
     }
 
+    if (mIsCapturing) {
+        mNeedCancelAutoFocus = true;
+        HAL_LOGD("isCapturing, can_not_cancel_autoFocus!");
+        return ret;
+    }
     Mutex::Autolock l(&mLock);
 
     ret = mHalOem->ops->camera_cancel_autofocus(mCameraHandle);
@@ -12103,6 +12109,7 @@ exit:
 void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
 
     SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
+    mIsCapturing = true;
     uint32_t ret = 0, count1 = 0, clear_af_trigger = 0;
     int64_t tmp1, tmp2;
     SPRD_DEF_Tag *sprddefInfo;
@@ -12278,7 +12285,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
         }
     }
 
-    if(mIsNeedFlashFired && sprddefInfo->af_support == 1 && sprddefInfo->sprd_appmode_id >= 0 &&
+    /*if(mIsNeedFlashFired && sprddefInfo->af_support == 1 && sprddefInfo->sprd_appmode_id >= 0 &&
         (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH ||
         controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_ALWAYS_FLASH) &&
         (!been_preflash) && (sprddefInfo->sprd_appmode_id != CAMERA_MODE_MANUAL)) {
@@ -12301,7 +12308,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
                         count1 ++;
                 }
                 clear_af_trigger = 1;
-    }
+    }*/
     mClearAfTrigger = !!clear_af_trigger;
 
     if(mZslCaptureExitLoop == true) {
@@ -12450,7 +12457,11 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     }
 
 exit:
-    if (!mZslIpsEnable && clear_af_trigger && mZslCaptureExitLoop == false) {
+    mIsCapturing = false;
+    if (!mZslIpsEnable && mZslCaptureExitLoop == false &&
+        (clear_af_trigger || mNeedCancelAutoFocus)) {
+        HAL_LOGD("cancelAutoFocus");
+        mNeedCancelAutoFocus = false;
         controlInfo.af_trigger = ANDROID_CONTROL_AF_TRIGGER_CANCEL;
         mSetting->setCONTROLTag(&controlInfo);
         SetCameraParaTag(ANDROID_CONTROL_AF_TRIGGER);
