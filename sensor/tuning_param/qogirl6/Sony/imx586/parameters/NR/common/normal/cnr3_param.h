@@ -30,13 +30,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x07D0,
+			0x03E8,
 			/*imgCenterY*/
-			0x05DC,
+			0x02CB,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x1B58,
+			0x0DAC,
 			/*baseRadius_factor*/
 			0x0400,
 			/*minRatio*/
@@ -69,13 +69,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x03E8,
+			0x01F4,
 			/*imgCenterY*/
-			0x02CB,
+			0x0165,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x082B,
+			0x0415,
 			/*baseRadius_factor*/
 			0x0264,
 			/*minRatio*/
@@ -108,13 +108,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x01F4,
+			0x00FA,
 			/*imgCenterY*/
-			0x0165,
+			0x00B2,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x020A,
+			0x0105,
 			/*baseRadius_factor*/
 			0x0132,
 			/*minRatio*/
@@ -147,13 +147,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x00FA,
+			0x007D,
 			/*imgCenterY*/
-			0x00B2,
+			0x0059,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0082,
+			0x0041,
 			/*baseRadius_factor*/
 			0x0099,
 			/*minRatio*/
@@ -186,13 +186,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x007D,
+			0x003E,
 			/*imgCenterY*/
-			0x0059,
+			0x002C,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0020,
+			0x0010,
 			/*baseRadius_factor*/
 			0x004C,
 			/*minRatio*/
@@ -247,13 +247,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x07D0,
+			0x03E8,
 			/*imgCenterY*/
-			0x05DC,
+			0x02EE,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x1B58,
+			0x0DAC,
 			/*baseRadius_factor*/
 			0x0400,
 			/*minRatio*/
@@ -264,7 +264,7 @@
 			},
 			/*sigma*/
 			{
-				5.00,6.00,7.00/*0-2*/
+				7.00,8.00,9.00/*0-2*/
 			},
 			/*reserved1*/
 			{
@@ -286,13 +286,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x03E8,
+			0x01F4,
 			/*imgCenterY*/
-			0x02CB,
+			0x0177,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x082B,
+			0x0415,
 			/*baseRadius_factor*/
 			0x0264,
 			/*minRatio*/
@@ -303,7 +303,7 @@
 			},
 			/*sigma*/
 			{
-				5.00,6.00,7.00/*0-2*/
+				6.00,7.00,8.00/*0-2*/
 			},
 			/*reserved1*/
 			{
@@ -325,13 +325,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x01F4,
+			0x00FA,
 			/*imgCenterY*/
-			0x0165,
+			0x00BB,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x020A,
+			0x0105,
 			/*baseRadius_factor*/
 			0x0132,
 			/*minRatio*/
@@ -364,13 +364,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x00FA,
+			0x007D,
 			/*imgCenterY*/
-			0x00B2,
+			0x005D,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0082,
+			0x0041,
 			/*baseRadius_factor*/
 			0x0099,
 			/*minRatio*/
@@ -403,13 +403,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x007D,
+			0x003E,
 			/*imgCenterY*/
-			0x0059,
+			0x002E,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0020,
+			0x0010,
 			/*baseRadius_factor*/
 			0x004C,
 			/*minRatio*/
@@ -464,13 +464,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x07D0,
+			0x03E8,
 			/*imgCenterY*/
-			0x05DC,
+			0x02EE,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x1B58,
+			0x0DAC,
 			/*baseRadius_factor*/
 			0x0400,
 			/*minRatio*/
@@ -481,7 +481,7 @@
 			},
 			/*sigma*/
 			{
-				5.00,6.00,7.00/*0-2*/
+				11.00,12.00,13.00/*0-2*/
 			},
 			/*reserved1*/
 			{
@@ -503,13 +503,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x03E8,
+			0x01F4,
 			/*imgCenterY*/
-			0x02CB,
+			0x0177,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x082B,
+			0x0415,
 			/*baseRadius_factor*/
 			0x0264,
 			/*minRatio*/
@@ -520,7 +520,7 @@
 			},
 			/*sigma*/
 			{
-				5.00,6.00,7.00/*0-2*/
+				10.00,11.00,12.00/*0-2*/
 			},
 			/*reserved1*/
 			{
@@ -542,13 +542,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x01F4,
+			0x00FA,
 			/*imgCenterY*/
-			0x0165,
+			0x00BB,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x020A,
+			0x0105,
 			/*baseRadius_factor*/
 			0x0132,
 			/*minRatio*/
@@ -559,7 +559,7 @@
 			},
 			/*sigma*/
 			{
-				5.00,6.00,7.00/*0-2*/
+				9.00,10.00,11.00/*0-2*/
 			},
 			/*reserved1*/
 			{
@@ -581,13 +581,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x00FA,
+			0x007D,
 			/*imgCenterY*/
-			0x00B2,
+			0x005D,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0082,
+			0x0041,
 			/*baseRadius_factor*/
 			0x0099,
 			/*minRatio*/
@@ -598,7 +598,7 @@
 			},
 			/*sigma*/
 			{
-				4.00,5.00,6.00/*0-2*/
+				9.00,10.00,11.00/*0-2*/
 			},
 			/*reserved1*/
 			{
@@ -620,13 +620,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x007D,
+			0x003E,
 			/*imgCenterY*/
-			0x0059,
+			0x002E,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0020,
+			0x0010,
 			/*baseRadius_factor*/
 			0x004C,
 			/*minRatio*/
@@ -637,7 +637,7 @@
 			},
 			/*sigma*/
 			{
-				2.00,3.00,5.00/*0-2*/
+				9.00,10.00,11.00/*0-2*/
 			},
 			/*reserved1*/
 			{
@@ -681,13 +681,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x07D0,
+			0x03E8,
 			/*imgCenterY*/
-			0x05DC,
+			0x02CB,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x1B58,
+			0x0DAC,
 			/*baseRadius_factor*/
 			0x0400,
 			/*minRatio*/
@@ -720,13 +720,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x03E8,
+			0x01F4,
 			/*imgCenterY*/
-			0x02CB,
+			0x0165,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x082B,
+			0x0415,
 			/*baseRadius_factor*/
 			0x0264,
 			/*minRatio*/
@@ -759,13 +759,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x01F4,
+			0x00FA,
 			/*imgCenterY*/
-			0x0165,
+			0x00B2,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x020A,
+			0x0105,
 			/*baseRadius_factor*/
 			0x0132,
 			/*minRatio*/
@@ -798,13 +798,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x00FA,
+			0x007D,
 			/*imgCenterY*/
-			0x00B2,
+			0x0059,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0082,
+			0x0041,
 			/*baseRadius_factor*/
 			0x0099,
 			/*minRatio*/
@@ -837,13 +837,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x007D,
+			0x003E,
 			/*imgCenterY*/
-			0x0059,
+			0x002C,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0020,
+			0x0010,
 			/*baseRadius_factor*/
 			0x004C,
 			/*minRatio*/
@@ -898,13 +898,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x07D0,
+			0x03E8,
 			/*imgCenterY*/
-			0x05DC,
+			0x02EE,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x1B58,
+			0x0DAC,
 			/*baseRadius_factor*/
 			0x0400,
 			/*minRatio*/
@@ -915,7 +915,7 @@
 			},
 			/*sigma*/
 			{
-				7.00,8.00,9.00/*0-2*/
+				11.00,12.00,13.00/*0-2*/
 			},
 			/*reserved1*/
 			{
@@ -937,13 +937,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x03E8,
+			0x01F4,
 			/*imgCenterY*/
-			0x02CB,
+			0x0177,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x082B,
+			0x0415,
 			/*baseRadius_factor*/
 			0x0264,
 			/*minRatio*/
@@ -954,7 +954,7 @@
 			},
 			/*sigma*/
 			{
-				6.00,7.00,8.00/*0-2*/
+				10.00,11.00,12.00/*0-2*/
 			},
 			/*reserved1*/
 			{
@@ -976,13 +976,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x01F4,
+			0x00FA,
 			/*imgCenterY*/
-			0x0165,
+			0x00BB,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x020A,
+			0x0105,
 			/*baseRadius_factor*/
 			0x0132,
 			/*minRatio*/
@@ -993,7 +993,7 @@
 			},
 			/*sigma*/
 			{
-				5.00,6.00,7.00/*0-2*/
+				9.00,10.00,11.00/*0-2*/
 			},
 			/*reserved1*/
 			{
@@ -1015,13 +1015,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x00FA,
+			0x007D,
 			/*imgCenterY*/
-			0x00B2,
+			0x005D,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0082,
+			0x0041,
 			/*baseRadius_factor*/
 			0x0099,
 			/*minRatio*/
@@ -1032,7 +1032,7 @@
 			},
 			/*sigma*/
 			{
-				4.00,5.00,6.00/*0-2*/
+				9.00,10.00,11.00/*0-2*/
 			},
 			/*reserved1*/
 			{
@@ -1054,13 +1054,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x007D,
+			0x003E,
 			/*imgCenterY*/
-			0x0059,
+			0x002E,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0020,
+			0x0010,
 			/*baseRadius_factor*/
 			0x004C,
 			/*minRatio*/
@@ -1071,7 +1071,7 @@
 			},
 			/*sigma*/
 			{
-				2.00,3.00,5.00/*0-2*/
+				9.00,10.00,11.00/*0-2*/
 			},
 			/*reserved1*/
 			{
@@ -1115,13 +1115,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x07D0,
+			0x03E8,
 			/*imgCenterY*/
-			0x05DC,
+			0x02EE,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x1B58,
+			0x0DAC,
 			/*baseRadius_factor*/
 			0x0400,
 			/*minRatio*/
@@ -1132,7 +1132,7 @@
 			},
 			/*sigma*/
 			{
-				7.00,8.00,9.00/*0-2*/
+				13.00,14.00,15.00/*0-2*/
 			},
 			/*reserved1*/
 			{
@@ -1154,13 +1154,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x03E8,
+			0x01F4,
 			/*imgCenterY*/
-			0x02CB,
+			0x0177,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x082B,
+			0x0415,
 			/*baseRadius_factor*/
 			0x0264,
 			/*minRatio*/
@@ -1171,7 +1171,7 @@
 			},
 			/*sigma*/
 			{
-				6.00,7.00,8.00/*0-2*/
+				12.00,13.00,14.00/*0-2*/
 			},
 			/*reserved1*/
 			{
@@ -1193,13 +1193,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x01F4,
+			0x00FA,
 			/*imgCenterY*/
-			0x0165,
+			0x00BB,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x020A,
+			0x0105,
 			/*baseRadius_factor*/
 			0x0132,
 			/*minRatio*/
@@ -1210,7 +1210,7 @@
 			},
 			/*sigma*/
 			{
-				5.00,6.00,7.00/*0-2*/
+				11.00,12.00,13.00/*0-2*/
 			},
 			/*reserved1*/
 			{
@@ -1232,13 +1232,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x00FA,
+			0x007D,
 			/*imgCenterY*/
-			0x00B2,
+			0x005D,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0082,
+			0x0041,
 			/*baseRadius_factor*/
 			0x0099,
 			/*minRatio*/
@@ -1249,7 +1249,7 @@
 			},
 			/*sigma*/
 			{
-				4.00,5.00,6.00/*0-2*/
+				10.00,11.00,12.00/*0-2*/
 			},
 			/*reserved1*/
 			{
@@ -1271,13 +1271,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x007D,
+			0x003E,
 			/*imgCenterY*/
-			0x0059,
+			0x002E,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0020,
+			0x0010,
 			/*baseRadius_factor*/
 			0x004C,
 			/*minRatio*/
@@ -1288,7 +1288,7 @@
 			},
 			/*sigma*/
 			{
-				2.00,3.00,5.00/*0-2*/
+				10.00,11.00,12.00/*0-2*/
 			},
 			/*reserved1*/
 			{
@@ -1332,13 +1332,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x07D0,
+			0x03E8,
 			/*imgCenterY*/
-			0x05DC,
+			0x02EE,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x1B58,
+			0x0DAC,
 			/*baseRadius_factor*/
 			0x0400,
 			/*minRatio*/
@@ -1349,7 +1349,7 @@
 			},
 			/*sigma*/
 			{
-				7.00,8.00,9.00/*0-2*/
+				13.00,14.00,15.00/*0-2*/
 			},
 			/*reserved1*/
 			{
@@ -1371,13 +1371,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x03E8,
+			0x01F4,
 			/*imgCenterY*/
-			0x02CB,
+			0x0177,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x082B,
+			0x0415,
 			/*baseRadius_factor*/
 			0x0264,
 			/*minRatio*/
@@ -1388,7 +1388,7 @@
 			},
 			/*sigma*/
 			{
-				6.00,7.00,8.00/*0-2*/
+				12.00,13.00,14.00/*0-2*/
 			},
 			/*reserved1*/
 			{
@@ -1410,13 +1410,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x01F4,
+			0x00FA,
 			/*imgCenterY*/
-			0x0165,
+			0x00BB,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x020A,
+			0x0105,
 			/*baseRadius_factor*/
 			0x0132,
 			/*minRatio*/
@@ -1427,7 +1427,7 @@
 			},
 			/*sigma*/
 			{
-				5.00,6.00,7.00/*0-2*/
+				11.00,12.00,13.00/*0-2*/
 			},
 			/*reserved1*/
 			{
@@ -1449,13 +1449,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x00FA,
+			0x007D,
 			/*imgCenterY*/
-			0x00B2,
+			0x005D,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0082,
+			0x0041,
 			/*baseRadius_factor*/
 			0x0099,
 			/*minRatio*/
@@ -1466,7 +1466,7 @@
 			},
 			/*sigma*/
 			{
-				4.00,5.00,6.00/*0-2*/
+				10.00,11.00,12.00/*0-2*/
 			},
 			/*reserved1*/
 			{
@@ -1488,13 +1488,13 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x007D,
+			0x003E,
 			/*imgCenterY*/
-			0x0059,
+			0x002E,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0020,
+			0x0010,
 			/*baseRadius_factor*/
 			0x004C,
 			/*minRatio*/
@@ -1505,7 +1505,7 @@
 			},
 			/*sigma*/
 			{
-				2.00,3.00,5.00/*0-2*/
+				10.00,11.00,12.00/*0-2*/
 			},
 			/*reserved1*/
 			{
