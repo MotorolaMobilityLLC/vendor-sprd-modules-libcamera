@@ -605,7 +605,7 @@
 		/*median_writeback_en*/
 		0x00,
 		/*median_mode*/
-		0x00,
+		0x01,
 		/*den_stren*/
 		0x00,
 		/*uv_joint*/
