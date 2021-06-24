@@ -2755,6 +2755,14 @@ exit : { // dump yuv data
                              mRealBokeh->mBokehSize.depth_snap_out_w,
                              mRealBokeh->mBokehSize.depth_snap_out_h,
                              mRealBokeh->mCapFrameNumber, "depthLinear");
+
+        HAL_LOGD("Debug Google depth jpeg size is %d", mRealBokeh->mBokehSize.depth_jepg_size);
+        mRealBokeh->dumpData(
+                (unsigned char *)(mRealBokeh->mDepthBuffer.snap_gdepthjpeg_buffer_addr), 2,
+                mRealBokeh->mBokehSize.depth_jepg_size,
+                mRealBokeh->mBokehSize.depth_snap_out_w,
+                mRealBokeh->mBokehSize.depth_snap_out_h,
+                mRealBokeh->mCapFrameNumber, "DepthEncode");
 #endif
     }
 }
