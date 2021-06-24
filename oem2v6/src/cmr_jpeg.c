@@ -179,6 +179,7 @@ cmr_int cmr_jpeg_encode(cmr_handle jpeg_handle, struct img_frm *src,
     jpeg_dst.format_pattern = dst->format_pattern;
     jpeg_dst.reserved = dst->reserved;
 
+    jpeg_src.fmt = cmr_fmt_transfer(src->fmt);
     ret = jcxt->ops.jpeg_encode(jcxt->codec_handle, &jpeg_src, &jpeg_dst, mean,
                                 enc_cb_param);
     if (ret) {
@@ -391,4 +392,19 @@ cmr_int cmr_jpeg_deinit(cmr_handle jpeg_handle) {
     }
     CMR_LOGD("ret %d", ret);
     return ret;
+}
+
+
+cmr_uint cmr_fmt_transfer(cmr_uint src_fmt) {
+    JPEGENC_FORMAT_E fmt = JPEGENC_YUV_420;
+
+    switch (src_fmt) {
+        case IMG_DATA_TYPE_YUV400:
+            fmt = JPEGENC_YUV_400;
+            break;
+
+        default:
+            break;
+        }
+    return fmt;
 }
