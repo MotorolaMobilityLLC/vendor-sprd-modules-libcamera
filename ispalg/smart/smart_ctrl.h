@@ -28,7 +28,7 @@ extern "C" {
 
 #define SMART_CMD_MASK        0x0F00
 #define SMART_WEIGHT_UNIT	  256
-#define SMART_MAX_WORK_MODE		16
+//#define SMART_MAX_WORK_MODE		16
 
 	typedef void *isp_smart_handle_t;
 	typedef void *smart_handle_t;
@@ -125,7 +125,7 @@ extern "C" {
 	struct smart_init_param {
 		cmr_handle caller_handle;
 		isp_smart_cb smart_set_cb;
-		struct smart_tuning_param tuning_param[SMART_MAX_WORK_MODE];
+		struct smart_tuning_param tuning_param[MAX_MODE_NUM];
 		cmr_int camera_id;
 		void *atm_info;
 		cmr_u32 atm_size;
