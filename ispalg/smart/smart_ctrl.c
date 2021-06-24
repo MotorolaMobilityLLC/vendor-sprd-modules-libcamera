@@ -116,8 +116,8 @@ struct smart_context {
 	cmr_u32 magic_flag;
 	pthread_mutex_t status_lock;
 	struct atmctrl_cxt *handle_atm;
-	struct tuning_param tuning_param[SMART_MAX_WORK_MODE];
-	struct tuning_param tuning_param_org[SMART_MAX_WORK_MODE];
+	struct tuning_param tuning_param[MAX_MODE_NUM];
+	struct tuning_param tuning_param_org[MAX_MODE_NUM];
 	struct tuning_param *cur_param;
 	cmr_u32 work_mode;
 	enum smart_ctrl_flash_mode flash_mode;
@@ -556,7 +556,7 @@ static cmr_s32 smart_ctl_get_update_param(struct smart_context *cxt, void *in_pa
 
 	param = (struct smart_init_param *)in_param;
 
-	rtn = smart_ctl_parse_tuning_param(param->tuning_param, cxt->tuning_param, SMART_MAX_WORK_MODE);
+	rtn = smart_ctl_parse_tuning_param(param->tuning_param, cxt->tuning_param, MAX_MODE_NUM);
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to parse tuning param, rtn = %d", rtn);
 		goto ERROR_EXIT;
@@ -1235,7 +1235,7 @@ smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 	cxt->camera_id = (cmr_u32)param->camera_id;
 	cxt->smart_lock_frame = 5; //lock smart N frames when change mode;
 
-	rtn = smart_ctl_parse_tuning_param(param->tuning_param, cxt->tuning_param, SMART_MAX_WORK_MODE);
+	rtn = smart_ctl_parse_tuning_param(param->tuning_param, cxt->tuning_param, MAX_MODE_NUM);
 	memcpy(cxt->tuning_param_org, cxt->tuning_param, sizeof(cxt->tuning_param_org));
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to parse tuning param, rtn %d", rtn);
@@ -2365,7 +2365,7 @@ cmr_s32 smart_ctl_block_enable_recover(smart_handle_t handle, cmr_u32 smart_id)
 
 	cxt = (struct smart_context *)handle;
 
-	for (int j = 0; j < SMART_MAX_WORK_MODE; j++) {
+	for (int j = 0; j < MAX_MODE_NUM; j++) {
 		if(cxt->tuning_param[j].param.block_num > 0) {
 			cxt->cur_param = &cxt->tuning_param[j];
 			org_param = &cxt->tuning_param_org[j];
@@ -2488,7 +2488,7 @@ cmr_s32 smart_ctl_block_disable(smart_handle_t handle, cmr_u32 smart_id)
 
 	cxt = (struct smart_context *)handle;
 
-	for (int j = 0; j < SMART_MAX_WORK_MODE; j++) {
+	for (int j = 0; j < MAX_MODE_NUM; j++) {
 		if(cxt->tuning_param[j].param.block_num > 0) {
 			cxt->cur_param = &cxt->tuning_param[j];
 
