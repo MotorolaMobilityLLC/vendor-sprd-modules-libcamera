@@ -313,7 +313,7 @@ static cmr_int s5kgm1sp_drv_identify(cmr_handle handle, cmr_int param) {
     cmd_val[1] = 0xc000 & 0xff;
     cmd_val[2] = 0x02;
     cmd_len = 3;
-    ret_value = hw_sensor_write_i2c(sns_drv_cxt->hw_handle, 0xA0 >> 1,
+    hw_sensor_write_i2c(sns_drv_cxt->hw_handle, 0xA0 >> 1,
                                   (uint8_t *)&cmd_val[0], cmd_len);
 
     SENSOR_LOGI("Identify: pid_value = %x, mid_value = %x", pid_value, mid_value);
