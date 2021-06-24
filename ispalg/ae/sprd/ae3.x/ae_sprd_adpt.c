@@ -6958,7 +6958,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 			}
 		}
 	}else if(cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW_SYNC) {
-		if(((0 == cxt->sync_state.sync_flag)&&(cxt->sync_state.ref_id == cxt->camera_id)) || (cxt->cur_status.adv_param.lock == AE_STATE_LOCKED)) {
+		if((cxt->sync_state.ref_id == cxt->camera_id)&&((0 == cxt->sync_state.sync_flag) || (cxt->exposure_compensation.ae_compensation_flag == 1))) {
 			ae_update_result_before_mapping(cxt, &cxt->exp_data, 0);
 			ae_write_to_sensor_normal_mapping(cxt, &cxt->exp_data);
 			slave_sensor_active = 0;
@@ -6970,7 +6970,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 			cxt->cur_status.tar_cam_id = cxt->sync_state.next_id;
 			cxt->cur_status.exp_time = 0;
 			cxt->cur_status.ae_gain = 0;
-			if(cxt->cur_status.adv_param.lock == AE_STATE_LOCKED) {
+			if(cxt->exposure_compensation.ae_compensation_flag == 1) {
 				cxt->sync_stable = 1;
 				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_SYNC_STABLE, &cxt->sync_stable);
 			}
