@@ -506,21 +506,21 @@ static cmr_s32 afm_set_lum(af_ctrl_t * af, void *in)
 				}
 				if (0 == af->win_offset) {
 					af->afm_lum[7] = afm_data[LUM_INDEX(9)];
-					af->afm_lum[6] = afm_data[LUM_INDEX(20)];
-					af->afm_lum[8] = afm_data[LUM_INDEX(22)];
+					af->afm_lum[6] = afm_data[LUM_INDEX(16)];
+					af->afm_lum[8] = afm_data[LUM_INDEX(18)];
 					if (val == 1) {
-						ISP_LOGI("afm_lum[6]: %d, block: 20, afm_data[%d]:%d", af->afm_lum[6], LUM_INDEX(20), afm_data[LUM_INDEX(20)]);
+						ISP_LOGI("afm_lum[6]: %d, block: 16, afm_data[%d]:%d", af->afm_lum[6], LUM_INDEX(16), afm_data[LUM_INDEX(16)]);
 						ISP_LOGI("afm_lum[7]: %d, block: 9,  afm_data[%d]:%d", af->afm_lum[7], LUM_INDEX(9), afm_data[LUM_INDEX(9)]);
-						ISP_LOGI("afm_lum[8]: %d, block: 22, afm_data[%d]:%d", af->afm_lum[8], LUM_INDEX(22), afm_data[LUM_INDEX(22)]);
+						ISP_LOGI("afm_lum[8]: %d, block: 18, afm_data[%d]:%d", af->afm_lum[8], LUM_INDEX(18), afm_data[LUM_INDEX(18)]);
 					}
 				} else {
 					af->afm_lum[7] = afm_data[LUM_INDEX(10)];
-					af->afm_lum[6] = afm_data[LUM_INDEX(21)];
-					af->afm_lum[8] = afm_data[LUM_INDEX(23)];
+					af->afm_lum[6] = afm_data[LUM_INDEX(17)];
+					af->afm_lum[8] = afm_data[LUM_INDEX(19)];
 					if (val == 1) {
-						ISP_LOGI("afm_lum[6]: %d, block: 21, afm_data[%d]:%d", af->afm_lum[6], LUM_INDEX(21), afm_data[LUM_INDEX(21)]);
+						ISP_LOGI("afm_lum[6]: %d, block: 17, afm_data[%d]:%d", af->afm_lum[6], LUM_INDEX(17), afm_data[LUM_INDEX(17)]);
 						ISP_LOGI("afm_lum[7]: %d, block: 10,  afm_data[%d]:%d", af->afm_lum[7], LUM_INDEX(10), afm_data[LUM_INDEX(10)]);
-						ISP_LOGI("afm_lum[8]: %d, block: 23, afm_data[%d]:%d", af->afm_lum[8], LUM_INDEX(23), afm_data[LUM_INDEX(23)]);
+						ISP_LOGI("afm_lum[8]: %d, block: 19, afm_data[%d]:%d", af->afm_lum[8], LUM_INDEX(19), afm_data[LUM_INDEX(19)]);
 					}
 				}
 			} else if (FACE_DOWN == af->f_orientation) {
@@ -533,21 +533,21 @@ static cmr_s32 afm_set_lum(af_ctrl_t * af, void *in)
 				}
 				if (0 == af->win_offset) {
 					af->afm_lum[1] = afm_data[LUM_INDEX(13)];
-					af->afm_lum[0] = afm_data[LUM_INDEX(0)];
-					af->afm_lum[2] = afm_data[LUM_INDEX(2)];
+					af->afm_lum[0] = afm_data[LUM_INDEX(4)];
+					af->afm_lum[2] = afm_data[LUM_INDEX(6)];
 					if (val == 1) {
-						ISP_LOGI("afm_lum[0]: %d, block: 0, afm_data[%d]:%d", af->afm_lum[0], LUM_INDEX(0), afm_data[LUM_INDEX(0)]);
+						ISP_LOGI("afm_lum[0]: %d, block: 4, afm_data[%d]:%d", af->afm_lum[0], LUM_INDEX(4), afm_data[LUM_INDEX(4)]);
 						ISP_LOGI("afm_lum[1]: %d, block: 13,  afm_data[%d]:%d", af->afm_lum[1], LUM_INDEX(13), afm_data[LUM_INDEX(13)]);
-						ISP_LOGI("afm_lum[2]: %d, block: 2, afm_data[%d]:%d", af->afm_lum[2], LUM_INDEX(2), afm_data[LUM_INDEX(2)]);
+						ISP_LOGI("afm_lum[2]: %d, block: 6, afm_data[%d]:%d", af->afm_lum[2], LUM_INDEX(6), afm_data[LUM_INDEX(6)]);
 					}
 				} else {
 					af->afm_lum[1] = afm_data[LUM_INDEX(14)];
-					af->afm_lum[0] = afm_data[LUM_INDEX(1)];
-					af->afm_lum[2] = afm_data[LUM_INDEX(3)];
+					af->afm_lum[0] = afm_data[LUM_INDEX(5)];
+					af->afm_lum[2] = afm_data[LUM_INDEX(7)];
 					if (val == 1) {
-						ISP_LOGI("afm_lum[0]: %d, block: 1, afm_data[%d]:%d", af->afm_lum[0], LUM_INDEX(1), afm_data[LUM_INDEX(1)]);
+						ISP_LOGI("afm_lum[0]: %d, block: 5, afm_data[%d]:%d", af->afm_lum[0], LUM_INDEX(5), afm_data[LUM_INDEX(5)]);
 						ISP_LOGI("afm_lum[1]: %d, block: 14,  afm_data[%d]:%d", af->afm_lum[1], LUM_INDEX(14), afm_data[LUM_INDEX(14)]);
-						ISP_LOGI("afm_lum[2]: %d, block: 3, afm_data[%d]:%d", af->afm_lum[2], LUM_INDEX(3), afm_data[LUM_INDEX(3)]);
+						ISP_LOGI("afm_lum[2]: %d, block: 7, afm_data[%d]:%d", af->afm_lum[2], LUM_INDEX(7), afm_data[LUM_INDEX(7)]);
 					}
 				}
 			}
@@ -561,12 +561,12 @@ static cmr_s32 afm_set_lum(af_ctrl_t * af, void *in)
 					}
 				}
 				af->afm_lum[5] = afm_data[LUM_INDEX(8)];
-				af->afm_lum[2] = afm_data[LUM_INDEX(5)];
-				af->afm_lum[8] = afm_data[LUM_INDEX(17)];
+				af->afm_lum[2] = afm_data[LUM_INDEX(4)];
+				af->afm_lum[8] = afm_data[LUM_INDEX(16)];
 				if (val == 1) {
 					ISP_LOGI("afm_lum[5]: %d, block: 8, afm_data[%d]:%d", af->afm_lum[5], LUM_INDEX(8), afm_data[LUM_INDEX(8)]);
-					ISP_LOGI("afm_lum[2]: %d, block: 5,  afm_data[%d]:%d", af->afm_lum[2], LUM_INDEX(5), afm_data[LUM_INDEX(5)]);
-					ISP_LOGI("afm_lum[8]: %d, block: 17, afm_data[%d]:%d", af->afm_lum[8], LUM_INDEX(17), afm_data[LUM_INDEX(17)]);
+					ISP_LOGI("afm_lum[2]: %d, block: 4,  afm_data[%d]:%d", af->afm_lum[2], LUM_INDEX(4), afm_data[LUM_INDEX(4)]);
+					ISP_LOGI("afm_lum[8]: %d, block: 16, afm_data[%d]:%d", af->afm_lum[8], LUM_INDEX(16), afm_data[LUM_INDEX(16)]);
 				}
 			} else if (FACE_RIGHT == af->f_orientation) {
 				for (i = 0; i < 6; i++) {	//3
@@ -577,12 +577,12 @@ static cmr_s32 afm_set_lum(af_ctrl_t * af, void *in)
 					}
 				}
 				af->afm_lum[3] = afm_data[LUM_INDEX(9)];
-				af->afm_lum[0] = afm_data[LUM_INDEX(0)];
-				af->afm_lum[6] = afm_data[LUM_INDEX(12)];
+				af->afm_lum[0] = afm_data[LUM_INDEX(1)];
+				af->afm_lum[6] = afm_data[LUM_INDEX(13)];
 				if (val == 1) {
 					ISP_LOGI("afm_lum[3]: %d, block: 9, afm_data[%d]:%d", af->afm_lum[3], LUM_INDEX(9), afm_data[LUM_INDEX(9)]);
-					ISP_LOGI("afm_lum[0]: %d, block: 0,  afm_data[%d]:%d", af->afm_lum[0], LUM_INDEX(0), afm_data[LUM_INDEX(0)]);
-					ISP_LOGI("afm_lum[6]: %d, block: 12, afm_data[%d]:%d", af->afm_lum[6], LUM_INDEX(12), afm_data[LUM_INDEX(12)]);
+					ISP_LOGI("afm_lum[0]: %d, block: 1,  afm_data[%d]:%d", af->afm_lum[0], LUM_INDEX(1), afm_data[LUM_INDEX(1)]);
+					ISP_LOGI("afm_lum[6]: %d, block: 13, afm_data[%d]:%d", af->afm_lum[6], LUM_INDEX(13), afm_data[LUM_INDEX(13)]);
 				}
 			}
 		}
@@ -648,32 +648,32 @@ static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
 				if (0 == af->win_offset) {
 					af->af_fv_val.af_fv0[7] = (cmr_u64) af_fv_val[FV0_INDEX(9)];
 					af->af_fv_val.af_fv1[7] = (cmr_u64) af_fv_val[FV1_INDEX(9)];
-					af->af_fv_val.af_fv0[6] = (cmr_u64) af_fv_val[FV0_INDEX(20)];
-					af->af_fv_val.af_fv1[6] = (cmr_u64) af_fv_val[FV1_INDEX(20)];
-					af->af_fv_val.af_fv0[8] = (cmr_u64) af_fv_val[FV0_INDEX(22)];
-					af->af_fv_val.af_fv1[8] = (cmr_u64) af_fv_val[FV1_INDEX(22)];
+					af->af_fv_val.af_fv0[6] = (cmr_u64) af_fv_val[FV0_INDEX(16)];
+					af->af_fv_val.af_fv1[6] = (cmr_u64) af_fv_val[FV1_INDEX(16)];
+					af->af_fv_val.af_fv0[8] = (cmr_u64) af_fv_val[FV0_INDEX(18)];
+					af->af_fv_val.af_fv1[8] = (cmr_u64) af_fv_val[FV1_INDEX(18)];
 					if (val == 1) {
-						ISP_LOGE("i: 6, af_fv0[6]: %15" PRIu64 ", j: 20, FV0_INDEX(20):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[6], FV0_INDEX(20),
-							 FV0_INDEX(20), af_fv_val[FV0_INDEX(20)]);
+						ISP_LOGE("i: 6, af_fv0[6]: %15" PRIu64 ", j: 16, FV0_INDEX(16):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[6], FV0_INDEX(16),
+							 FV0_INDEX(16), af_fv_val[FV0_INDEX(16)]);
 						ISP_LOGE("i: 7, af_fv0[7]: %15" PRIu64 ", j: 9, FV0_INDEX(9):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[7], FV0_INDEX(9),
 							 FV0_INDEX(9), af_fv_val[FV0_INDEX(9)]);
-						ISP_LOGE("i: 8, af_fv0[8]: %15" PRIu64 ", j: 22, FV0_INDEX(22):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[8], FV0_INDEX(22),
-							 FV0_INDEX(22), af_fv_val[FV0_INDEX(22)]);
+						ISP_LOGE("i: 8, af_fv0[8]: %15" PRIu64 ", j: 18, FV0_INDEX(18):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[8], FV0_INDEX(18),
+							 FV0_INDEX(18), af_fv_val[FV0_INDEX(18)]);
 					}
 				} else {
 					af->af_fv_val.af_fv0[7] = (cmr_u64) af_fv_val[FV0_INDEX(10)];
 					af->af_fv_val.af_fv1[7] = (cmr_u64) af_fv_val[FV1_INDEX(10)];
-					af->af_fv_val.af_fv0[6] = (cmr_u64) af_fv_val[FV0_INDEX(21)];
-					af->af_fv_val.af_fv1[6] = (cmr_u64) af_fv_val[FV1_INDEX(21)];
-					af->af_fv_val.af_fv0[8] = (cmr_u64) af_fv_val[FV0_INDEX(23)];
-					af->af_fv_val.af_fv1[8] = (cmr_u64) af_fv_val[FV1_INDEX(23)];
+					af->af_fv_val.af_fv0[6] = (cmr_u64) af_fv_val[FV0_INDEX(17)];
+					af->af_fv_val.af_fv1[6] = (cmr_u64) af_fv_val[FV1_INDEX(17)];
+					af->af_fv_val.af_fv0[8] = (cmr_u64) af_fv_val[FV0_INDEX(19)];
+					af->af_fv_val.af_fv1[8] = (cmr_u64) af_fv_val[FV1_INDEX(19)];
 					if (val == 1) {
-						ISP_LOGE("i: 6, af_fv0[6]: %15" PRIu64 ", j: 21, FV0_INDEX(21):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[6], FV0_INDEX(21),
-							 FV0_INDEX(21), af_fv_val[FV0_INDEX(21)]);
+						ISP_LOGE("i: 6, af_fv0[6]: %15" PRIu64 ", j: 17, FV0_INDEX(17):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[6], FV0_INDEX(17),
+							 FV0_INDEX(17), af_fv_val[FV0_INDEX(17)]);
 						ISP_LOGE("i: 7, af_fv0[7]: %15" PRIu64 ", j: 10, FV0_INDEX(10):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[7], FV0_INDEX(10),
 							 FV0_INDEX(10), af_fv_val[FV0_INDEX(10)]);
-						ISP_LOGE("i: 8, af_fv0[8]: %15" PRIu64 ", j: 23, FV0_INDEX(23):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[8], FV0_INDEX(23),
-							 FV0_INDEX(23), af_fv_val[FV0_INDEX(23)]);
+						ISP_LOGE("i: 8, af_fv0[8]: %15" PRIu64 ", j: 19, FV0_INDEX(19):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[8], FV0_INDEX(19),
+							 FV0_INDEX(19), af_fv_val[FV0_INDEX(19)]);
 					}
 				}
 			} else if (FACE_DOWN == af->f_orientation) {
@@ -690,32 +690,32 @@ static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
 				if (0 == af->win_offset) {
 					af->af_fv_val.af_fv0[1] = (cmr_u64) af_fv_val[FV0_INDEX(13)];
 					af->af_fv_val.af_fv1[1] = (cmr_u64) af_fv_val[FV1_INDEX(13)];
-					af->af_fv_val.af_fv0[0] = (cmr_u64) af_fv_val[FV0_INDEX(0)];
-					af->af_fv_val.af_fv1[0] = (cmr_u64) af_fv_val[FV1_INDEX(0)];
-					af->af_fv_val.af_fv0[2] = (cmr_u64) af_fv_val[FV0_INDEX(2)];
-					af->af_fv_val.af_fv1[2] = (cmr_u64) af_fv_val[FV1_INDEX(2)];
+					af->af_fv_val.af_fv0[0] = (cmr_u64) af_fv_val[FV0_INDEX(4)];
+					af->af_fv_val.af_fv1[0] = (cmr_u64) af_fv_val[FV1_INDEX(4)];
+					af->af_fv_val.af_fv0[2] = (cmr_u64) af_fv_val[FV0_INDEX(6)];
+					af->af_fv_val.af_fv1[2] = (cmr_u64) af_fv_val[FV1_INDEX(6)];
 					if (val == 1) {
-						ISP_LOGE("i: 0, af_fv0[0]: %15" PRIu64 ", j: 0, FV0_INDEX(0):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[0],
-							 FV0_INDEX(0), FV0_INDEX(0), af_fv_val[FV0_INDEX(0)]);
+						ISP_LOGE("i: 0, af_fv0[0]: %15" PRIu64 ", j: 4, FV0_INDEX(4):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[0],
+							 FV0_INDEX(4), FV0_INDEX(4), af_fv_val[FV0_INDEX(4)]);
 						ISP_LOGE("i: 1, af_fv0[1]: %15" PRIu64 ", j: 13, FV0_INDEX(13):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[1],
 							 FV0_INDEX(13), FV0_INDEX(13), af_fv_val[FV0_INDEX(13)]);
-						ISP_LOGE("i: 2, af_fv0[2]: %15" PRIu64 ", j: 2, FV0_INDEX(2):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[2],
-							 FV0_INDEX(2), FV0_INDEX(2), af_fv_val[FV0_INDEX(2)]);
+						ISP_LOGE("i: 2, af_fv0[2]: %15" PRIu64 ", j: 6, FV0_INDEX(6):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[2],
+							 FV0_INDEX(6), FV0_INDEX(6), af_fv_val[FV0_INDEX(6)]);
 					}
 				} else {
 					af->af_fv_val.af_fv0[1] = (cmr_u64) af_fv_val[FV0_INDEX(14)];
 					af->af_fv_val.af_fv1[1] = (cmr_u64) af_fv_val[FV1_INDEX(14)];
-					af->af_fv_val.af_fv0[0] = (cmr_u64) af_fv_val[FV0_INDEX(1)];
-					af->af_fv_val.af_fv1[0] = (cmr_u64) af_fv_val[FV1_INDEX(1)];
-					af->af_fv_val.af_fv0[2] = (cmr_u64) af_fv_val[FV0_INDEX(3)];
-					af->af_fv_val.af_fv1[2] = (cmr_u64) af_fv_val[FV1_INDEX(3)];
+					af->af_fv_val.af_fv0[0] = (cmr_u64) af_fv_val[FV0_INDEX(5)];
+					af->af_fv_val.af_fv1[0] = (cmr_u64) af_fv_val[FV1_INDEX(5)];
+					af->af_fv_val.af_fv0[2] = (cmr_u64) af_fv_val[FV0_INDEX(7)];
+					af->af_fv_val.af_fv1[2] = (cmr_u64) af_fv_val[FV1_INDEX(7)];
 					if (val == 1) {
-						ISP_LOGE("i: 0, af_fv0[0]: %15" PRIu64 ", j: 1, FV0_INDEX(1):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[0],
-							 FV0_INDEX(1), FV0_INDEX(1), af_fv_val[FV0_INDEX(1)]);
+						ISP_LOGE("i: 0, af_fv0[0]: %15" PRIu64 ", j: 5, FV0_INDEX(5):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[0],
+							 FV0_INDEX(5), FV0_INDEX(5), af_fv_val[FV0_INDEX(5)]);
 						ISP_LOGE("i: 1, af_fv0[1]: %15" PRIu64 ", j: 14, FV0_INDEX(14):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[1],
 							 FV0_INDEX(14), FV0_INDEX(14), af_fv_val[FV0_INDEX(14)]);
-						ISP_LOGE("i: 2, af_fv0[2]: %15" PRIu64 ", j: 3, FV0_INDEX(3):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[2],
-							 FV0_INDEX(3), FV0_INDEX(3), af_fv_val[FV0_INDEX(3)]);
+						ISP_LOGE("i: 2, af_fv0[2]: %15" PRIu64 ", j: 7, FV0_INDEX(7):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[2],
+							 FV0_INDEX(7), FV0_INDEX(7), af_fv_val[FV0_INDEX(7)]);
 					}
 				}
 			}
@@ -732,17 +732,17 @@ static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
 				}
 				af->af_fv_val.af_fv0[5] = (cmr_u64) af_fv_val[FV0_INDEX(8)];
 				af->af_fv_val.af_fv1[5] = (cmr_u64) af_fv_val[FV1_INDEX(8)];
-				af->af_fv_val.af_fv0[2] = (cmr_u64) af_fv_val[FV0_INDEX(5)];
-				af->af_fv_val.af_fv1[2] = (cmr_u64) af_fv_val[FV1_INDEX(5)];
-				af->af_fv_val.af_fv0[8] = (cmr_u64) af_fv_val[FV0_INDEX(17)];
-				af->af_fv_val.af_fv1[8] = (cmr_u64) af_fv_val[FV1_INDEX(17)];
+				af->af_fv_val.af_fv0[2] = (cmr_u64) af_fv_val[FV0_INDEX(4)];
+				af->af_fv_val.af_fv1[2] = (cmr_u64) af_fv_val[FV1_INDEX(4)];
+				af->af_fv_val.af_fv0[8] = (cmr_u64) af_fv_val[FV0_INDEX(16)];
+				af->af_fv_val.af_fv1[8] = (cmr_u64) af_fv_val[FV1_INDEX(16)];
 				if (val == 1) {
-					ISP_LOGE("i: 2, af_fv0[2]: %15" PRIu64 ", j: 5, FV0_INDEX(5):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[2], FV0_INDEX(5),
-						 FV0_INDEX(5), af_fv_val[FV0_INDEX(5)]);
+					ISP_LOGE("i: 2, af_fv0[2]: %15" PRIu64 ", j: 4, FV0_INDEX(4):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[2], FV0_INDEX(4),
+						 FV0_INDEX(4), af_fv_val[FV0_INDEX(4)]);
 					ISP_LOGE("i: 5, af_fv0[5]: %15" PRIu64 ", j: 8, FV0_INDEX(8):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[5], FV0_INDEX(8),
 						 FV0_INDEX(8), af_fv_val[FV0_INDEX(8)]);
-					ISP_LOGE("i: 8, af_fv0[8]: %15" PRIu64 ", j: 17, FV0_INDEX(17):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[8], FV0_INDEX(17),
-						 FV0_INDEX(17), af_fv_val[FV0_INDEX(17)]);
+					ISP_LOGE("i: 8, af_fv0[8]: %15" PRIu64 ", j: 16, FV0_INDEX(16):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[8], FV0_INDEX(16),
+						 FV0_INDEX(16), af_fv_val[FV0_INDEX(16)]);
 				}
 			} else if (FACE_RIGHT == af->f_orientation) {
 				for (i = 0; i < 6; i++) {	//3
@@ -757,17 +757,17 @@ static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
 				}
 				af->af_fv_val.af_fv0[3] = (cmr_u64) af_fv_val[FV0_INDEX(9)];
 				af->af_fv_val.af_fv1[3] = (cmr_u64) af_fv_val[FV1_INDEX(9)];
-				af->af_fv_val.af_fv0[0] = (cmr_u64) af_fv_val[FV0_INDEX(0)];
-				af->af_fv_val.af_fv1[0] = (cmr_u64) af_fv_val[FV1_INDEX(0)];
-				af->af_fv_val.af_fv0[6] = (cmr_u64) af_fv_val[FV0_INDEX(12)];
-				af->af_fv_val.af_fv1[6] = (cmr_u64) af_fv_val[FV1_INDEX(12)];
+				af->af_fv_val.af_fv0[0] = (cmr_u64) af_fv_val[FV0_INDEX(1)];
+				af->af_fv_val.af_fv1[0] = (cmr_u64) af_fv_val[FV1_INDEX(1)];
+				af->af_fv_val.af_fv0[6] = (cmr_u64) af_fv_val[FV0_INDEX(13)];
+				af->af_fv_val.af_fv1[6] = (cmr_u64) af_fv_val[FV1_INDEX(13)];
 				if (val == 1) {
-					ISP_LOGE("i: 0, af_fv0[0]: %15" PRIu64 ", j: 0, FV0_INDEX(0):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[0], FV0_INDEX(0),
-						 FV0_INDEX(0), af_fv_val[FV0_INDEX(0)]);
+					ISP_LOGE("i: 0, af_fv0[0]: %15" PRIu64 ", j: 1, FV0_INDEX(1):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[0], FV0_INDEX(1),
+						 FV0_INDEX(1), af_fv_val[FV0_INDEX(1)]);
 					ISP_LOGE("i: 3, af_fv0[3]: %15" PRIu64 ", j: 9, FV0_INDEX(9):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[3], FV0_INDEX(9),
 						 FV0_INDEX(9), af_fv_val[FV0_INDEX(9)]);
-					ISP_LOGE("i: 6, af_fv0[6]: %15" PRIu64 ", j: 12, FV0_INDEX(12):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[6], FV0_INDEX(12),
-						 FV0_INDEX(12), af_fv_val[FV0_INDEX(12)]);
+					ISP_LOGE("i: 6, af_fv0[6]: %15" PRIu64 ", j: 9, FV0_INDEX(6):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[6], FV0_INDEX(13),
+						 FV0_INDEX(13), af_fv_val[FV0_INDEX(13)]);
 				}
 			}
 		}
@@ -1664,13 +1664,6 @@ static cmr_u8 if_get_tof_data(tof_measure_data_t * tof_result, void *cookie)
 }
 
 //[TOF_---]
-static cmr_u8 if_get_aiscene_data(struct aiscene_info * ai_result, void *cookie)
-{
-	af_ctrl_t *af = cookie;
-	ai_result->cur_scene_id = af->ai_scene_info.cur_scene_id;
-	ISP_LOGV("ai_cur_scene_id: %d", ai_result->cur_scene_id);
-	return 0;
-}
 // trigger stuffs
 #define LOAD_SYMBOL(handle, sym, name) \
 {sym=dlsym(handle, name); if(NULL==sym) {ISP_LOGE("dlsym fail: %s", name); return -1;}}
@@ -1897,7 +1890,6 @@ static void *af_lib_init(af_ctrl_t * af)
 	af_in.AF_Ops.get_tof_data = if_get_tof_data;
 	af_in.AF_Ops.get_saf_extra_data = if_get_saf_extra_data;
 	af_in.AF_Ops.get_sub_wins_ysum = if_get_sub_wins_ysum;
-	af_in.AF_Ops.get_aiscene_data = if_get_aiscene_data;
 
 	af_in.tuning.data = af->aftuning_data;
 	af_in.tuning.data_len = af->aftuning_data_len;
@@ -3424,17 +3416,6 @@ static cmr_s32 af_sprd_set_dac_info(cmr_handle handle, void *param0)
 	return AFV1_SUCCESS;
 }
 
-static cmr_s32 af_sprd_set_scene_info(cmr_handle handle, void *param0)
-{
-	af_ctrl_t *af = (af_ctrl_t *) handle;
-	struct afctrl_aiscene_info *ai_scene_info = (struct afctrl_aiscene_info *)param0;
-	if (NULL == ai_scene_info) {
-		return AFV1_ERROR;
-	}
-	af->ai_scene_info.cur_scene_id = ai_scene_info->cur_scene_id;
-	ISP_LOGV("ai_scene_id: %d", af->ai_scene_info.cur_scene_id);
-	return AFV1_SUCCESS;
-}
 static cmr_s32 af_sprd_set_realbokeh_distance(cmr_handle handle, void *param0)
 {
 	af_ctrl_t *af = (af_ctrl_t *) handle;
@@ -3729,7 +3710,6 @@ cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *
 		break;
 		// SharkLE Only --
 	case AF_CMD_SET_SCENE_INFO:
-		rtn = af_sprd_set_scene_info(handle, param0);
 		break;
 
 	case AF_CMD_SET_REALBOKEH_DISTANCE:
