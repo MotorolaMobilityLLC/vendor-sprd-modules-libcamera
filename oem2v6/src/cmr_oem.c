@@ -13917,6 +13917,10 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     struct common_isp_cmd_param isp_param;
     struct snapshot_param snp_param;
     cmr_u32 app_mode = CAMERA_MODE_AUTO_PHOTO;
+    cmr_u32 is_raw_capture = 0;
+    cmr_u32 is_isptool_flag = 0;
+    char raw_value[PROPERTY_VALUE_MAX];
+    char isptool_value[PROPERTY_VALUE_MAX];
     char value[PROPERTY_VALUE_MAX] = {0};
 
     cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
@@ -14014,6 +14018,18 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
         property_get("debug.camera.mfsr.force_off", value, "2");
         if (atoi(value) < 2)
             cxt->mfsr_force_off = atoi(value);
+        property_get("persist.vendor.cam.raw.mode", raw_value, "jpeg");
+        if (!strcmp(raw_value, "raw")) {
+             is_raw_capture = 1;
+        }
+        property_get("persist.vendor.cam.isptool.mode.enable", isptool_value, "false");
+        if ((!strcmp(isptool_value, "true")) || (CAMERA_ISP_SIMULATION_MODE == mode)) {
+             is_isptool_flag = 1;
+        }
+        if ((is_raw_capture ==  1) || (is_isptool_flag ==  1)) {
+             cxt->mfsr_force_off = 1;
+        }
+        CMR_LOGD("is_raw_capture %d, is_isptool_flag %d", is_raw_capture, is_isptool_flag);
         property_get("debug.camera.mfsr.ratio.low", value, "0");
         if (atoi(value) != 0)
             s_mfsr_ratiol = (atoi(value)) / 10.0 - 0.00000001;
