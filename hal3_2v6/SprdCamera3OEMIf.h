@@ -1062,8 +1062,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mSkipNum;
     bool EisErr;
     uint32_t mNeed_share_buf;
-    bool mIsCapturing;
-    bool mNeedCancelAutoFocus;
 };
 
 }; // namespace sprdcamera
