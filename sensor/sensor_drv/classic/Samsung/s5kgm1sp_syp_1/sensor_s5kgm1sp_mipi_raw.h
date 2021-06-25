@@ -1862,7 +1862,7 @@ static struct sensor_res_tab_info s_s5kgm1sp_resolution_Tab_RAW[VENDOR_NUM] =
                .xclk_to_sensor = 24, .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
               {ADDR_AND_LEN_OF_ARRAY(s5kgm1sp_snapshot_4lane_setting), PNULL,
-               0, .width = 4000, .height = 3000, .xclk_to_sensor = 24,
+               0, .width = 8000, .height = 6000, .xclk_to_sensor = 24,
                .image_format = SENSOR_IMAGE_FORMAT_RAW}}}
         /*If there are multiple modules,please add here*/
 };
@@ -1891,8 +1891,8 @@ static SENSOR_TRIM_T s_s5kgm1sp_Resolution_Trim_Tab[VENDOR_NUM] = {
 
                    {.trim_start_x = 0,
                     .trim_start_y = 0,
-                    .trim_width = 4000,
-                    .trim_height = 3000,
+                    .trim_width = 8000,
+                    .trim_height = 6000,
                     .line_time = 10430,//20200,
                     .bps_per_lane = 1152,
                     .frame_line = 0x0c7a,
@@ -2020,8 +2020,8 @@ SENSOR_INFO_T g_s5kgm1sp_mipi_raw_info = {
                       {.reg_addr = s5kgm1sp_VER_ADDR,
                        .reg_value = s5kgm1sp_VER_VALUE}},
 
-    .source_width_max = 4000,
-    .source_height_max = 3000,
+    .source_width_max = 8000,
+    .source_height_max = 6000,
     .name = (cmr_s8 *)"s5kgm1sp_syp_1",
 
     .image_format = SENSOR_IMAGE_FORMAT_RAW,
