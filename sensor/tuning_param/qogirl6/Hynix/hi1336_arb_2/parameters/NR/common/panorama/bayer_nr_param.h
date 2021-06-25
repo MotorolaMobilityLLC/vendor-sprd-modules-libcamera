@@ -1,6 +1,4 @@
-/*versionid=0x000C000F*/
-/*maxGain=0.00*/
-/*param0.&BasePoint=1&*/
+/*param0.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
@@ -698,7 +696,7 @@
 	0x0400,
 }
 ,
-/*param1.&BasePoint=1&*/
+/*param1.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
@@ -720,11 +718,11 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x05,
+						0x0A,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00BE,
+						0x00A0,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -796,11 +794,11 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x05,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00D2,
+						0x00B4,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -814,7 +812,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x0A,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -872,11 +870,11 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x05,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00E6,
+						0x00BE,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -890,7 +888,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x0A,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -1396,7 +1394,7 @@
 	0x0400,
 }
 ,
-/*param2.&BasePoint=1&*/
+/*param2.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
@@ -1418,11 +1416,11 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x05,
+						0x0A,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00BE,
+						0x00A0,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -1473,7 +1471,7 @@
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x96,
+					0xC0,
 					/*addback30*/
 					0x0A,
 					/*addback31*/
@@ -1494,11 +1492,11 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x05,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00D2,
+						0x00B4,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -1512,7 +1510,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x0A,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -1570,11 +1568,11 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x05,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00E6,
+						0x00BE,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -1588,7 +1586,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x0A,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -2094,7 +2092,7 @@
 	0x0400,
 }
 ,
-/*param3.&BasePoint=1&*/
+/*param3.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
@@ -2116,11 +2114,11 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x05,
+						0x0A,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00BE,
+						0x00A0,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -2192,11 +2190,11 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x05,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00D2,
+						0x00B4,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -2210,7 +2208,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x0A,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -2268,11 +2266,11 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x05,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00E6,
+						0x00BE,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -2286,7 +2284,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x0A,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -2792,7 +2790,7 @@
 	0x0400,
 }
 ,
-/*param4.&BasePoint=1&*/
+/*param4.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
@@ -2814,11 +2812,11 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x05,
+						0x0A,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00BE,
+						0x00A0,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -2869,7 +2867,7 @@
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x96,
+					0xC0,
 					/*addback30*/
 					0x0A,
 					/*addback31*/
@@ -2890,11 +2888,11 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x05,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00D2,
+						0x00B4,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -2908,7 +2906,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x0A,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -2966,11 +2964,11 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x05,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00E6,
+						0x00BE,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -2984,7 +2982,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x0A,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -3490,7 +3488,7 @@
 	0x0400,
 }
 ,
-/*param5.&BasePoint=1&*/
+/*param5.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
@@ -3512,11 +3510,11 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x05,
+						0x0A,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00BE,
+						0x00A0,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -3567,7 +3565,7 @@
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x96,
+					0xC0,
 					/*addback30*/
 					0x0A,
 					/*addback31*/
@@ -3588,11 +3586,11 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x05,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00D2,
+						0x00B4,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -3606,7 +3604,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x0A,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -3664,11 +3662,11 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x05,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00E6,
+						0x00BE,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -3682,7 +3680,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x0A,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -4188,7 +4186,7 @@
 	0x0400,
 }
 ,
-/*param6.&BasePoint=1&*/
+/*param6.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
@@ -4214,7 +4212,7 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00D2,
+						0x00A0,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -4232,7 +4230,7 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0122,
+						0x00BE,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -4250,7 +4248,7 @@
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x0136,
+						0x00D2,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -4265,7 +4263,7 @@
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0xB4,
+					0x78,
 					/*addback30*/
 					0x0A,
 					/*addback31*/
@@ -4290,7 +4288,7 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00E6,
+						0x00B4,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -4308,7 +4306,7 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0136,
+						0x00D2,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -4326,7 +4324,7 @@
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x014A,
+						0x00E6,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -4366,7 +4364,7 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00FA,
+						0x00BE,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -4384,7 +4382,7 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x014A,
+						0x00E6,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -4402,7 +4400,7 @@
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x015E,
+						0x00FA,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -4886,7 +4884,7 @@
 	0x0400,
 }
 ,
-/*param7.&BasePoint=1&*/
+/*param7.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
@@ -4912,7 +4910,7 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00D2,
+						0x00A0,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -4930,7 +4928,7 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0122,
+						0x00BE,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -4948,7 +4946,7 @@
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x0136,
+						0x00D2,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -4988,7 +4986,7 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00E6,
+						0x00B4,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -5006,7 +5004,7 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0136,
+						0x00D2,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -5024,7 +5022,7 @@
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x014A,
+						0x00E6,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -5064,7 +5062,7 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00FA,
+						0x00BE,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -5082,7 +5080,7 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x014A,
+						0x00E6,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -5100,7 +5098,7 @@
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x015E,
+						0x00FA,
 						/*addback0*/
 						0x000A,
 						/*addback1*/
@@ -5584,7 +5582,7 @@
 	0x0400,
 }
 ,
-/*param8.&BasePoint=1&*/
+/*param8.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
@@ -6282,7 +6280,7 @@
 	0x0400,
 }
 ,
-/*param9.&BasePoint=1&*/
+/*param9.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
@@ -6980,7 +6978,7 @@
 	0x0400,
 }
 ,
-/*param10.&BasePoint=1&*/
+/*param10.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
@@ -7678,7 +7676,7 @@
 	0x0400,
 }
 ,
-/*param11.&BasePoint=1&*/
+/*param11.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
@@ -8376,7 +8374,7 @@
 	0x0400,
 }
 ,
-/*param12.&BasePoint=1&*/
+/*param12.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
@@ -9074,7 +9072,7 @@
 	0x0400,
 }
 ,
-/*param13.&BasePoint=1&*/
+/*param13.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
@@ -9772,7 +9770,7 @@
 	0x0400,
 }
 ,
-/*param14.&BasePoint=1&*/
+/*param14.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
@@ -10470,7 +10468,7 @@
 	0x0400,
 }
 ,
-/*param15.&BasePoint=1&*/
+/*param15.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
@@ -11168,7 +11166,7 @@
 	0x0400,
 }
 ,
-/*param16.&BasePoint=1&*/
+/*param16.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
@@ -11866,7 +11864,7 @@
 	0x0400,
 }
 ,
-/*param17.&BasePoint=1&*/
+/*param17.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
@@ -12564,7 +12562,7 @@
 	0x0400,
 }
 ,
-/*param18.&BasePoint=1&*/
+/*param18.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
@@ -13262,7 +13260,7 @@
 	0x0400,
 }
 ,
-/*param19.&BasePoint=1&*/
+/*param19.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
@@ -13960,7 +13958,7 @@
 	0x0400,
 }
 ,
-/*param20.&BasePoint=1&*/
+/*param20.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
@@ -14658,7 +14656,7 @@
 	0x0400,
 }
 ,
-/*param21.&BasePoint=1&*/
+/*param21.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
@@ -15356,7 +15354,7 @@
 	0x0400,
 }
 ,
-/*param22.&BasePoint=1&*/
+/*param22.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
@@ -16054,7 +16052,7 @@
 	0x0400,
 }
 ,
-/*param23.&BasePoint=1&*/
+/*param23.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
@@ -16752,7 +16750,7 @@
 	0x0400,
 }
 ,
-/*param24.&BasePoint=1&*/
+/*param24.*/
 /*sharkl5pro_sensor_nlm_level*/
 {
 	/*first_lum*/
