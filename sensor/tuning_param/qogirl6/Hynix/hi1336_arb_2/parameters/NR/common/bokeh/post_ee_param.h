@@ -1,4 +1,6 @@
-/*param0.*/
+/*versionid=0x000C000F*/
+/*maxGain=0.00*/
+/*param0.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
@@ -533,7 +535,7 @@
 	}
 }
 ,
-/*param1.*/
+/*param1.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
@@ -1068,7 +1070,7 @@
 	}
 }
 ,
-/*param2.*/
+/*param2.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
@@ -1603,7 +1605,7 @@
 	}
 }
 ,
-/*param3.*/
+/*param3.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
@@ -2138,7 +2140,7 @@
 	}
 }
 ,
-/*param4.*/
+/*param4.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
@@ -2673,7 +2675,7 @@
 	}
 }
 ,
-/*param5.*/
+/*param5.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
@@ -3208,7 +3210,7 @@
 	}
 }
 ,
-/*param6.*/
+/*param6.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
@@ -3743,7 +3745,7 @@
 	}
 }
 ,
-/*param7.*/
+/*param7.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
@@ -4278,7 +4280,7 @@
 	}
 }
 ,
-/*param8.*/
+/*param8.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
@@ -4813,7 +4815,7 @@
 	}
 }
 ,
-/*param9.*/
+/*param9.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
@@ -5348,7 +5350,7 @@
 	}
 }
 ,
-/*param10.*/
+/*param10.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
@@ -5883,7 +5885,7 @@
 	}
 }
 ,
-/*param11.*/
+/*param11.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
@@ -6418,7 +6420,7 @@
 	}
 }
 ,
-/*param12.*/
+/*param12.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
@@ -6953,7 +6955,7 @@
 	}
 }
 ,
-/*param13.*/
+/*param13.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
@@ -7488,7 +7490,7 @@
 	}
 }
 ,
-/*param14.*/
+/*param14.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
@@ -8023,7 +8025,7 @@
 	}
 }
 ,
-/*param15.*/
+/*param15.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
@@ -8558,7 +8560,7 @@
 	}
 }
 ,
-/*param16.*/
+/*param16.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
@@ -9093,7 +9095,7 @@
 	}
 }
 ,
-/*param17.*/
+/*param17.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
@@ -9628,7 +9630,7 @@
 	}
 }
 ,
-/*param18.*/
+/*param18.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
@@ -10163,7 +10165,7 @@
 	}
 }
 ,
-/*param19.*/
+/*param19.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
@@ -10698,7 +10700,7 @@
 	}
 }
 ,
-/*param20.*/
+/*param20.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
@@ -11233,7 +11235,7 @@
 	}
 }
 ,
-/*param21.*/
+/*param21.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
@@ -11768,7 +11770,7 @@
 	}
 }
 ,
-/*param22.*/
+/*param22.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
@@ -12303,7 +12305,7 @@
 	}
 }
 ,
-/*param23.*/
+/*param23.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
@@ -12838,7 +12840,7 @@
 	}
 }
 ,
-/*param24.*/
+/*param24.&BasePoint=1&*/
 /*sharkl5pro_sensor_post_ee_level*/
 {
 	/*post_ee_face*/
