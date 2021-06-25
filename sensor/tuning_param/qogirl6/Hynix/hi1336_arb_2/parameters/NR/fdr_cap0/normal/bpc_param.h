@@ -370,9 +370,9 @@
 		/*double_bypass*/
 		0x00,
 		/*three_bypass*/
-		0x00,
+		0x01,
 		/*four_bypass*/
-		0x00,
+		0x01,
 		/*reserved*/
 		0x00,
 		/*lut_level*/
@@ -433,9 +433,9 @@
 		/*k_val*/
 		{
 			/*min*/
-			0x001E,
+			0x0000,
 			/*max*/
-			0x000F,
+			0x0000,
 
 		},
 		/*lowcoeff*/
