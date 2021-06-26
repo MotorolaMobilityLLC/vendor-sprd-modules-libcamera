@@ -1665,7 +1665,7 @@
 	/*edge_smooth_mode*/
 	0x00,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param3.&BasePoint=1&*/
@@ -2221,7 +2221,7 @@
 	/*edge_smooth_mode*/
 	0x00,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param4.&BasePoint=1&*/
@@ -2777,7 +2777,7 @@
 	/*edge_smooth_mode*/
 	0x00,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param5.&BasePoint=1&*/
@@ -3333,7 +3333,7 @@
 	/*edge_smooth_mode*/
 	0x00,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param6.&BasePoint=1&*/
@@ -3889,7 +3889,7 @@
 	/*edge_smooth_mode*/
 	0x00,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param7.&BasePoint=1&*/
@@ -4445,7 +4445,7 @@
 	/*edge_smooth_mode*/
 	0x00,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param8.&BasePoint=1&*/
@@ -5001,7 +5001,7 @@
 	/*edge_smooth_mode*/
 	0x00,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param9.&BasePoint=1&*/
@@ -5557,7 +5557,7 @@
 	/*edge_smooth_mode*/
 	0x00,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param10.&BasePoint=1&*/
@@ -6113,7 +6113,7 @@
 	/*edge_smooth_mode*/
 	0x00,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param11.&BasePoint=1&*/
@@ -6669,7 +6669,7 @@
 	/*edge_smooth_mode*/
 	0x00,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param12.&BasePoint=1&*/
@@ -7102,9 +7102,9 @@
 	/*ee_offset_layer*/
 	{
 		/*ee_old_gradient_en*/
-		0x0001,
+		0x0000,
 		/*ee_new_pyramid_en*/
-		0x0001,
+		0x0000,
 		/*ee_ratio_old_gradient*/
 		0x0020,
 		/*ee_ratio_new_pyramid*/
@@ -7225,7 +7225,7 @@
 	/*edge_smooth_mode*/
 	0x00,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param13.&BasePoint=1&*/
@@ -7781,7 +7781,7 @@
 	/*edge_smooth_mode*/
 	0x00,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param14.&BasePoint=1&*/
@@ -7921,9 +7921,9 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x0A,
+				0x05,
 				/*ee_r3_cfg*/
-				0x0F,
+				0x05,
 				/*reserved*/
 				0x00,
 
@@ -7934,7 +7934,7 @@
 			/*ee_c1_cfg*/
 			0x00,
 			/*ee_c2_cfg*/
-			0x0A,
+			0x05,
 			/*ee_c3_cfg*/
 			0x0F,
 			/*reserved*/
@@ -7960,9 +7960,9 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x0A,
+				0x05,
 				/*ee_r3_cfg*/
-				0x0F,
+				0x05,
 				/*reserved*/
 				0x00,
 
@@ -8214,7 +8214,7 @@
 	/*ee_offset_layer*/
 	{
 		/*ee_old_gradient_en*/
-		0x0001,
+		0x0000,
 		/*ee_new_pyramid_en*/
 		0x0001,
 		/*ee_ratio_old_gradient*/
@@ -8251,11 +8251,11 @@
 				},
 				/*ratio_layer_lum_cv*/
 				{
-					0x0001,0x0008,0x000F/*0-2*/
+					0x0001,0x0004,0x0007/*0-2*/
 				},
 				/*ratio_layer_freq_cv*/
 				{
-					0x0001,0x0008,0x000F/*0-2*/
+					0x0001,0x0004,0x0007/*0-2*/
 				}
 			},
 			/*[0x1]*/
@@ -8286,11 +8286,11 @@
 				},
 				/*ratio_layer_lum_cv*/
 				{
-					0x0001,0x0008,0x000F/*0-2*/
+					0x0001,0x0004,0x0007/*0-2*/
 				},
 				/*ratio_layer_freq_cv*/
 				{
-					0x0001,0x0008,0x000F/*0-2*/
+					0x0001,0x0004,0x0007/*0-2*/
 				}
 			},
 			/*[0x2]*/
@@ -8321,11 +8321,11 @@
 				},
 				/*ratio_layer_lum_cv*/
 				{
-					0x0001,0x0008,0x000F/*0-2*/
+					0x0001,0x0004,0x0007/*0-2*/
 				},
 				/*ratio_layer_freq_cv*/
 				{
-					0x0001,0x0008,0x000F/*0-2*/
+					0x0001,0x0004,0x0007/*0-2*/
 				}
 			}
 		}
@@ -8337,7 +8337,7 @@
 	/*edge_smooth_mode*/
 	0x00,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param15.&BasePoint=1&*/
@@ -8770,7 +8770,7 @@
 	/*ee_offset_layer*/
 	{
 		/*ee_old_gradient_en*/
-		0x0001,
+		0x0000,
 		/*ee_new_pyramid_en*/
 		0x0001,
 		/*ee_ratio_old_gradient*/
@@ -8807,11 +8807,11 @@
 				},
 				/*ratio_layer_lum_cv*/
 				{
-					0x0001,0x0008,0x000F/*0-2*/
+					0x0001,0x0004,0x0007/*0-2*/
 				},
 				/*ratio_layer_freq_cv*/
 				{
-					0x0001,0x0008,0x000F/*0-2*/
+					0x0001,0x0004,0x0007/*0-2*/
 				}
 			},
 			/*[0x1]*/
@@ -8842,11 +8842,11 @@
 				},
 				/*ratio_layer_lum_cv*/
 				{
-					0x0001,0x0008,0x000F/*0-2*/
+					0x0001,0x0004,0x0007/*0-2*/
 				},
 				/*ratio_layer_freq_cv*/
 				{
-					0x0001,0x0008,0x000F/*0-2*/
+					0x0001,0x0004,0x0007/*0-2*/
 				}
 			},
 			/*[0x2]*/
@@ -8877,11 +8877,11 @@
 				},
 				/*ratio_layer_lum_cv*/
 				{
-					0x0001,0x0008,0x000F/*0-2*/
+					0x0001,0x0004,0x0007/*0-2*/
 				},
 				/*ratio_layer_freq_cv*/
 				{
-					0x0001,0x0008,0x000F/*0-2*/
+					0x0001,0x0004,0x0007/*0-2*/
 				}
 			}
 		}
@@ -8893,7 +8893,7 @@
 	/*edge_smooth_mode*/
 	0x00,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param16.&BasePoint=1&*/
