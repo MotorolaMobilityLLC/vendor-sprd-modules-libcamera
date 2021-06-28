@@ -1311,7 +1311,7 @@ int SprdPortraitAlgo::doFaceBeauty(unsigned char *mask, void *input_buff,
                             FaceMap->cur.fb_param[i].fb_layer.skinSmoothRadiusCoeff[j]);
                 }
             }
-            rc = face_beauty_ctrl(&fb_cap, FB_BEAUTY_CONSTRUCT_FACEMAP_CMD,FaceMap);
+            rc = face_beauty_ctrl(&fb_cap, FB_BEAUTY_CONSTRUCT_FACEMAP_CMD, FaceMap);
         }
         int index = mPortraitCapParam.portrait_param.face_num;
         for (int j = 0; j < index; j++) {
