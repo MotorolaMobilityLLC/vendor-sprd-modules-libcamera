@@ -137,7 +137,7 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x0D,
+				0x0A,
 				/*ee_r3_cfg*/
 				0x08,
 				/*reserved*/
@@ -150,7 +150,7 @@
 			/*ee_c1_cfg*/
 			0x00,
 			/*ee_c2_cfg*/
-			0x0D,
+			0x0A,
 			/*ee_c3_cfg*/
 			0x08,
 			/*reserved*/
@@ -693,7 +693,7 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x0D,
+				0x0A,
 				/*ee_r3_cfg*/
 				0x08,
 				/*reserved*/
@@ -706,7 +706,7 @@
 			/*ee_c1_cfg*/
 			0x00,
 			/*ee_c2_cfg*/
-			0x0D,
+			0x0A,
 			/*ee_c3_cfg*/
 			0x08,
 			/*reserved*/
