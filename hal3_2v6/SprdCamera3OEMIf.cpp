@@ -3612,11 +3612,20 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mZslMaxFrameNum = 5;
     }
 
-#if defined(CONFIG_ISP_2_3)|| defined(CONFIG_ISP_2_7)
-    if (mSprdAppmodeId == CAMERA_MODE_AUTO_PHOTO||(getMultiCameraMode() == MODE_BOKEH&& mCameraId == mMasterId) ||
-        getMultiCameraMode() == MODE_BLUR) {
+#if defined(CONFIG_ISP_2_3)|| defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8)
+    if (mSprdAppmodeId == CAMERA_MODE_AUTO_PHOTO) {
         mZslNum = 5;
         mZslMaxFrameNum = 5;
+    }
+    if ((getMultiCameraMode() == MODE_BOKEH && mCameraId == mMasterId) ||
+        getMultiCameraMode() == MODE_BLUR) {
+#if defined(CONFIG_BOKEH_MFNR_HDR_OFF)
+        mZslNum = 3;
+        mZslMaxFrameNum = 3;
+#else
+        mZslNum = 5;
+        mZslMaxFrameNum = 5;
+#endif
     }
 #endif
 
