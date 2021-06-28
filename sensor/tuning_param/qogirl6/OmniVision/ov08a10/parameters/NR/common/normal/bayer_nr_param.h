@@ -10510,7 +10510,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x08,
+						0x05,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -10528,7 +10528,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x09,
+						0x08,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -10586,7 +10586,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x09,
+						0x06,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -10604,7 +10604,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x0A,
+						0x09,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -10662,7 +10662,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x0A,
+						0x07,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -10680,7 +10680,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x0B,
+						0x0A,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
