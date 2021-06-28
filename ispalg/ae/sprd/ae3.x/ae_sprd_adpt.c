@@ -3687,7 +3687,7 @@ static cmr_s32 ae_get_hdr_exp_gain_infor(struct ae_ctrl_cxt *cxt, void *result)
 		base_exposure_line = cxt->hdr_exp_line;
 		base_gain = cxt->hdr_gain;
 		down_exposure =  (cmr_u32)(base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time);
-		down_gain = pow(2,ev_result) * base_gain;
+		down_gain = (cmr_u16)(pow(2,ev_result) * base_gain);
 		if(down_gain < 128) {
 			down_gain = 128;
 			ev_shutter = 1.0 * pow(2,ev_result) * base_gain / 128;
@@ -5146,26 +5146,26 @@ static void ae_set_fdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 	base_exposure = base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
 	ISP_LOGD("base_exp %d base_gain %d ",base_exposure,base_gain);
 	if(base_exposure > exp_thd_value){
-		down_exposure = pow(2,ev_result)* base_exposure;
+		down_exposure = (cmr_u32)(pow(2,ev_result)* base_exposure);
 		down_gain = base_gain;
 		if (down_exposure < exp_thd_value){
 			down_exposure = exp_thd_value;
 			ev_gain =1.0 * pow(2,ev_result) * base_exposure / down_exposure;
 			ISP_LOGD("ev_gain %f",ev_gain);
-			down_gain = base_gain*ev_gain;
+			down_gain = (cmr_u32)(base_gain*ev_gain);
 			if(down_gain < 128){
 				down_gain = 128;
 				ev_shutter = 1.0 * pow(2,ev_result) * base_gain / 128;
-				down_exposure = ev_shutter * base_exposure;
+				down_exposure = (cmr_u32)(ev_shutter * base_exposure);
 			}
 		}
 	}else{
 		down_exposure = base_exposure;
-		down_gain = pow(2,ev_result) * base_gain;
+		down_gain = (cmr_u32)(pow(2,ev_result) * base_gain);
 		if(down_gain < 128){
 			down_gain = 128;
 			ev_shutter =1.0 * pow(2,ev_result) * base_gain / 128;
-			down_exposure = ev_shutter * base_exposure;
+			down_exposure = (cmr_u32)(ev_shutter * base_exposure);
 		}
 	}
 	ISP_LOGD("down_exp %d, pow2 %f\n", down_exposure,  ev_result);
