@@ -476,6 +476,7 @@ static const SENSOR_REG_T imx586_preview_setting[] = {
     {0x3E3B, 0x01},
     {0x4434, 0x01},
     {0x4435, 0xF0},
+    {0x0350, 0x01},
 };
 
 static const SENSOR_REG_T imx586_snapshot_setting[] = {
@@ -573,6 +574,7 @@ static const SENSOR_REG_T imx586_snapshot_setting[] = {
     {0x3E3B, 0x01},
     {0x4434, 0x00},
     {0x4435, 0xF8},
+    {0x0350, 0x01},
 };
 
 static struct sensor_res_tab_info s_imx586_resolution_tab_raw[VENDOR_NUM] = {
