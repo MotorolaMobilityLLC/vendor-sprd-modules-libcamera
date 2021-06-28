@@ -154,7 +154,7 @@ void construct_fb_image(fb_beauty_param_t *faceBeauty, int picWidth,
 void construct_fb_map(fb_beauty_param_t *faceBeauty,facebeauty_param_info_t *facemap){
     ALOGI("construct_fb_map facemap");
     faceLevelMap++;
-    if (faceBeauty->fb_mode == 1){
+    if (faceBeauty->fb_mode == 1) {
         fbPrevParam = facemap->cur.fb_param[FB_SKIN_DEFAULT];
     } else {
         ALOGI("construct_fb_map capture");
@@ -510,7 +510,7 @@ int face_beauty_ctrl(fb_beauty_param_t *faceBeauty, fb_beauty_cmd_t cmd, void *p
     }
     case FB_BEAUTY_CONSTRUCT_FACEMAP_CMD:{
         facebeauty_param_info_t *pFaceMap = (facebeauty_param_info_t*)param;
-        construct_fb_map(faceBeauty,pFaceMap);
+        construct_fb_map(faceBeauty, pFaceMap);
         break;
     }
     case FB_BEAUTY_CONSTRUCT_MASK_CMD: {

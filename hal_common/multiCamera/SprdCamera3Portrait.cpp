@@ -1365,7 +1365,7 @@ bool SprdCamera3Portrait::PreviewMuxerThread::threadLoop() {
                         }
                         struct facebeauty_param_info Ptr_fb_param_prev;
                         memset(&Ptr_fb_param_prev, 0, sizeof(Ptr_fb_param_prev));
-                        //for get fbpre_param
+                        //for get fb preview param
                         SprdCamera3HWI *hwiMain = mPortrait->m_pPhyCamera[CAM_TYPE_MAIN].hwi;
                         rc = hwiMain->camera_ioctrl(CAMERA_IOCTRL_GET_FB_PREV_PARAM, &Ptr_fb_param_prev, NULL);
                         if (rc == 0) {
@@ -1394,8 +1394,8 @@ bool SprdCamera3Portrait::PreviewMuxerThread::threadLoop() {
                                 mPortrait->mBokehSize.preview_w,
                                 mPortrait->mBokehSize.preview_h, 0,
                                 &mPortrait->facebeautylevel, &Ptr_fb_param_prev);
-                        }else{
-                            HAL_LOGD("cant get fb tuning param and use default param!");
+                        } else {
+                            HAL_LOGD("preview fb tuning param can't get, use default param!");
                             rc = mPortrait->mBokehAlgo->doFaceBeauty(
                                 NULL, output_buf_addr,
                                 mPortrait->mBokehSize.preview_w,
@@ -2797,10 +2797,17 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
                             Ptr_fb_param_cap.cur.fb_param[i].fb_layer.skinSmoothRadiusCoeff[j]);
                 }
             }
+            rc = mPortrait->mBokehAlgo->doFaceBeauty(
+                mPortrait->lptMask, output_buf_addr, mPortrait->mBokehSize.capture_w,
+                mPortrait->mBokehSize.capture_h, 1, &mPortrait->facebeautylevel,
+                &Ptr_fb_param_cap);
+        }else {
+            HAL_LOGD("capture fb tunning param can't get, use default param !");
+            rc = mPortrait->mBokehAlgo->doFaceBeauty(
+                mPortrait->lptMask, output_buf_addr, mPortrait->mBokehSize.capture_w,
+                mPortrait->mBokehSize.capture_h, 1, &mPortrait->facebeautylevel,
+                NULL);
         }
-        rc = mPortrait->mBokehAlgo->doFaceBeauty(
-            mPortrait->lptMask, output_buf_addr, mPortrait->mBokehSize.capture_w,
-            mPortrait->mBokehSize.capture_h, 1, &mPortrait->facebeautylevel, &Ptr_fb_param_cap);
     }
 #endif
 
