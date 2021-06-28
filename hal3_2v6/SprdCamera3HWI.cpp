@@ -667,7 +667,7 @@ static void set_usage_for_preview(camera3_stream_t *newStream)
 
 int SprdCamera3HWI::checkMultimodeAndIdForPool() {
 #ifdef CAMERA_BUFFER_POOL
-    if (MODE_ULTRA_WIDE == mMultiCameraMode) {
+    if (MODE_ULTRA_WIDE == mMultiCameraMode || mMultiCameraMode == MODE_BOKEH) {
         return 0;
     }
     if (mCameraId == 0 || mCameraId == 1) {
