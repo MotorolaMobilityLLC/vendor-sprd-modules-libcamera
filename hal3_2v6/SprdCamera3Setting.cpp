@@ -516,7 +516,6 @@ const struct img_size default_sensor_max_sizes[CAMERA_ID_COUNT] = {
 // stall_duration
 const cam_stream_info_t stream_info[] = {
     {{9216, 6912}, 41666666L, 41666666L}, /* 64M */
-    {{8000, 6000}, 41666666L, 41666666L},
     {{6528, 4896}, 41666666L, 41666666L},
     {{5312, 3984}, 41666666L, 41666666L},
     {{5312, 2988}, 41666666L, 41666666L},
@@ -1011,10 +1010,7 @@ int SprdCamera3Setting::getJpegStreamSize(int32_t cameraId, cmr_u16 width,
     } else if (width * height <= 6528 * 4896) {
         // 32M
         jpeg_stream_size = (6528 * 4896 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
-    }  else if (width * height <= 8000 * 6000) {
-        // 48M
-        jpeg_stream_size = (8000 * 6000 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
-    }else if(width*height <= 9216 * 6912) {
+    } else if(width*height <= 9216 * 6912) {
 	// 64M
         jpeg_stream_size = (9216 * 6912 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
     } else {
@@ -1850,7 +1846,7 @@ int SprdCamera3Setting::getHighResCapSize(int32_t cameraId,
     if (pt) {
         HAL_LOGD("high res cap [%d %d]", pt->width, pt->height);
     } else {
-        pt = tb_res_cap[1].res; /* default 48M */
+        pt = tb_res_cap[3].res; /* default 16M */
         HAL_LOGW("prop:%s,size[%d %d], high res cap default[%d %d]", prop,
                  phyPtr->source_width_max, phyPtr->source_height_max, pt->width,
                  pt->height);
