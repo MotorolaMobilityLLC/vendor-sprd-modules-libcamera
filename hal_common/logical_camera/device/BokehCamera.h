@@ -45,7 +45,11 @@ namespace sprdcamera {
 #define LOCAL_PREVIEW_NUM (20)
 #define SNAP_DEPTH_NUM 1
 #define SNAP_SCALE_NUM 1
-#define LOCAL_CAPBUFF_NUM 4
+#ifdef CONFIG_BOKEH_MFNR_HDR_OFF
+ #define LOCAL_CAPBUFF_NUM 4
+#else
+ #define LOCAL_CAPBUFF_NUM 5
+#endif
 
 #ifdef BOKEH_YUV_DATA_TRANSFORM
 #define SNAP_TRANSF_NUM 1

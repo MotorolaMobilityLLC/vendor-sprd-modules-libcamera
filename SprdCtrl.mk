@@ -1118,6 +1118,11 @@ else
 LOCAL_CFLAGS += -DCONFIG_HAS_CAMERA_HINTS_VERSION=0
 endif
 
+#no mfnr less zslnum
+ifeq ($(strip $(TARGET_BOARD_CAMERA_BOKEH_MFNR_HDR_OFF)),true)
+LOCAL_CFLAGS += -DCONFIG_BOKEH_MFNR_HDR_OFF
+endif
+
 #super macro
 ifeq ($(strip $(TARGET_BOARD_SR_FUSION_SUPPORT)),true)
 LOCAL_CFLAGS += -DSUPER_MACRO
