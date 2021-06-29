@@ -139,4 +139,3 @@ static struct sensor_nr_scene_map_param s_ov08a10_nr_scene_map_param = {{
 #include "NR/common/normal/post_ee_param.h"
 #include "NR/common/hdr/post_ee_param.h"
 #endif
-
