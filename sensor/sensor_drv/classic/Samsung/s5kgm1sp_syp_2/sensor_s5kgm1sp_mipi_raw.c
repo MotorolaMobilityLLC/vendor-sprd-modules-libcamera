@@ -164,7 +164,7 @@ struct pdaf_block_descriptor s5kgm1sp_pd_seprator_helper = {
     .pd_line_coordinate = NULL,
 };
 
-static const cmr_u32 pd_sns_mode[] = {0, 0, 1, 1};
+static const cmr_u32 pd_sns_mode[] = {0, 1, 1, 1};
 
 cmr_int s5kgm1sp_drv_pdaf_data_process(void *buffer_handle);
 
