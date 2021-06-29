@@ -266,3 +266,4 @@ static struct sensor_nr_scene_map_param s_imx586_nr_scene_map_param = {{
 #include "NR/video_1/normal/post_ee_param.h"
 #include "NR/fdr_cap1/normal/post_ee_param.h"
 #endif
+
