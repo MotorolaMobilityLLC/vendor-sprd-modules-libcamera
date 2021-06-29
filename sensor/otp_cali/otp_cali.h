@@ -8,9 +8,11 @@
 #include "cmr_types.h"
 #include "cmr_type.h"
 #include "cmr_log.h"
+#include "cmr_sensor_info.h"
 
 #define CALI_OTP_HEAD_SIZE 32
-#define CMEI_OTP_CMEI_SIZE 64
+
+#define CALI_OTP_FILE_PATH_LENGTH 512
 
 #define OTP_HEAD_MAGIC 0x00004e56
 #define OTP_VERSION1 1 // calibration data structure, header+data
@@ -39,6 +41,7 @@ enum calibration_flag {
     CALIBRATION_FLAG_BOKEH_GLD2, //For bokeh after-sale golden plan, 1 time calibration data
     CALIBRATION_FLAG_OZ1_GLD,
     CALIBRATION_FLAG_OZ2_GLD,
+    CALIBRATION_FLAG_BOKEH_MANUAL_CMEI,
     CALIBRATION_FLAG_MAX
 };
 
@@ -67,8 +70,14 @@ enum calibration_flag {
 #define OTP_CALI_OZ1_GLD_PATH "/vendor/etc/otpdata/otp_cali_oz1_gld.bin"
 #define OTP_CALI_OZ2_GLD_PATH "/vendor/etc/otpdata/otp_cali_oz2_gld.bin"
 
-cmr_u16 read_calibration_cmei(cmr_u8 dual_flag, cmr_u8 *cmei_buf);
-cmr_u16 read_calibration_otp(cmr_u8 dual_flag, cmr_u8 *otp_buf);
+#define OTP_CALI_BOKEH_MANUAL_CMEI_PATH \
+    "/data/vendor/local/otpdata/otp_cali_bokeh_manual_cmei.bin"
+#define OTPBK_CALI_BOKEH_MANUAL_CMEI_PATH \
+    "/mnt/vendor/productinfo/otpdata/otpbk_cali_bokeh_manual_cmei.bin"
+cmr_u16 read_calibration_cmei(cmr_u8 dual_flag,
+                      cmr_u8 *cmei_buf);
+cmr_u16 read_calibration_otp(cmr_u8 dual_flag, cmr_u8 *otp_buf,
+                                                  cmr_u8 *multi_module_name);
 cmr_u8 write_calibration_otp_with_cmei(cmr_u8 dual_flag, cmr_u8 *otp_buf,
                                      cmr_u16 otp_size, cmr_u8 *cmei_buf, cmr_u16 cmei_size);
 cmr_u8 write_calibration_otp_no_cmei(cmr_u8 dual_flag, cmr_u8 *otp_buf,
