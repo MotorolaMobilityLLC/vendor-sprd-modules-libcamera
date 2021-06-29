@@ -617,6 +617,7 @@ typedef struct {
     uint8_t notify_next_cap;   /*for shot2shot*/
     ENGENEER_Tag engeneerInfo;
     uint8_t get_algo_version;
+    int32_t calibration_sn;
     FALSH_CALI_Tag flash_cali_result;
 } sprd_setting_info_t;
 typedef int (*CAMIP_INTERFACE_INIT)(char **);

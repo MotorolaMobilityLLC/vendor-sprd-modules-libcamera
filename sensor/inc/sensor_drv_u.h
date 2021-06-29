@@ -828,7 +828,7 @@ cmr_int sensor_set_exif_common(cmr_handle sns_module_handle, cmr_u32 cmdin,
                                cmr_u64 param);
 
 cmr_int sensor_set_snspid_common(cmr_handle sns_module_handle,
-        cmr_u8 sensor_id, cmr_u8 *snspid, cmr_u8 snspid_size);
+        cmr_u8 sensor_id, cmr_u8 *snspid, cmr_u16 snspid_size);
 
 cmr_int sensor_get_exif_common(cmr_handle sns_module_handle, void **param);
 
@@ -877,6 +877,8 @@ cmr_int sensor_set_color_temp(cmr_handle handle, void* callback);
 void sensor_rid_save_sensor_name(SENSOR_HWINFOR_E mag, char *sensor_info);
 cmr_s64 sensor_drv_get_shutter_skew(struct sensor_drv_context *sensor_cxt,
                                     cmr_uint sensor_work_mode);
+cmr_int sensor_drv_get_cmei_status(void);
+cmr_int sensor_drv_set_manual_cmei(cmr_u8 dual_flag, bool type);
 
 #ifdef __cplusplus
 }
