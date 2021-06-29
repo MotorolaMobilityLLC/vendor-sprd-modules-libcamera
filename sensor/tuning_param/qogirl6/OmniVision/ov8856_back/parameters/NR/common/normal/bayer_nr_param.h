@@ -22,7 +22,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x28,
+						0x1E,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -40,7 +40,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x23,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -98,7 +98,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x34,
+						0x21,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -116,7 +116,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x28,
+						0x14,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
