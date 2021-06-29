@@ -121,11 +121,13 @@ struct snsotp_pid_info {
 #define BOKEH_SNSPID_SIZE 64
 #define BOKEH_MODULE_NAME_SIZE 64
 
+#define BOKEH_MANUAL_CMEI_SIZE 1
 #define OZ1_SNSPID_SIZE 64
 #define OZ1_MODULE_NAME_SIZE 64
 
 #define OZ2_SNSPID_SIZE 64
 #define OZ2_MODULE_NAME_SIZE 64
+#define MAX_CMEI_SIZE 512
 
 struct sensor_raw_resolution_info_tab {
     cmr_u32 image_pattern;

@@ -60,6 +60,10 @@ cmr_u16 read_calibration_cmei(cmr_u8 dual_flag, cmr_u8 *cmei_buf) {
         OtpDataPath = OTP_CALI_OZ2_PATH;
         OtpBkDataPath = OTPBK_CALI_OZ2_PATH;
         break;
+    case CALIBRATION_FLAG_BOKEH_MANUAL_CMEI:
+        OtpDataPath = OTP_CALI_BOKEH_MANUAL_CMEI_PATH;
+        OtpBkDataPath = OTPBK_CALI_BOKEH_MANUAL_CMEI_PATH;
+        break;
     default:
         SENSOR_LOGE("Invalid cali data type:%d", dual_flag);
         return 0;
@@ -67,7 +71,7 @@ cmr_u16 read_calibration_cmei(cmr_u8 dual_flag, cmr_u8 *cmei_buf) {
 
     // 1 read origin file
     memset(header, 0x00, CALI_OTP_HEAD_SIZE);
-    memset(cmei_buf, 0x00, CMEI_OTP_CMEI_SIZE);
+    memset(cmei_buf, 0x00, MAX_CMEI_SIZE);
     do {
         if (NULL == OtpDataPath) {
             SENSOR_LOGE("OtpDataPath is NULL !");
@@ -101,11 +105,19 @@ cmr_u16 read_calibration_cmei(cmr_u8 dual_flag, cmr_u8 *cmei_buf) {
                 break;
             }
 
+            if (header_ptr->cmei_len > 0) {
+                if (header_ptr->cmei_len > MAX_CMEI_SIZE) {
+                    SENSOR_LOGE("read %d byte, overflow cmei_buf max_size %d",
+                            header_ptr->cmei_len, MAX_CMEI_SIZE);
+                    fclose(fileHandle);
+                    break;
+                }
             rcount = fread(cmei_buf, sizeof(char), header_ptr->cmei_len, fileHandle);
             if (rcount != header_ptr->cmei_len) {
                 SENSOR_LOGE("read %s cmei count error!", OtpDataPath);
                 fclose(fileHandle);
                 break;
+                }
             }
 
             fclose(fileHandle);
@@ -119,7 +131,7 @@ cmr_u16 read_calibration_cmei(cmr_u8 dual_flag, cmr_u8 *cmei_buf) {
     // 2 read backup file
     memset(header, 0x00, CALI_OTP_HEAD_SIZE);
     memset(otp_buf, 0x00, SPRD_DUAL_OTP_SIZE);
-    memset(cmei_buf, 0x00, CMEI_OTP_CMEI_SIZE);
+    memset(cmei_buf, 0x00, MAX_CMEI_SIZE);
     do {
         if (NULL == OtpBkDataPath) {
             SENSOR_LOGE("OtpBkDataPath is NULL !");
@@ -141,11 +153,19 @@ cmr_u16 read_calibration_cmei(cmr_u8 dual_flag, cmr_u8 *cmei_buf) {
                 break;
             }
 
+            if (header_ptr->otp_len > 0) {
+                if (header_ptr->otp_len > SPRD_DUAL_OTP_SIZE) {
+                    SENSOR_LOGE("read %d byte, overflow otp_buf max_size %d",
+                            header_ptr->otp_len, SPRD_DUAL_OTP_SIZE);
+                    fclose(fileHandle);
+                    break;
+                }
             rcount = fread(otp_buf, sizeof(char), header_ptr->otp_len, fileHandle);
             if (rcount != header_ptr->otp_len) {
                 SENSOR_LOGE("read %s buf count error!", OtpBkDataPath);
                 fclose(fileHandle);
                 break;
+                }
             }
 
             if(header_ptr->version != OTP_VERSION2) {
@@ -154,11 +174,19 @@ cmr_u16 read_calibration_cmei(cmr_u8 dual_flag, cmr_u8 *cmei_buf) {
                 break;
             }
 
+            if (header_ptr->cmei_len > 0) {
+                if (header_ptr->cmei_len > MAX_CMEI_SIZE) {
+                    SENSOR_LOGE("read %d byte, overflow cmei_buf max_size %d",
+                            header_ptr->cmei_len, MAX_CMEI_SIZE);
+                    fclose(fileHandle);
+                    break;
+                }
             rcount = fread(cmei_buf, sizeof(char), header_ptr->cmei_len, fileHandle);
             if (rcount != header_ptr->cmei_len) {
                 SENSOR_LOGE("read %s cmei buf count error!", OtpBkDataPath);
                 fclose(fileHandle);
                 break;
+                }
             }
 
             fclose(fileHandle);
@@ -194,18 +222,22 @@ cmr_u16 read_calibration_cmei(cmr_u8 dual_flag, cmr_u8 *cmei_buf) {
                     SENSOR_LOGI("%s:write origin header success", OtpDataPath);
                 }
 
+                if (header_ptr->otp_len > 0) {
                 if (ret &&
                     (header_ptr->otp_len !=
                      fwrite(otp_buf, sizeof(char), header_ptr->otp_len, fileHandle))) {
                     SENSOR_LOGE("%s:origin image write fail!", OtpDataPath);
                     ret = 0;
+                    }
                 }
 
+                if (header_ptr->cmei_len > 0) {
                 if (ret &&
                     (header_ptr->cmei_len !=
                      fwrite(cmei_buf, sizeof(char), header_ptr->cmei_len, fileHandle))) {
                     SENSOR_LOGE("%s:origin cmei write fail!", OtpDataPath);
                     ret = 0;
+                    }
                 }
 
                 if (ret) {
@@ -240,15 +272,17 @@ cmr_u16 read_calibration_cmei(cmr_u8 dual_flag, cmr_u8 *cmei_buf) {
     return 0;
 }
 
-cmr_u16 read_calibration_otp(cmr_u8 dual_flag, cmr_u8 *otp_buf) {
+cmr_u16 read_calibration_otp(cmr_u8 dual_flag, cmr_u8 *otp_buf,
+                                                   cmr_u8 *multi_module_name) {
     int fd = 0;
     int ret = 0;
     cmr_u32 rcount = 0;
     FILE *fileHandle = NULL;
     char *OtpDataPath = NULL;
+    char otp_data_path[CALI_OTP_FILE_PATH_LENGTH] = {0};
     char *OtpBkDataPath = NULL;
     cmr_u8 header[CALI_OTP_HEAD_SIZE] = {0};
-    cmr_u8 cmei_buf[CMEI_OTP_CMEI_SIZE] = {0};
+    cmr_u8 cmei_buf[MAX_CMEI_SIZE] = {0};
     otp_header_t *header_ptr = (otp_header_t *)header;
     SENSOR_LOGD("E");
 
@@ -282,8 +316,16 @@ cmr_u16 read_calibration_otp(cmr_u8 dual_flag, cmr_u8 *otp_buf) {
         OtpBkDataPath = NULL;
         break;
     case CALIBRATION_FLAG_BOKEH_GLD2:
+        if (NULL == multi_module_name) {
         OtpDataPath = OTP_CALI_BOKEH_GLD2_PATH;
+        } else {
+            OtpDataPath = &otp_data_path;
+            strcat(OtpDataPath, "/vendor/etc/otpdata/otp_cali_bokeh_gld2_");
+            strcat(OtpDataPath, multi_module_name);
+            strcat(OtpDataPath, ".bin");
+        }
         OtpBkDataPath = NULL;
+        SENSOR_LOGI("bokeh gld online file path:%s", OtpDataPath);
         break;
     case CALIBRATION_FLAG_OZ1_GLD:
         OtpDataPath = OTP_CALI_OZ1_GLD_PATH;
@@ -321,11 +363,19 @@ cmr_u16 read_calibration_otp(cmr_u8 dual_flag, cmr_u8 *otp_buf) {
                 break;
             }
 
+            if (header_ptr->otp_len > 0) {
+                if (header_ptr->otp_len > SPRD_DUAL_OTP_SIZE) {
+                    SENSOR_LOGE("read %d byte, overflow otp_buf max_size %d",
+                            header_ptr->otp_len, SPRD_DUAL_OTP_SIZE);
+                    fclose(fileHandle);
+                    break;
+                }
             rcount = fread(otp_buf, sizeof(char), header_ptr->otp_len, fileHandle);
             if (rcount != header_ptr->otp_len) {
                 SENSOR_LOGE("read %s buf count error!", OtpDataPath);
                 fclose(fileHandle);
                 break;
+                }
             }
 
             fclose(fileHandle);
@@ -348,7 +398,7 @@ cmr_u16 read_calibration_otp(cmr_u8 dual_flag, cmr_u8 *otp_buf) {
     // 2 read backup file
     memset(header, 0x00, CALI_OTP_HEAD_SIZE);
     memset(otp_buf, 0x00, SPRD_DUAL_OTP_SIZE);
-    memset(cmei_buf, 0x00, CMEI_OTP_CMEI_SIZE);
+    memset(cmei_buf, 0x00, MAX_CMEI_SIZE);
     do {
         if (NULL == OtpBkDataPath) {
             SENSOR_LOGE("OtpBkDataPath is NULL !");
@@ -370,16 +420,25 @@ cmr_u16 read_calibration_otp(cmr_u8 dual_flag, cmr_u8 *otp_buf) {
                 break;
             }
 
+            if (header_ptr->otp_len > 0) {
+                if (header_ptr->otp_len > SPRD_DUAL_OTP_SIZE) {
+                    SENSOR_LOGE("read %d byte, overflow otp_buf max_size %d",
+                            header_ptr->otp_len, SPRD_DUAL_OTP_SIZE);
+                    fclose(fileHandle);
+                    break;
+                }
             rcount = fread(otp_buf, sizeof(char), header_ptr->otp_len, fileHandle);
             if (rcount != header_ptr->otp_len) {
                 SENSOR_LOGE("read %s buf count error!", OtpBkDataPath);
                 fclose(fileHandle);
                 break;
+                }
             }
 
-            if (OTP_VERSION2  == header_ptr->version) {
-                if (header_ptr->cmei_len >= CMEI_OTP_CMEI_SIZE) {
-                    SENSOR_LOGE("read %s cmei buf (%d)overflow error!", OtpBkDataPath, header_ptr->cmei_len);
+            if ((OTP_VERSION2  == header_ptr->version) && (header_ptr->cmei_len > 0)) {
+                if (header_ptr->cmei_len > MAX_CMEI_SIZE) {
+                    SENSOR_LOGE("read %d byte, overflow cmei_buf max_size %d",
+                            header_ptr->cmei_len, MAX_CMEI_SIZE);
                     fclose(fileHandle);
                     break;
                 }
@@ -428,14 +487,16 @@ cmr_u16 read_calibration_otp(cmr_u8 dual_flag, cmr_u8 *otp_buf) {
                     SENSOR_LOGI("%s:write origin header success", OtpDataPath);
                 }
 
+                if (header_ptr->otp_len > 0) {
                 if (ret &&
                     (header_ptr->otp_len !=
                      fwrite(otp_buf, sizeof(char), header_ptr->otp_len, fileHandle))) {
                     SENSOR_LOGE("%s:origin image write fail!", OtpDataPath);
                     ret = 0;
+                    }
                 }
 
-                if (OTP_VERSION2  == header_ptr->version) {
+                if ((OTP_VERSION2  == header_ptr->version) && (header_ptr->cmei_len > 0)) {
                     if (ret &&
                         (header_ptr->cmei_len!=
                         fwrite(cmei_buf, sizeof(char), header_ptr->cmei_len, fileHandle))) {
@@ -516,6 +577,10 @@ cmr_u8 write_calibration_otp_with_cmei(cmr_u8 dual_flag, cmr_u8 *otp_buf,
         OtpDataPath = OTP_CALI_OZ2_PATH;
         OtpBkDataPath = OTPBK_CALI_OZ2_PATH;
         break;
+    case CALIBRATION_FLAG_BOKEH_MANUAL_CMEI:
+        OtpDataPath = OTP_CALI_BOKEH_MANUAL_CMEI_PATH;
+        OtpBkDataPath = OTPBK_CALI_BOKEH_MANUAL_CMEI_PATH;
+        break;
     default:
         SENSOR_LOGE("Invalid cali data type:%d", dual_flag);
         return 0;
@@ -544,7 +609,7 @@ cmr_u8 write_calibration_otp_with_cmei(cmr_u8 dual_flag, cmr_u8 *otp_buf,
 
     if (ret != 0) {
         ret = remove(OtpBkDataPath);
-        SENSOR_LOGD("remove file:%s, ret:%d", OtpDataPath, ret);
+        SENSOR_LOGD("remove file:%s, ret:%d", OtpBkDataPath, ret);
         fileProductinfoHandle = fopen(OtpBkDataPath, "w+");
     }
 
@@ -560,6 +625,7 @@ cmr_u8 write_calibration_otp_with_cmei(cmr_u8 dual_flag, cmr_u8 *otp_buf,
                         OtpBkDataPath);
         }
 
+        if ((NULL != otp_buf) && (otp_size > 0) ) {
         if (ret && (otp_size == fwrite(otp_buf, sizeof(char), otp_size,
                                        fileProductinfoHandle))) {
             SENSOR_LOGI("%s:backup image write success", OtpBkDataPath);
@@ -568,7 +634,9 @@ cmr_u8 write_calibration_otp_with_cmei(cmr_u8 dual_flag, cmr_u8 *otp_buf,
             SENSOR_LOGE("%s:backup image write failed!", OtpBkDataPath);
             ret = 0;
         }
+        }
 
+        if ((NULL != cmei_buf) && (cmei_size > 0) ) {
         if (ret && (cmei_size == fwrite(cmei_buf, sizeof(char), cmei_size,
                                        fileProductinfoHandle))) {
             SENSOR_LOGI("%s:backup cmei write success", OtpBkDataPath);
@@ -576,6 +644,7 @@ cmr_u8 write_calibration_otp_with_cmei(cmr_u8 dual_flag, cmr_u8 *otp_buf,
         } else {
             SENSOR_LOGE("%s:backup cmei write failed!", OtpBkDataPath);
             ret = 0;
+            }
         }
 
         if (ret) {
@@ -629,6 +698,7 @@ cmr_u8 write_calibration_otp_with_cmei(cmr_u8 dual_flag, cmr_u8 *otp_buf,
             SENSOR_LOGI("%s:origin image header write success", OtpDataPath);
         }
 
+        if ((NULL != otp_buf) && (otp_size > 0) ) {
         if (ret && (otp_size ==
                     fwrite(otp_buf, sizeof(char), otp_size, fileVendorHandle))) {
             SENSOR_LOGI("%s:origin image write success", OtpDataPath);
@@ -637,7 +707,9 @@ cmr_u8 write_calibration_otp_with_cmei(cmr_u8 dual_flag, cmr_u8 *otp_buf,
             SENSOR_LOGE("%s:origin image write fail!", OtpDataPath);
             ret = 0;
         }
+        }
 
+        if ((NULL != cmei_buf) && (cmei_size > 0) ) {
         if (ret && (cmei_size ==
                     fwrite(cmei_buf, sizeof(char), cmei_size, fileVendorHandle))) {
             SENSOR_LOGI("%s:origin cmei write success", OtpDataPath);
@@ -645,6 +717,7 @@ cmr_u8 write_calibration_otp_with_cmei(cmr_u8 dual_flag, cmr_u8 *otp_buf,
         } else {
             SENSOR_LOGE("%s:origin cmei write fail!", OtpDataPath);
             ret = 0;
+            }
         }
 
         if (ret) {
@@ -735,7 +808,7 @@ cmr_u8 write_calibration_otp_no_cmei(cmr_u8 dual_flag, cmr_u8 *otp_buf,
 
     if (ret != 0) {
         ret = remove(OtpBkDataPath);
-        SENSOR_LOGD("remove file:%s, ret:%d", OtpDataPath, ret);
+        SENSOR_LOGD("remove file:%s, ret:%d", OtpBkDataPath, ret);
         fileProductinfoHandle = fopen(OtpBkDataPath, "w+");
     }
 
@@ -751,6 +824,7 @@ cmr_u8 write_calibration_otp_no_cmei(cmr_u8 dual_flag, cmr_u8 *otp_buf,
                         OtpBkDataPath);
         }
 
+        if ((NULL != otp_buf) && (otp_size > 0) ) {
         if (ret && (otp_size == fwrite(otp_buf, sizeof(char), otp_size,
                                        fileProductinfoHandle))) {
             SENSOR_LOGI("%s:backup image write success", OtpBkDataPath);
@@ -758,6 +832,7 @@ cmr_u8 write_calibration_otp_no_cmei(cmr_u8 dual_flag, cmr_u8 *otp_buf,
         } else {
             SENSOR_LOGE("%s:backup image write failed!", OtpBkDataPath);
             ret = 0;
+            }
         }
 
         if (ret) {
@@ -811,6 +886,7 @@ cmr_u8 write_calibration_otp_no_cmei(cmr_u8 dual_flag, cmr_u8 *otp_buf,
             SENSOR_LOGI("%s:origin image header write success", OtpDataPath);
         }
 
+        if ((NULL != otp_buf) && (otp_size > 0) ) {
         if (ret && (otp_size ==
                     fwrite(otp_buf, sizeof(char), otp_size, fileVendorHandle))) {
             SENSOR_LOGI("%s:origin image write success", OtpDataPath);
@@ -818,6 +894,7 @@ cmr_u8 write_calibration_otp_no_cmei(cmr_u8 dual_flag, cmr_u8 *otp_buf,
         } else {
             SENSOR_LOGE("%s:origin image write fail!", OtpDataPath);
             ret = 0;
+            }
         }
 
         if (ret) {
