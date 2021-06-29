@@ -2843,6 +2843,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     // otp calibration
     s_setting[cameraId].calOtpInfo.cal_otp_result = 0;
 
+    // SN
+    s_setting[cameraId].calibration_sn= sensor_drv_get_cmei_status();
     // request
     memcpy(s_setting[cameraId].requestInfo.max_num_output_streams,
            camera3_default_info.common.max_output_streams,
@@ -3216,6 +3218,7 @@ int SprdCamera3Setting::initStaticMetadata(
     CameraMetadata staticInfo;
     SprdCamera3DefaultInfo *default_info = &camera3_default_info;
     struct phySensorInfo *phyPtr = NULL;
+    cmr_u8 cmei_status = 0;
 
 #define FILL_CAM_INFO(Array, Start, Num, Flag)                                 \
     for (array_size = Start; array_size < Num; array_size++) {                 \
@@ -3565,6 +3568,8 @@ int SprdCamera3Setting::initStaticMetadata(
                       s_setting[cameraId].engeneerInfo.otp_data,
                       ARRAY_SIZE(s_setting[cameraId].engeneerInfo.otp_data));
 
+    staticInfo.update(ANDROID_SPRD_SN_READY,
+                      &(s_setting[cameraId].calibration_sn), 1);
     *static_metadata = staticInfo.release();
 #undef FILL_CAM_INFO
 #undef FILL_CAM_INFO_ARRAY
@@ -5226,6 +5231,14 @@ int SprdCamera3Setting::updateWorkParameters(
     }
 
     if (frame_settings.exists(ANDROID_SPRD_CALIBRATION_OTP_DATA)) {
+        cmr_u32 ret = 0;
+        ret = memcmp("Otp Init Golden Data",
+            frame_settings.find(ANDROID_SPRD_CALIBRATION_OTP_DATA).data.u8,
+                sizeof("Otp Init Golden Data")-1);
+        if(0 == ret) {
+            ret = sensor_drv_set_manual_cmei(1, 1);
+            s_setting[mCameraId].calOtpInfo.cal_otp_result = ret;
+        } else {
         s_setting[mCameraId].calOtpInfo.dual_otp_flag =
             frame_settings.find(ANDROID_SPRD_CALIBRATION_OTP_DATA).data.u8[20];
         s_setting[mCameraId].calOtpInfo.cal_otp_result = 0;
@@ -5245,6 +5258,7 @@ int SprdCamera3Setting::updateWorkParameters(
             s_setting[mCameraId].calOtpInfo.dual_otp_flag,
             s_setting[mCameraId].calOtpInfo.otp_size);
         pushAndroidParaTag(ANDROID_SPRD_CALIBRATION_OTP_DATA);
+        }
     }
 
     if (frame_settings.exists(ANDROID_SPRD_ZSL_ENABLED)) {
