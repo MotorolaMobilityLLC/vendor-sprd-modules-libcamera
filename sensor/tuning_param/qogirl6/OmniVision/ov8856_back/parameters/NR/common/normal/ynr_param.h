@@ -41,17 +41,17 @@
 				/*wv_thresh2_n*/
 				0x04,
 				/*wv_ratio1*/
-				0xD2,
+				0xAA,
 				/*wv_ratio2*/
-				0xE6,
+				0xBE,
 				/*wv_thresh_d1*/
 				0x0C,
 				/*wv_thresh_d2_n*/
 				0x04,
 				/*wv_ratio_d1*/
-				0xD2,
+				0xAA,
 				/*wv_ratio_d2*/
-				0xE6,
+				0xBE,
 				/*soft_offset*/
 				0x0000,
 				/*soft_offsetd*/
@@ -65,17 +65,17 @@
 				/*wv_thresh2_n*/
 				0x04,
 				/*wv_ratio1*/
-				0xD2,
+				0xAA,
 				/*wv_ratio2*/
-				0xE6,
+				0xBE,
 				/*wv_thresh_d1*/
 				0x0C,
 				/*wv_thresh_d2_n*/
 				0x04,
 				/*wv_ratio_d1*/
-				0xD2,
+				0xAA,
 				/*wv_ratio_d2*/
-				0xE6,
+				0xBE,
 				/*soft_offset*/
 				0x0000,
 				/*soft_offsetd*/
@@ -89,17 +89,17 @@
 				/*wv_thresh2_n*/
 				0x04,
 				/*wv_ratio1*/
-				0xD2,
+				0xBE,
 				/*wv_ratio2*/
-				0xE6,
+				0xD2,
 				/*wv_thresh_d1*/
 				0x0C,
 				/*wv_thresh_d2_n*/
 				0x04,
 				/*wv_ratio_d1*/
-				0xD2,
+				0xBE,
 				/*wv_ratio_d2*/
-				0xE6,
+				0xD2,
 				/*soft_offset*/
 				0x0000,
 				/*soft_offsetd*/
@@ -118,17 +118,17 @@
 				/*wv_thresh2_n*/
 				0x04,
 				/*wv_ratio1*/
-				0xD2,
+				0xAA,
 				/*wv_ratio2*/
-				0xE6,
+				0xBE,
 				/*wv_thresh_d1*/
 				0x0C,
 				/*wv_thresh_d2_n*/
 				0x04,
 				/*wv_ratio_d1*/
-				0xD2,
+				0xAA,
 				/*wv_ratio_d2*/
-				0xE6,
+				0xBE,
 				/*soft_offset*/
 				0x0000,
 				/*soft_offsetd*/
@@ -142,17 +142,17 @@
 				/*wv_thresh2_n*/
 				0x04,
 				/*wv_ratio1*/
-				0xD2,
+				0xAA,
 				/*wv_ratio2*/
-				0xE6,
+				0xBE,
 				/*wv_thresh_d1*/
 				0x0C,
 				/*wv_thresh_d2_n*/
 				0x04,
 				/*wv_ratio_d1*/
-				0xD2,
+				0xAA,
 				/*wv_ratio_d2*/
-				0xE6,
+				0xBE,
 				/*soft_offset*/
 				0x0000,
 				/*soft_offsetd*/
@@ -166,17 +166,17 @@
 				/*wv_thresh2_n*/
 				0x04,
 				/*wv_ratio1*/
-				0xD2,
+				0xBE,
 				/*wv_ratio2*/
-				0xE6,
+				0xD2,
 				/*wv_thresh_d1*/
 				0x0C,
 				/*wv_thresh_d2_n*/
 				0x04,
 				/*wv_ratio_d1*/
-				0xD2,
+				0xBE,
 				/*wv_ratio_d2*/
-				0xE6,
+				0xD2,
 				/*soft_offset*/
 				0x0000,
 				/*soft_offsetd*/
@@ -195,17 +195,17 @@
 				/*wv_thresh2_n*/
 				0x04,
 				/*wv_ratio1*/
-				0xD2,
+				0xAA,
 				/*wv_ratio2*/
-				0xE6,
+				0xBE,
 				/*wv_thresh_d1*/
 				0x0C,
 				/*wv_thresh_d2_n*/
 				0x04,
 				/*wv_ratio_d1*/
-				0xD2,
+				0xAA,
 				/*wv_ratio_d2*/
-				0xE6,
+				0xBE,
 				/*soft_offset*/
 				0x0000,
 				/*soft_offsetd*/
@@ -219,17 +219,17 @@
 				/*wv_thresh2_n*/
 				0x04,
 				/*wv_ratio1*/
-				0xD2,
+				0xAA,
 				/*wv_ratio2*/
-				0xE6,
+				0xBE,
 				/*wv_thresh_d1*/
 				0x0C,
 				/*wv_thresh_d2_n*/
 				0x04,
 				/*wv_ratio_d1*/
-				0xD2,
+				0xAA,
 				/*wv_ratio_d2*/
-				0xE6,
+				0xBE,
 				/*soft_offset*/
 				0x0000,
 				/*soft_offsetd*/
@@ -243,17 +243,17 @@
 				/*wv_thresh2_n*/
 				0x04,
 				/*wv_ratio1*/
-				0xD2,
+				0xBE,
 				/*wv_ratio2*/
-				0xE6,
+				0xD2,
 				/*wv_thresh_d1*/
 				0x0C,
 				/*wv_thresh_d2_n*/
 				0x04,
 				/*wv_ratio_d1*/
-				0xD2,
+				0xBE,
 				/*wv_ratio_d2*/
-				0xE6,
+				0xD2,
 				/*soft_offset*/
 				0x0000,
 				/*soft_offsetd*/
