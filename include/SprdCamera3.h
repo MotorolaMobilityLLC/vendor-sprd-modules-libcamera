@@ -264,6 +264,7 @@ static tags_info_t
         {"sprdAwbCtValue", TYPE_INT32},
         {"sprdfalshcalibrationenable", TYPE_BYTE},
         {"sprdfalshcalibrationresult", TYPE_BYTE},
+        {"sprdSNReady", TYPE_INT32},
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {
