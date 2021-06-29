@@ -116,6 +116,8 @@ PRODUCT_PACKAGES += libparam_sp5508_arb
 PRODUCT_PACKAGES += libparam_ov02b10_arb_1
 PRODUCT_PACKAGES += libparam_ov02b10_arb_2
 PRODUCT_PACKAGES += libparam_ov5675_arb
+PRODUCT_PACKAGES += libparam_gc02m1b_arb_1
+PRODUCT_PACKAGES += libparam_gc02m1b_arb_2
 
 PRODUCT_PACKAGES += libparam_imx586_replace_back_main
 
