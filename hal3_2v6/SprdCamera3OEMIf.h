@@ -1039,6 +1039,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mMultiCameraId;
     cmr_u32 mExposureTime;
     uint32_t mNeed_share_buf;
+    bool mNonZslFlag;
+    uint32_t mSkipNum;
     bool EisErr;
     bool mMultiCamHighResMode;
 };
