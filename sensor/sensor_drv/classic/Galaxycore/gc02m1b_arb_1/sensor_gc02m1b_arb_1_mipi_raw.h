@@ -359,6 +359,27 @@ static const SENSOR_REG_T gc02m1b_arb_1_init_setting[] = {
 	{0xfe, 0x00},
 };
 
+static const SENSOR_REG_T gc02m1b_arb_1_otp_setting[] = {
+	{0xfe, 0x00},
+	{0xfc, 0x01},
+	{0xf4, 0x41},
+	{0xf5, 0xc0},
+	{0xf6, 0x44},
+	{0xf8, 0x38},
+	{0xf9, 0x82},
+	{0xfa, 0x00},
+	{0xfd, 0x80},
+	{0xfc, 0x81},
+	{0xf7, 0x01},
+	{0xfc, 0x80},
+	{0xfc, 0x80},
+	{0xfc, 0x80},
+	{0xfc, 0x80},
+	{0xfc, 0x8e},
+
+	
+};
+
 static const SENSOR_REG_T gc02m1b_arb_1_preview_setting[] = {
     {0xfe, 0x00},
 };
@@ -412,6 +433,10 @@ static SENSOR_TRIM_T s_gc02m1b_arb_1_resolution_trim_tab[VENDOR_NUM] = {
 
     /*If there are multiple modules,please add here*/
 
+};
+
+static struct sensor_i2c_reg_tab gc02m1b_module_id_tab = {
+    .settings = gc02m1b_arb_1_otp_setting, .size = ARRAY_SIZE(gc02m1b_arb_1_otp_setting),
 };
 
 static SENSOR_REG_T gc02m1b_arb_1_shutter_reg[] = {
