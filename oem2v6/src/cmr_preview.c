@@ -1080,6 +1080,8 @@ cmr_int cmr_preview_deinit(cmr_handle preview_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     cmr_u32 i = 0;
     struct prev_handle *handle = (struct prev_handle *)preview_handle;
+    struct camera_context *cxt;
+    struct setting_cmd_parameter setting_param;
 
     if (!preview_handle) {
         CMR_LOGE("Invalid param!");
@@ -1088,6 +1090,20 @@ cmr_int cmr_preview_deinit(cmr_handle preview_handle) {
 
     CMR_LOGD("E");
     /*check every device, if previewing, stop it*/
+    cxt = (struct camera_context *)handle->oem_handle;
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = cxt->camera_id;
+    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                    SETTING_GET_APPMODE, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get app mode %ld", ret);
+    }
+    CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
+    //for highresmode
+    if (setting_param.cmd_type_value == CAMERA_MODE_HIGH_RES_PHOTO) {
+        prev_fd_close(handle, cxt->camera_id);
+    }
+
     for (i = 0; i < CAMERA_ID_MAX; i++) {
         CMR_LOGV("id %d, prev_status %ld,4in1_mem_num=%d",
                  i, handle->prev_cxt[i].prev_status,handle->prev_cxt[i].cap_4in1_mem_num);
@@ -4154,6 +4170,7 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_u32 valid_num;
     struct prev_cb_info cb_data_info;
     struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
+    struct setting_cmd_parameter setting_param;
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
@@ -4229,6 +4246,15 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
     }
 #endif
 
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = cxt->camera_id;
+    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                    SETTING_GET_APPMODE, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get app mode %ld", ret);
+    }
+    CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
+
     if (preview_enable) {
         if (is_restart && PREV_RECOVERY_IDLE != prev_cxt->recovery_status) {
             prev_cxt->prev_status = RECOVERING_IDLE;
@@ -4237,7 +4263,8 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
         }
 
         /*deinit fd*/
-        if (prev_cxt->prev_param.is_support_fd) {
+        if (prev_cxt->prev_param.is_support_fd &&
+            (cxt->zsl_enabled || !(setting_param.cmd_type_value == CAMERA_MODE_HIGH_RES_PHOTO))) {
             prev_fd_close(handle, camera_id);
         }
         /*deinit ultra wide*/
