@@ -1067,6 +1067,16 @@ int SprdCamera3OEMIf::takePicture() {
             usleep(20 * 1000);
         }
 
+        FACE_Tag faceInfo;
+        mSetting->getFACETag(&faceInfo);
+        if (isFaceBeautyOn(sprddefInfo) && faceInfo.face_num > 0) {
+            mNonZslFlag = true;
+            mSkipNum = 0;
+            mSprdZslEnabled = false;
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ZSL_ENABLED,
+                (cmr_uint)mSprdZslEnabled);
+        }
+
         if (isPreviewing()) {
             HAL_LOGD("call stopPreviewInternal in takePicture().");
             // whether FRONT_CAMERA_FLASH_TYPE is lcd
