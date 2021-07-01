@@ -13678,7 +13678,7 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     if (ret) {
         CMR_LOGE("failed to get app mode %ld", ret);
     } else {
-        app_mode = setting_param.cmd_type_value;
+        app_mode = (cmr_u32) setting_param.cmd_type_value;
     }
     CMR_LOGI("cam%d app_mode = %d, takepic mode %d, multi mode %d\n",
         cxt->camera_id, app_mode, mode, cxt->is_multi_mode);
