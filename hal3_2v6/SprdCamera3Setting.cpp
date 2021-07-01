@@ -4634,7 +4634,8 @@ cmr_u32 SprdCamera3Setting::getMinFocusDistance(uint8_t cameraId) {
         HAL_LOGD("can not find sensor info");
     }
     //in case of that sensor didn't set the min_focus_distance
-    if (!min_focus_distance){
+    if (!min_focus_distance) {
+        HAL_LOGW("sensor fail to configure min_focus_distance");
         min_focus_distance = 100;
     }
     return min_focus_distance;
