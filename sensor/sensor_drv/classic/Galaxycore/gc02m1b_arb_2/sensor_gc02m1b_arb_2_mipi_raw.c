@@ -418,6 +418,33 @@ static cmr_int gc02m1b_arb_2_drv_access_val(cmr_handle handle, cmr_uint param)
     return ret;
 }
 
+static cmr_int gc02m1b_arb_2_read_module_id(cmr_handle handle)
+{
+    cmr_u16 module_id_l = 0x00;
+    cmr_u16 module_id_h = 0x00;
+    cmr_u16 module_id = 0x00;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    gc02m1b_arb_2_drv_write_reg2sensor(handle, &gc02m1b_module_id_tab);
+
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xf3, 0x30);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x02);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x17, 0x80);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xf3, 0x34);
+    module_id_h = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x19);
+
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x17, 0x88);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xf3, 0x34);
+    module_id_l = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x19);
+
+    module_id = (module_id_l &0x00FF)|((module_id_h<<8) &0xFF00);
+
+    SENSOR_LOGI("module_id in otp = %x", module_id);
+    return module_id;
+}
+
+
 
 /*==============================================================================
  * Description:
@@ -428,6 +455,7 @@ static cmr_int gc02m1b_arb_2_drv_identify(cmr_handle handle, cmr_uint param)
 {
 	cmr_u16 pid_value = 0x00;
 	cmr_u16 ver_value = 0x00;
+	cmr_u16 mid_value = 0x00;
 	cmr_int ret_value = SENSOR_FAIL;
 	
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -439,8 +467,9 @@ static cmr_int gc02m1b_arb_2_drv_identify(cmr_handle handle, cmr_uint param)
 
 	if (GC02M1B_ARB_2_PID_VALUE == pid_value) {
 		ver_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, GC02M1B_ARB_2_VER_ADDR);
-		SENSOR_LOGI("Identify: pid_value = %x, ver_value = %x", pid_value, ver_value);
-		if (GC02M1B_ARB_2_VER_VALUE == ver_value) {
+		mid_value = gc02m1b_arb_2_read_module_id(handle);
+		SENSOR_LOGI("Identify: pid_value = %x, ver_value = %x, mid_value = %x", pid_value, ver_value, mid_value);
+		if ((GC02M1B_ARB_2_VER_VALUE == ver_value) && (0x5453 == mid_value)) {
 			SENSOR_LOGI("this is gc02m1b_arb_2 sensor");
 			sensor_rid_save_sensor_name(SENSOR_HWINFOR_BACKAUX_CAM_NAME, "2_gc02m1b_arb_4");
 			ret_value = SENSOR_SUCCESS;
