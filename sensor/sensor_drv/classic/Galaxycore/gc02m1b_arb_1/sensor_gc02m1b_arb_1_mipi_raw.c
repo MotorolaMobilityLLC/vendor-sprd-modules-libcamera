@@ -470,7 +470,7 @@ static cmr_int gc02m1b_arb_1_drv_identify(cmr_handle handle, cmr_uint param)
 		mid_value = gc02m1b_arb_1_read_module_id(handle);
 
 		SENSOR_LOGI("Identify: pid_value = %x, ver_value = %x, mid_value = %x", pid_value, ver_value, mid_value);
-		if ((GC02M1B_ARB_1_VER_VALUE == ver_value) && (0x5453 == mid_value)) {
+		if ((GC02M1B_ARB_1_VER_VALUE == ver_value) && (0x5357 == mid_value)) {
 			SENSOR_LOGI("this is gc02m1b_arb_1 sensor");
 			sensor_rid_save_sensor_name(SENSOR_HWINFOR_BACKAUX_CAM_NAME, "2_gc02m1b_arb_3");
 			ret_value = SENSOR_SUCCESS;
