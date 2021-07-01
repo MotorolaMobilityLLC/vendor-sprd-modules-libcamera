@@ -9825,7 +9825,7 @@ int SprdCamera3OEMIf::Callback_GraphicBufferFree(
             if (itor->mGpuHeap.buf_size > 0) {
                 Mutex::Autolock l(&p_mem_dbg->Lock);
                 p_mem_dbg->total_cnt--;
-                p_mem_dbg->total_size -= itor->mGpuHeap.buf_size;
+                p_mem_dbg->total_size -= (cmr_s32)itor->mGpuHeap.buf_size;
             }
             mTotalGpuSize = mTotalGpuSize - (itor->mGpuHeap.buf_size);
             itor->mGpuHeap.bufferhandle.clear();
