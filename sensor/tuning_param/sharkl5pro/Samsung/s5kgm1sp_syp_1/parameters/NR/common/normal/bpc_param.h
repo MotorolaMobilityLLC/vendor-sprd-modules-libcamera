@@ -244,7 +244,7 @@
 		/*bpc_mode*/
 		0x00,
 		/*hv_mode*/
-		0x00,
+		0x02,
 		/*rd_mode*/
 		0x00,
 		/*isMonoSensor*/
@@ -305,7 +305,7 @@
 		/*reserved*/
 		0x00,
 		/*flat_th*/
-		0x0190,
+		0x01C2,
 		/*texture_th*/
 		0x0078,
 
