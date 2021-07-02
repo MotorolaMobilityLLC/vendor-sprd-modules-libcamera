@@ -2278,7 +2278,7 @@ struct ae_callback_params {
    cmr_u32 sensor_gain;
    cmr_u32 isp_gain;
    cmr_u32 exp_line;
-   cmr_u32 exp_time;
+   cmr_u64 exp_time;
    cmr_u32 ae_stable;
    cmr_u8 flash_fired;
    cmr_u32 cur_effect_sensitivity;
