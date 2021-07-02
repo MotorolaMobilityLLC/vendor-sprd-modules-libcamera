@@ -273,6 +273,33 @@ extern "C" {
 		AF_PDAF_DUAL,
 		AF_PDAF_MAX
 	};
+		// AI scene
+	enum af_aiscene_type
+	{
+		AF_AI_SCENE_DEFAULT,
+		AF_AI_SCENE_FOOD,
+		AF_AI_SCENE_PORTRAIT,
+		AF_AI_SCENE_FOLIAGE,
+		AF_AI_SCENE_SKY,
+		AF_AI_SCENE_NIGHT,
+		AF_AI_SCENE_BACKLIGHT,
+		AF_AI_SCENE_TEXT,
+		AF_AI_SCENE_SUNRISE,
+		AF_AI_SCENE_BUILDING,
+		AF_AI_SCENE_LANDSCAPE,
+		AF_AI_SCENE_SNOW,
+		AF_AI_SCENE_FIREWORK,
+		AF_AI_SCENE_BEACH,
+		AF_AI_SCENE_PET,
+		AF_AI_SCENE_FLOWER,
+		AF_AI_SCENE_MAX
+	};
+
+	struct afctrl_aiscene_info {
+		cmr_u32 frame_id;
+		enum af_aiscene_type cur_scene_id;
+	};
+
 
 	// AI scene
 	enum af_aiscene_type
