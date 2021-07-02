@@ -3025,6 +3025,21 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 	return AFV1_SUCCESS;
 }
 
+static cmr_s32 af_sprd_set_scene_info(cmr_handle handle, void *param0)
+{
+	af_ctrl_t *af = (af_ctrl_t *) handle;
+	struct afctrl_aiscene_info *ai_scene_info = (struct afctrl_aiscene_info *)param0;
+
+	if (NULL == ai_scene_info) {
+		return AFV1_ERROR;
+	}
+
+	af->ai_scene_info.cur_scene_id = ai_scene_info->cur_scene_id;
+	ISP_LOGV("ai_scene_id: %d", af->ai_scene_info.cur_scene_id);
+
+	return AFV1_SUCCESS;
+}
+
 static cmr_s32 af_sprd_set_video_stop(cmr_handle handle, void *param0)
 {
 	UNUSED(param0);
