@@ -1665,17 +1665,6 @@ static cmr_u8 if_get_tof_data(tof_measure_data_t * tof_result, void *cookie)
 }
 
 //[TOF_---]
-
-//[AI +++]
-static cmr_u8 if_get_aiscene_data(struct aiscene_info * ai_result, void *cookie)
-{
-	af_ctrl_t *af = cookie;
-	ai_result->cur_scene_id = af->ai_scene_info.cur_scene_id;
-	ISP_LOGV("ai_cur_scene_id: %d", ai_result->cur_scene_id);
-	return 0;
-}
-//[AI ---]
-
 // trigger stuffs
 #define LOAD_SYMBOL(handle, sym, name) \
 {sym=dlsym(handle, name); if(NULL==sym) {ISP_LOGE("dlsym fail: %s", name); return -1;}}
@@ -1902,7 +1891,6 @@ static void *af_lib_init(af_ctrl_t * af)
 	af_in.AF_Ops.get_tof_data = if_get_tof_data;
 	af_in.AF_Ops.get_saf_extra_data = if_get_saf_extra_data;
 	af_in.AF_Ops.get_sub_wins_ysum = if_get_sub_wins_ysum;
-	af_in.AF_Ops.get_aiscene_data = if_get_aiscene_data;
 
 	af_in.tuning.data = af->aftuning_data;
 	af_in.tuning.data_len = af->aftuning_data_len;
@@ -3025,21 +3013,6 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 	return AFV1_SUCCESS;
 }
 
-static cmr_s32 af_sprd_set_scene_info(cmr_handle handle, void *param0)
-{
-	af_ctrl_t *af = (af_ctrl_t *) handle;
-	struct afctrl_aiscene_info *ai_scene_info = (struct afctrl_aiscene_info *)param0;
-
-	if (NULL == ai_scene_info) {
-		return AFV1_ERROR;
-	}
-
-	af->ai_scene_info.cur_scene_id = ai_scene_info->cur_scene_id;
-	ISP_LOGV("ai_scene_id: %d", af->ai_scene_info.cur_scene_id);
-
-	return AFV1_SUCCESS;
-}
-
 static cmr_s32 af_sprd_set_video_stop(cmr_handle handle, void *param0)
 {
 	UNUSED(param0);
@@ -3755,7 +3728,6 @@ cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *
 		break;
 		// SharkLE Only --
 	case AF_CMD_SET_SCENE_INFO:
-		rtn = af_sprd_set_scene_info(handle, param0);
 		break;
 
 	case AF_CMD_SET_REALBOKEH_DISTANCE:

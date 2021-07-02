@@ -336,12 +336,6 @@ struct aflib_aem_stats_data
 	cmr_u32 *cnt_oe_b;
 };
 
-struct aiscene_info {
-	cmr_u32 frame_id;
-	cmr_u32 cur_scene_id;
-	cmr_u32 reserved[30];
-};
-
 typedef struct _AF_Ctrl_Ops {
 	void *cookie;
 	 cmr_u8(*statistics_wait_cal_done) (void *cookie);
@@ -386,7 +380,6 @@ typedef struct _AF_Ctrl_Ops {
 	 cmr_u8(*set_Gridinfo_to_PD) (eAF_MODE AF_mode, ROIinfo * PD_ROI, void *cookie);
 	 cmr_u8(*get_saf_extra_data) (saf_extra_data_t * saf_extra, void *cookie);
 	 cmr_u8(*get_sub_wins_ysum) (Y_Sum * c_y_sum, void *cookie);
-	 cmr_u8(*get_aiscene_data) (struct aiscene_info * ai_result, void *cookie);
 } AF_Ctrl_Ops;
 
 typedef struct _af_tuning_block_param {
