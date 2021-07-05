@@ -4603,6 +4603,10 @@ cmr_u32 SprdCamera3Setting::getMinFocusDistance(uint8_t cameraId) {
     } else {
         HAL_LOGD("can not find sensor info");
     }
+    //in case of that sensor didn't set the min_focus_distance
+    if (!min_focus_distance){
+        min_focus_distance = 100;
+    }
     return min_focus_distance;
 }
 
@@ -4628,17 +4632,6 @@ float SprdCamera3Setting::focusDistanceTranslateToDrvFocusDistance(float focus_d
     setDrvFocusStep = (int)(focus_distance /(mFocusRange[1] - mFocusRange[0]) * (mDrvFocusRange[1] - mDrvFocusRange[0]));
     HAL_LOGD("focus distance:%f translate to drv step:%f",focus_distance,setDrvFocusStep);
     return setDrvFocusStep;
-}
-
-float SprdCamera3Setting::drvFocusDistanceTranslateToFocusDistance(float focus_distance, uint8_t cameraId) {
-    float min_focus_distance = getMinFocusDistance(cameraId);
-    min_focus_distance = 1000 / min_focus_distance;
-    float mFocusRange[2] = {0.0f,min_focus_distance};
-    float mDrvFocusRange[2] = {0.0f,1023.0f};
-    float FocusDistance = 0.0f;
-    FocusDistance = (float)(focus_distance /((mDrvFocusRange[1] - mDrvFocusRange[0])) *(mFocusRange[1] - mFocusRange[0]));
-    HAL_LOGD("drv step:%f translate to focus distance:%f",focus_distance,FocusDistance);
-    return FocusDistance;
 }
 
 int SprdCamera3Setting::updateAppMode(
