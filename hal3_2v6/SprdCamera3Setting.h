@@ -778,7 +778,6 @@ class SprdCamera3Setting {
     int setFdScore(int32_t *fd_score, int num);
     int getFdScore(int32_t *fd_score, int num);
     float focusDistanceTranslateToDrvFocusDistance(float focus_distance, uint8_t cameraId);
-    float drvFocusDistanceTranslateToFocusDistance(float focus_distance, uint8_t cameraId);
 
 
     static uint8_t mMaxCameraCount;
