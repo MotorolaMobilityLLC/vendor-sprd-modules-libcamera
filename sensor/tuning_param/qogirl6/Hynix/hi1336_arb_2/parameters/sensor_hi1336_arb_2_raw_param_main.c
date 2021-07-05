@@ -45,7 +45,7 @@
 /************************************************************************/
 
 
-/* IspToolVersion=R1.21.2202 */
+/* IspToolVersion=R1.21.2501 */
 
 
 /* Capture Sizes:
@@ -171,6 +171,13 @@ static struct sensor_raw_info s_hi1336_arb_2_mipi_raw_info=
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
 	},
 	&s_hi1336_arb_2_trim_info,
 	&s_hi1336_arb_2_ioctrl,
@@ -193,6 +200,13 @@ static struct sensor_raw_info s_hi1336_arb_2_mipi_raw_info=
 		NULL,
 		NULL,
 		NULL,
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		NULL,
 	},
 	{
 		{s_hi1336_arb_2_common_tool_ui_input, sizeof(s_hi1336_arb_2_common_tool_ui_input)},
@@ -209,6 +223,13 @@ static struct sensor_raw_info s_hi1336_arb_2_mipi_raw_info=
 		{NULL, 0},
 		{NULL, 0},
 		{s_hi1336_arb_2_fdr_cap0_tool_ui_input, sizeof(s_hi1336_arb_2_fdr_cap0_tool_ui_input)},
+		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
+		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
