@@ -197,8 +197,8 @@ namespace sprdcamera {
 
 // legacy sprd isp ae compensation manual mode, just for manual mode, dont
 // change this easily
-#define LEGACY_SPRD_AE_COMPENSATION_RANGE_MIN -3
-#define LEGACY_SPRD_AE_COMPENSATION_RANGE_MAX 3
+#define LEGACY_SPRD_AE_COMPENSATION_RANGE_MIN -4
+#define LEGACY_SPRD_AE_COMPENSATION_RANGE_MAX 4
 #define LEGACY_SPRD_AE_COMPENSATION_STEP_NUMERATOR 1
 #define LEGACY_SPRD_AE_COMPENSATION_STEP_DEMINATOR 1
 
@@ -7753,7 +7753,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             ae_compensation_param.ae_compensation_step_denominator =
                 LEGACY_SPRD_AE_COMPENSATION_STEP_DEMINATOR;
             ae_compensation_param.ae_exposure_compensation =
-                controlInfo.ae_exposure_compensation;
+                controlInfo.ae_exposure_compensation/8;
         } else {
             // standard implementation following android api
             ae_compensation_param.ae_compensation_range[0] =
