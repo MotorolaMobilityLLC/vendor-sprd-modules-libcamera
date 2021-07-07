@@ -34,7 +34,7 @@
 //#define FEATURE_OTP
 
 #define VENDOR_NUM 1
-#define SENSOR_NAME				"sp5508_arb_2"
+#define SENSOR_NAME				"sp5508_arb_4"
 
 #define I2C_SLAVE_ADDR			0x78 		/* 8bit slave address*/
 
