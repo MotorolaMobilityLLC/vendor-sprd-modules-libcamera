@@ -113,6 +113,7 @@ PRODUCT_PACKAGES += libparam_hi1336_arb_1
 PRODUCT_PACKAGES += libparam_hi1336_arb_2
 PRODUCT_PACKAGES += libparam_gc5035_arb
 PRODUCT_PACKAGES += libparam_sp5508_arb
+PRODUCT_PACKAGES += libparam_sp5508_arb_2
 PRODUCT_PACKAGES += libparam_ov02b10_arb_1
 PRODUCT_PACKAGES += libparam_ov02b10_arb_2
 PRODUCT_PACKAGES += libparam_ov5675_arb
