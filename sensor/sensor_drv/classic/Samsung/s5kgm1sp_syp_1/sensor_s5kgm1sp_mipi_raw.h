@@ -2082,8 +2082,8 @@ SENSOR_INFO_T g_s5kgm1sp_mipi_raw_info = {
                       {.reg_addr = s5kgm1sp_VER_ADDR,
                        .reg_value = s5kgm1sp_VER_VALUE}},
 
-    .source_width_max = 4000,
-    .source_height_max = 3000,
+    .source_width_max = 8000,
+    .source_height_max = 6000,
     .name = (cmr_s8 *)"s5kgm1sp_syp_1",
 
     .image_format = SENSOR_IMAGE_FORMAT_RAW,
