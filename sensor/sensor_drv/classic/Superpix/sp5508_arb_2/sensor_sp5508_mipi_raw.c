@@ -19,7 +19,7 @@
  *
  */
 
-#define LOG_TAG "sp5508_2"
+#define LOG_TAG "sp5508_4"
 
 #include "sensor_sp5508_mipi_raw.h"
 
@@ -34,7 +34,7 @@ static void sp5508_drv_write_reg2sensor(cmr_handle handle,struct sensor_i2c_reg_
 {
 	SENSOR_IC_CHECK_PTR_VOID(reg_info);
 	SENSOR_IC_CHECK_HANDLE_VOID(handle);
-	
+
 	struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 	cmr_int i=0;
 
@@ -55,7 +55,7 @@ static void sp5508_drv_write_gain(cmr_handle handle, struct sensor_aec_i2c_tag *
 	SENSOR_IC_CHECK_PTR_VOID(aec_info);
 	SENSOR_IC_CHECK_HANDLE_VOID(handle);
 	struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-	
+
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfd, 0x01);
 
     if(gain <= 0x10*1.5)//<1.5x
@@ -69,13 +69,13 @@ static void sp5508_drv_write_gain(cmr_handle handle, struct sensor_aec_i2c_tag *
 	    aec_info->again->settings[0].reg_value = (gain) & 0xff;
 		/*END*/
        }
-	
+
 	if(aec_info->dgain->size){
 
 		/*TODO*/
 
 		/*END*/
-	}  
+	}
 }
 
 
@@ -89,11 +89,11 @@ static void sp5508_drv_write_frame_length(cmr_handle handle, struct sensor_aec_i
     SENSOR_IC_CHECK_PTR_VOID(aec_info);
 	SENSOR_IC_CHECK_HANDLE_VOID(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-	
+
     frame_len = frame_len - 1993;
 	if(aec_info->frame_length->size){
 		/*TODO*/
-		
+
 		aec_info->frame_length->settings[1].reg_value = (frame_len >> 8) & 0xff;
 		aec_info->frame_length->settings[2].reg_value = frame_len & 0xff;
 
@@ -106,7 +106,7 @@ static void sp5508_drv_write_frame_length(cmr_handle handle, struct sensor_aec_i
 /*==============================================================================
  * Description:
  * write shutter to sensor registers buffer
- * please pay attention to the frame length 
+ * please pay attention to the frame length
  * please modify this function acording your spec
  *============================================================================*/
 static void sp5508_drv_write_shutter(cmr_handle handle, struct sensor_aec_i2c_tag *aec_info, cmr_u32 shutter)
@@ -114,7 +114,7 @@ static void sp5508_drv_write_shutter(cmr_handle handle, struct sensor_aec_i2c_ta
 	SENSOR_IC_CHECK_PTR_VOID(aec_info);
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-	
+
     shutter = shutter << 1;
 	shutter = shutter >> 1;
     if(aec_info->shutter->size){
@@ -122,7 +122,7 @@ static void sp5508_drv_write_shutter(cmr_handle handle, struct sensor_aec_i2c_ta
 		aec_info->shutter->settings[1].reg_value = (shutter >> 0x08) & 0xff;
 		aec_info->shutter->settings[2].reg_value = (shutter ) & 0xff;
 
-		
+
 		/*END*/
 	}
 }
@@ -133,7 +133,7 @@ static void sp5508_drv_write_shutter(cmr_handle handle, struct sensor_aec_i2c_ta
  * please pay attention to the frame length
  * please don't change this function if it's necessary
  *============================================================================*/
-static void sp5508_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,cmr_u32 dummy_line, 
+static void sp5508_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,cmr_u32 dummy_line,
                                                   cmr_u16 mode, struct sensor_aec_i2c_tag *aec_info)
 {
     cmr_u32 dest_fr_len = 0;
@@ -141,16 +141,16 @@ static void sp5508_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,cmr_u32 
     cmr_u32 fr_len = 0;
     float fps = 0.0;
     cmr_u16 frame_interval = 0x00;
-	
+
     SENSOR_IC_CHECK_PTR_VOID(aec_info);
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-	
+
 	sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
     sns_drv_cxt->line_time_def = sns_drv_cxt->trim_tab_info[mode].line_time;
 	cur_fr_len = sns_drv_cxt->sensor_ev_info.preview_framelength;
     fr_len = sns_drv_cxt->frame_length_def;
-	
+
 	dummy_line = dummy_line > FRAME_OFFSET ? dummy_line : FRAME_OFFSET;
 	dest_fr_len = ((shutter + dummy_line) > fr_len) ? (shutter +dummy_line) : fr_len;
     sns_drv_cxt->frame_length = dest_fr_len;
@@ -192,7 +192,7 @@ static void sp5508_drv_calc_gain(cmr_handle handle,cmr_uint isp_gain, struct sen
 
 	sensor_gain = isp_gain < ISP_BASE_GAIN ? ISP_BASE_GAIN : isp_gain;
 	sensor_gain = sensor_gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
-	
+
 	if (SENSOR_MAX_GAIN < sensor_gain)
 			sensor_gain = SENSOR_MAX_GAIN;
 
@@ -200,7 +200,7 @@ static void sp5508_drv_calc_gain(cmr_handle handle,cmr_uint isp_gain, struct sen
 
 	sns_drv_cxt->sensor_ev_info.preview_gain=sensor_gain;
 	sp5508_drv_write_gain(handle, aec_info,sensor_gain);
-	
+
 }
 
 /*==============================================================================
@@ -218,9 +218,9 @@ static cmr_int sp5508_drv_power_on(cmr_handle handle, cmr_uint power_on)
     SENSOR_AVDD_VAL_E avdd_val = module_info->avdd_val;
     SENSOR_AVDD_VAL_E iovdd_val = module_info->iovdd_val;
     BOOLEAN power_down = g_sp5508_mipi_raw_info.power_down_level;
-    BOOLEAN reset_level = g_sp5508_mipi_raw_info.reset_pulse_level;	
-	
-    if (SENSOR_TRUE == power_on) 
+    BOOLEAN reset_level = g_sp5508_mipi_raw_info.reset_pulse_level;
+
+    if (SENSOR_TRUE == power_on)
 	{
         hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
@@ -250,7 +250,7 @@ static cmr_int sp5508_drv_power_on(cmr_handle handle, cmr_uint power_on)
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
     }
-	
+
     SENSOR_LOGI("(1:on, 0:off): %lu", power_on);
     return SENSOR_SUCCESS;
 }
@@ -260,7 +260,7 @@ static cmr_int sp5508_drv_power_on(cmr_handle handle, cmr_uint power_on)
  * calculate fps for every sensor mode according to frame_line and line_time
  * please modify this function acording your spec
  *============================================================================*/
-static cmr_int sp5508_drv_init_fps_info(cmr_handle handle) 
+static cmr_int sp5508_drv_init_fps_info(cmr_handle handle)
 {
     cmr_int rtn = SENSOR_SUCCESS;
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -309,13 +309,13 @@ static cmr_int sp5508_drv_init_fps_info(cmr_handle handle)
     return rtn;
 }
 
-static cmr_int sp5508_drv_get_static_info(cmr_handle handle, cmr_u32 *param) 
+static cmr_int sp5508_drv_get_static_info(cmr_handle handle, cmr_u32 *param)
 {
     cmr_int rtn = SENSOR_SUCCESS;
     struct sensor_ex_info *ex_info = (struct sensor_ex_info *)param;
     cmr_u32 up = 0;
     cmr_u32 down = 0;
-    
+
 	SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(ex_info);
     SENSOR_IC_CHECK_PTR(param);
@@ -350,7 +350,7 @@ static cmr_int sp5508_drv_get_static_info(cmr_handle handle, cmr_u32 *param)
     return rtn;
 }
 
-static cmr_int sp5508_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) 
+static cmr_int sp5508_drv_get_fps_info(cmr_handle handle, cmr_u32 *param)
 {
     cmr_int rtn = SENSOR_SUCCESS;
     SENSOR_MODE_FPS_T *fps_info = (SENSOR_MODE_FPS_T *)param;
@@ -386,13 +386,13 @@ static cmr_int sp5508_drv_access_val(cmr_handle handle, cmr_uint param)
 {
 	cmr_int ret = SENSOR_FAIL;
     SENSOR_VAL_T *param_ptr = (SENSOR_VAL_T *)param;
-    
+
 	SENSOR_IC_CHECK_HANDLE(handle);
 	SENSOR_IC_CHECK_PTR(param_ptr);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
 	SENSOR_LOGI("sensor sp5508: param_ptr->type=%x", param_ptr->type);
-	
+
 	switch(param_ptr->type)
 	{
 		case SENSOR_VAL_TYPE_GET_STATIC_INFO:
@@ -582,9 +582,9 @@ static cmr_int sp5508_drv_identify(cmr_handle handle, cmr_uint param)
 		ver_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, sp5508_VER_ADDR);
 		mid_value = sp5508_arb_read_module_id(sns_drv_cxt->hw_handle);
 		SENSOR_LOGI("Identify: pid_value = %x, ver_value = %x, mid_value = %x", pid_value, ver_value, mid_value);
-		if ((sp5508_VER_VALUE == ver_value) && (0x10 == mid_value)) {
-			sensor_rid_save_sensor_name(SENSOR_HWINFOR_FRONT_CAM_NAME, "1_sp5508_arb_2");
-			SENSOR_LOGI("this is sp5508_2 sensor");
+		if ((sp5508_VER_VALUE == ver_value) && (0x0e == mid_value)) {
+			sensor_rid_save_sensor_name(SENSOR_HWINFOR_FRONT_CAM_NAME, "1_sp5508_arb_4");
+			SENSOR_LOGI("this is sp5508_4 sensor");
 			ret_value = SENSOR_SUCCESS;
 		} else {
 			SENSOR_LOGE("sensor identify fail, pid_value = %x, ver_value = %x", pid_value, ver_value);
