@@ -953,6 +953,7 @@ struct img_frm_cap {
     cmr_u32 need_isp_tool;
     cmr_u32 need_4in1;
     cmr_u32 need_3dnr;
+    cmr_u32 need_fdr;
     cmr_u32 dual_cam;
     struct dcam_regular_desc regular_desc;
     cmr_u32 flip_on;
