@@ -4191,6 +4191,16 @@ void SprdCamera3OEMIf::PreviewFrameFaceBeauty(struct camera_frame_type *frame,
     cmr_u32 iso;
     int ret;
 
+    mSetting->getFACETag(&faceInfo);
+    /* if FB on before non-zsl cap, then skip no FD frame */
+    if (faceInfo.face_num == 0 && mNonZslFlag == true && mSkipNum < 3) {
+     mSkipNum++;
+     frame->type = PREVIEW_CANCELED_FRAME;
+     return ;
+    }
+    mNonZslFlag = false;
+    mSkipNum = 0;
+
     ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_BV, &bv);
     ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_CT, &ct);
     ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_ISO, &iso);
