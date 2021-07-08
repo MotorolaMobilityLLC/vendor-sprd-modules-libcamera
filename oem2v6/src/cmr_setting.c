@@ -1129,7 +1129,6 @@ static cmr_int setting_set_scene_mode(struct setting_component *cpt,
     } else {
         hal_param->is_fdr = 0;
     }
-    cpt->force_set = 1;
     ret = setting_set_general(cpt, SETTING_GENERAL_SCENE_MODE, parm);
 
     return ret;
