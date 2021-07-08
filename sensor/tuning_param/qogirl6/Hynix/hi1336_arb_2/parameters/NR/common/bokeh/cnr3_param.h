@@ -898,7 +898,7 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x0410,
+			0x041C,
 			/*imgCenterY*/
 			0x030C,
 			/*slope*/
@@ -937,7 +937,7 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x0208,
+			0x020E,
 			/*imgCenterY*/
 			0x0186,
 			/*slope*/
@@ -976,7 +976,7 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x0104,
+			0x0107,
 			/*imgCenterY*/
 			0x00C3,
 			/*slope*/
@@ -1015,9 +1015,9 @@
 				0x06,0x05,0x04/*0-2*/
 			},
 			/*imgCenterX*/
-			0x0082,
+			0x0083,
 			/*imgCenterY*/
-			0x0062,
+			0x0061,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
@@ -1056,7 +1056,7 @@
 			/*imgCenterX*/
 			0x0041,
 			/*imgCenterY*/
-			0x0031,
+			0x0030,
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
