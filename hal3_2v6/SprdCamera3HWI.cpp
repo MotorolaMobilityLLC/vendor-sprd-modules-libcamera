@@ -2688,6 +2688,10 @@ void SprdCamera3HWI::setUltraWideMode(unsigned int on_off){
 void SprdCamera3HWI::setFovFusionMode(unsigned int on_off){
     mOEMIf->camera_ioctrl(CAMERA_IOCTRL_FOV_FUSION_MODE, &on_off, NULL);
 }
+void SprdCamera3HWI::setFovFusionFlag(unsigned int flag){
+    mOEMIf->camera_ioctrl(CAMERA_IOCTRL_FOV_FUSION_FLAG, &flag, NULL);
+}
+
 
 void SprdCamera3HWI::setMultiCameraId(uint32_t multi_camera_id){
     mOEMIf->camera_ioctrl(CAMERA_IOCTRL_MULTI_CAMERA_ID, &multi_camera_id, NULL);

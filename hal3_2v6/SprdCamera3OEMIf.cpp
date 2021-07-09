@@ -508,7 +508,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mFlagOffLineZslStart(0), mZslSnapshotTime(0),  mAf_start_time(0),mAf_stop_time(0),
       mIsIspToolMode(0),
       mIsYuvSensor(0), mIsUltraWideMode(false),
-      mIsFovFusionMode(false), mIsRawCapture(0),
+      mIsFovFusionMode(false),mIsFovFusionFlag(false), mIsRawCapture(0),
       mIsFDRCapture(0), mIsCameraClearQBuf(0),
       mLatestFocusDoneTime(0), mFaceDetectStartedFlag(0),
       mIsJpegWithBigSizePreview(0), lightportrait_type(0),
@@ -1819,6 +1819,15 @@ int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
         }
         break;
     }
+    case CAMERA_IOCTRL_FOV_FUSION_FLAG: {
+        if (*(unsigned int *)param1 == 1) {
+            mIsFovFusionFlag = true;
+        } else {
+            mIsFovFusionFlag = false;
+        }
+        break;
+    }
+
     case CAMERA_IOCTRL_MULTI_CAMERA_ID: {
         mMultiCameraId = *(uint32_t *)param1;
         break;
@@ -3377,10 +3386,9 @@ int SprdCamera3OEMIf::startPreviewInternal() {
        if(zsl_num)
            zsl_skip_num = DEFAULT_ZSL_SKIP_NUM;
     }
-    if(sprddefInfo->sprd_appmode_id == CAMERA_MODE_REFOCUS
-       || sprddefInfo->sprd_appmode_id == CAMERA_MODE_PORTRAIT_PHOTO
-       || sprddefInfo->sprd_appmode_id == CAMERA_MODE_FOV_FUSION_MODE){
-        mNeed_share_buf = 0;
+
+    if(mMultiCameraMode == MODE_MULTI_CAMERA && mIsFovFusionFlag != true){
+        mNeed_share_buf = 1;
     }
     zsl_param.zsl_num = zsl_num;
     zsl_param.zsk_skip_num = zsl_skip_num;
