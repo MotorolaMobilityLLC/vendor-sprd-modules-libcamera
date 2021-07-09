@@ -3494,8 +3494,6 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         }
     }
 
-    mZslMaxFrameNum = 1;
-    mZslNum = DEFAULT_ZSL_BUFFER_NUM;
     mPictureFrameNum = -1;
     mZslCaptureExitLoop = false;
     mRestartFlag = false;
@@ -3670,11 +3668,6 @@ int SprdCamera3OEMIf::startPreviewInternal() {
             mZslNum = 7;
             mZslMaxFrameNum = 7;
         }
-    }
-
-    if (mSprdAppmodeId == CAMERA_MODE_FDR && mCameraId == 0) {
-        mZslNum = 1;
-        mZslMaxFrameNum = 1;
     }
 
     if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW) {

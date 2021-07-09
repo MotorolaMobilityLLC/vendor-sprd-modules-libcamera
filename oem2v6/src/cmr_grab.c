@@ -738,12 +738,12 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
 
     CMR_LOGI("frm_num %d, dst width %d, dst height %d,slowmotion %d,"
              "is_high_fps:%d, high_fps_skip_num:%d, src_img_fmt %d,"
-             "dst_img_fmt %d, 4in1 %d, fdr %d",
+             "dst_img_fmt %d, 4in1 %d.",
              config->frm_num, config->cfg.dst_img_size.width,
              config->cfg.dst_img_size.height, config->cfg.slowmotion,
              config->cfg.is_high_fps, config->cfg.high_fps_skip_num,
              config->cfg.src_img_fmt, config->cfg.dst_img_fmt,
-             config->cfg.need_4in1, config->cfg.need_fdr);
+             config->cfg.need_4in1);
 
     parm.dst_size.w = config->cfg.dst_img_size.width;
     parm.dst_size.h = config->cfg.dst_img_size.height;
@@ -790,7 +790,6 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
     function_mode.need_4in1 = config->cfg.need_4in1;
     function_mode.dual_cam = config->cfg.dual_cam;
     function_mode.need_afbc = config->cfg.afbc_enable;
-    function_mode.need_fdr = config->cfg.need_fdr;
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_FUNCTION_MODE, &function_mode);
 
     sprd_3dnr_mode.channel_id = ch_id;
