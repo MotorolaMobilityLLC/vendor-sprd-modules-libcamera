@@ -12243,6 +12243,12 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     }
     obj->mHalOem->ops->camera_snapshot_is_need_flash(
         obj->mCameraHandle, mCameraId, &mFlashCaptureFlag);
+	if (mFlashCaptureFlag) {
+		  mSprd3dnrType = CAMERA_3DNR_TYPE_NULL;
+		  mFlagHdr = false;
+		  mIsFDRCapture = false;
+		  SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DNR_TYPE, mSprd3dnrType);
+	  }
 
     SET_PARM(obj->mHalOem, obj->mCameraHandle, CAMERA_PARAM_SHOT_NUM,
              mPicCaptureCnt);
