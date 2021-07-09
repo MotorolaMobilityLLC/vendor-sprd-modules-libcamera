@@ -4464,8 +4464,10 @@ static cmr_int sensor_drv_check_cmei(cmr_u8 dual_flag) {
                 ret = SENSOR_FAIL;
             }
         } else {
-            SENSOR_LOGI("without BOKEH cmei, use origin cali data");
-            ret = SENSOR_SUCCESS;
+            //SENSOR_LOGI("without BOKEH cmei, use origin cali data");
+            //ret = SENSOR_SUCCESS;
+            SENSOR_LOGI("xxx--cannot get bokeh module info, use golden data");
+            return SENSOR_FAIL;
         }
         break;
 
@@ -4482,8 +4484,10 @@ static cmr_int sensor_drv_check_cmei(cmr_u8 dual_flag) {
                 ret = SENSOR_FAIL;
             }
         } else {
-            SENSOR_LOGI("without SAT oz1 cmei, use origin cali data");
-            ret = SENSOR_SUCCESS;
+            //SENSOR_LOGI("without SAT oz1 cmei, use origin cali data");
+            //ret = SENSOR_SUCCESS;
+            SENSOR_LOGI("xxx--cannot get oz1 module info, use golden data");
+            return SENSOR_FAIL;
         }
         break;
 
@@ -4500,8 +4504,10 @@ static cmr_int sensor_drv_check_cmei(cmr_u8 dual_flag) {
                 ret = SENSOR_FAIL;
             }
         } else {
-            SENSOR_LOGI("without SAT oz2 cmei, use origin cali data");
-            ret = SENSOR_SUCCESS;
+            //SENSOR_LOGI("without SAT oz2 cmei, use origin cali data");
+            //ret = SENSOR_SUCCESS;
+            SENSOR_LOGI("xxx--cannot get oz2 module info, use golden data");
+            return SENSOR_FAIL;
         }
         break;
 
