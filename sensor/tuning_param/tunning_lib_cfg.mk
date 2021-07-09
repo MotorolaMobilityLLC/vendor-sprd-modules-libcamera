@@ -110,3 +110,4 @@ PRODUCT_PACKAGES += libparam_gc02m1b_syp_1
 PRODUCT_PACKAGES += libparam_gc02m1b_syp_2
 PRODUCT_PACKAGES += libparam_gc02m1b_syp
 PRODUCT_PACKAGES += libparam_ov02b10_syp
+PRODUCT_PACKAGES += libparam_ov08d10_syp
