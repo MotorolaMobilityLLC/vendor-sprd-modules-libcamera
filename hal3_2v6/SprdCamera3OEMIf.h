@@ -996,6 +996,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool mIsMlogMode;
     int64_t mtimestamplast;
     bool mIsFovFusionMode;
+    bool mIsFovFusionFlag;
     bool mIsRawCapture;
     bool mIsFDRCapture;
 #ifdef CONFIG_FACE_BEAUTY

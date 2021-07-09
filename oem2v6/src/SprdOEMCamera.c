@@ -1168,7 +1168,8 @@ static cmr_int ioctrl_sensor_get_stream_status(cmr_handle handle, void *param) {
 static cmr_int ioctrl_camera_set_zsl_param(cmr_handle handle, void *param) {
     struct  sprd_cap_zsl_param *zsl_param = (struct sprd_cap_zsl_param *)param;
 
-    CMR_LOGD("zsl_num = %d,skip_num=%d", zsl_param->zsl_num,zsl_param->zsk_skip_num);
+    CMR_LOGD("zsl_num = %d,skip_num=%d,is_share_buffer =%d\n", zsl_param->zsl_num,zsl_param->zsk_skip_num,
+              zsl_param->need_share_buf);
     camera_set_zsl_param(handle, zsl_param);
     return 0;
 }
