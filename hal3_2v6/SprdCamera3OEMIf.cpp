@@ -2447,9 +2447,9 @@ void SprdCamera3OEMIf::setAfState(enum afTransitionCause cause) {
 
 
 exit:
-    HAL_LOGD("mCameraId=%d, Af mode=%d, transition cause=%d, cur state=%d, new "
-             "state=%d",
-             mCameraId, controlInfo.af_mode, cause, state, newState);
+    HAL_LOGD("mCameraId=%d, Af mode=%d, transition cause=%d, cur state=%d, new state=%d,"
+            "mAf_start_time =%lld, mAf_stop_time =%lld",
+            mCameraId, controlInfo.af_mode, cause, state, newState, mAf_start_time, mAf_stop_time);
 
     controlInfo.af_state = newState;
     mSetting->setAfCONTROLTag(&controlInfo);
