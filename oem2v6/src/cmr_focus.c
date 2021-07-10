@@ -941,8 +941,6 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
     af_cxt->af_busy = 1;
     pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
     if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_info.image_format) {
-        uint32_t flash = 0;
-
         isp_af_param.mode = af_param.param;
         isp_af_param.valid_win = af_param.zone_cnt;
         focus_rect_param_to_isp(af_param, &isp_af_param);
@@ -963,24 +961,11 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
         af_cxt->isp_af_timeout = 0;
         pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
         com_isp_af.af_param = isp_af_param;
-
-        flash = af_cxt->ops.get_flash_info(af_cxt->oem_handle, camera_id);
-        CMR_LOGD("flash %d af_cxt->af_mode %d", flash, af_cxt->af_mode);
-
-        pthread_mutex_lock(&af_cxt->af_isp_caf_mutex);
-        if ((af_cxt->af_mode == CAMERA_FOCUS_MODE_CAF ||
-              af_cxt->af_mode == CAMERA_FOCUS_MODE_CAF_VIDEO) &&
-              1 != flash /*1 stands for pre-flash turned on*/) {
-            pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
-        } else {
-            pthread_mutex_unlock(&af_cxt->af_isp_caf_mutex);
-            ret = af_cxt->ops.af_isp_ioctrl(af_cxt->oem_handle, COM_ISP_SET_AF,
+        ret = af_cxt->ops.af_isp_ioctrl(af_cxt->oem_handle, COM_ISP_SET_AF,
                                             &com_isp_af);
-
-            CMR_LOGD("wait for af_isp_ioctrl");
-            ret = cmr_focus_clear_sem(af_handle);
-            ret = wait_isp_focus_result(af_handle, camera_id, 0);
-        }
+        CMR_LOGD("wait for af_isp_ioctrl");
+        ret = cmr_focus_clear_sem(af_handle);
+        ret = wait_isp_focus_result(af_handle, camera_id, 0);
     } else {
         CMR_LOGV("TYPE_YUV");
         /*yuv sensor process*/
