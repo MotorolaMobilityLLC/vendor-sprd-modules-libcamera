@@ -2449,7 +2449,7 @@ void SprdCamera3OEMIf::setAeState(enum aeTransitionCause cause) {
     state = controlInfo.ae_state;
     newState = state;
 
-    HAL_LOGV("aeTransitionCause:%d, state:%d", cause, state);
+    HAL_LOGD("aeTransitionCause:%d, state:%d", cause, state);
 
     // ae state is always INACTIVE when ae mode is OFF
     if (ANDROID_CONTROL_AE_MODE_OFF == controlInfo.ae_mode) {
@@ -2491,9 +2491,14 @@ void SprdCamera3OEMIf::setAeState(enum aeTransitionCause cause) {
         if ((aeStateMachine[i].transitionCause == cause) &&
             (aeStateMachine[i].state == state)) {
             newState = aeStateMachine[i].newState;
-            HAL_LOGD("mCameraId=%d, Ae transition cause=%d, cur state=%d, new "
-                     "state=%d",
-                     mCameraId, cause, state, newState);
+            //HAL_LOGD("mCameraId=%d, Ae transition cause=%d, cur state=%d, new State=%d", mCameraId, cause, state, newState);
+HAL_LOGD("mmm-before mCameraId=%d, Ae transition cause=%d, cur state=%d, new State=%d", mCameraId, cause, state, newState);
+	     if(cause == AE_START&&state==ANDROID_CONTROL_AE_STATE_CONVERGED){
+                          newState=ANDROID_CONTROL_AE_STATE_CONVERGED;
+	     }
+
+HAL_LOGD("mmm-after mCameraId=%d, Ae transition cause=%d, cur state=%d, new state=%d",mCameraId, cause, state, newState);
+
             break;
         }
     }
