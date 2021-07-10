@@ -874,8 +874,6 @@ static cmr_uint setting_flash_mode_to_status(struct setting_component *cpt,
             ret =
                 setting_sn_ctrl(cpt, COM_SN_GET_AUTO_FLASH_STATE, &ctrl_param);
         }
-        CMR_LOGD("auto flash status %ld", ctrl_param.cmd_type_value);
-
         if (ret) {
             ctrl_param.cmd_type_value = 1;
             CMR_LOGW("Failed to read auto flash mode %ld", ret);
