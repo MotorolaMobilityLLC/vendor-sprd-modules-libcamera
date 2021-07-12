@@ -4455,6 +4455,8 @@ void SprdCamera3OEMIf::adjustPreviewPerformance(uint32_t frame_num,
                         setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_3);
                 } else if (getMultiCameraMode() != MODE_SINGLE_FACEID_UNLOCK) {
                     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
+                }else if(mSprdAppmodeId == CAMERA_MODE_MANUAL){
+                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
                 }
                 mIsPowerhintWait = 0;
             }
@@ -5649,7 +5651,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
     } else if (mRecordingMode == true) {
         setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_3);
-    } else if (mSprdAppmodeId == CAMERA_MODE_CONTINUE) {
+    } else if (mSprdAppmodeId == CAMERA_MODE_CONTINUE || mSprdAppmodeId == CAMERA_MODE_MANUAL) {
         setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
     } else {
         setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
