@@ -1771,7 +1771,7 @@
 	/*ynr_sal_str*/
 	{
 		/*sal_enable*/
-		0x00000001,
+		0x00000000,
 		/*lum_thresh*/
 		{
 			0x3C,0x50/*0-1*/
@@ -2124,7 +2124,7 @@
 	/*ynr_sal_str*/
 	{
 		/*sal_enable*/
-		0x00000001,
+		0x00000000,
 		/*lum_thresh*/
 		{
 			0x3C,0x50/*0-1*/
@@ -2477,7 +2477,7 @@
 	/*ynr_sal_str*/
 	{
 		/*sal_enable*/
-		0x00000001,
+		0x00000000,
 		/*lum_thresh*/
 		{
 			0x3C,0x50/*0-1*/
@@ -2830,7 +2830,7 @@
 	/*ynr_sal_str*/
 	{
 		/*sal_enable*/
-		0x00000001,
+		0x00000000,
 		/*lum_thresh*/
 		{
 			0x3C,0x50/*0-1*/
@@ -2873,9 +2873,9 @@
 				/*wv_thresh_d2_n*/
 				0x04,
 				/*wv_ratio_d1*/
-				0x0A,
+				0x00,
 				/*wv_ratio_d2*/
-				0x0A,
+				0x00,
 				/*soft_offset*/
 				0x0000,
 				/*soft_offsetd*/
@@ -2897,9 +2897,9 @@
 				/*wv_thresh_d2_n*/
 				0x04,
 				/*wv_ratio_d1*/
-				0x0A,
+				0x00,
 				/*wv_ratio_d2*/
-				0x0A,
+				0x00,
 				/*soft_offset*/
 				0x0000,
 				/*soft_offsetd*/
@@ -2921,9 +2921,9 @@
 				/*wv_thresh_d2_n*/
 				0x04,
 				/*wv_ratio_d1*/
-				0x0A,
+				0x00,
 				/*wv_ratio_d2*/
-				0x0A,
+				0x00,
 				/*soft_offset*/
 				0x0000,
 				/*soft_offsetd*/
@@ -3114,7 +3114,7 @@
 		0x04,
 		/*range_s*/
 		{
-			0x04,0x05,0x06,0x01/*0-3*/
+			0x04,0x05,0x06,0x05/*0-3*/
 		},
 		/*dist_weight*/
 		{
@@ -3183,7 +3183,7 @@
 	/*ynr_sal_str*/
 	{
 		/*sal_enable*/
-		0x00000001,
+		0x00000000,
 		/*lum_thresh*/
 		{
 			0x3C,0x50/*0-1*/
@@ -3226,9 +3226,9 @@
 				/*wv_thresh_d2_n*/
 				0x04,
 				/*wv_ratio_d1*/
-				0x0A,
+				0x00,
 				/*wv_ratio_d2*/
-				0x0A,
+				0x00,
 				/*soft_offset*/
 				0x0000,
 				/*soft_offsetd*/
@@ -3250,9 +3250,9 @@
 				/*wv_thresh_d2_n*/
 				0x04,
 				/*wv_ratio_d1*/
-				0x0A,
+				0x00,
 				/*wv_ratio_d2*/
-				0x0A,
+				0x00,
 				/*soft_offset*/
 				0x0000,
 				/*soft_offsetd*/
@@ -3274,9 +3274,9 @@
 				/*wv_thresh_d2_n*/
 				0x04,
 				/*wv_ratio_d1*/
-				0x0A,
+				0x00,
 				/*wv_ratio_d2*/
-				0x0A,
+				0x00,
 				/*soft_offset*/
 				0x0000,
 				/*soft_offsetd*/
@@ -3467,7 +3467,7 @@
 		0x04,
 		/*range_s*/
 		{
-			0x04,0x05,0x06,0x01/*0-3*/
+			0x04,0x05,0x06,0x06/*0-3*/
 		},
 		/*dist_weight*/
 		{
