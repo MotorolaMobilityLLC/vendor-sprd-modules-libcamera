@@ -6713,9 +6713,15 @@ camera_metadata_t *SprdCamera3Setting::reportMetadataToFramework
         }
         if (camMetadata->exists(ANDROID_CONTROL_AE_STATE)) {
             valueU8 = camMetadata->find(ANDROID_CONTROL_AE_STATE).data.u8[0];
-            if(valueU8 != s_setting[mCameraId].controlInfo.ae_state)
-                    camMetadata->update(ANDROID_CONTROL_AE_STATE,
-                                       &(s_setting[mCameraId].resultInfo.ae_state), 1);
+            //if(valueU8 != s_setting[mCameraId].controlInfo.ae_state)
+            //        camMetadata->update(ANDROID_CONTROL_AE_STATE,
+             HAL_LOGD("camMetadata-> ANDROID_CONTROL_AE_STATE %d,controlInfo.ae_state %d", valueU8,s_setting[mCameraId].controlInfo.ae_state);
+
+            if(valueU8 != s_setting[mCameraId].controlInfo.ae_state){
+               camMetadata->update(ANDROID_CONTROL_AE_STATE, &(s_setting[mCameraId].resultInfo.ae_state), 1);
+            }else{
+                  camMetadata->update(ANDROID_CONTROL_AE_STATE, &(s_setting[mCameraId].resultInfo.ae_state), 1);
+            }
         }
     }
 
