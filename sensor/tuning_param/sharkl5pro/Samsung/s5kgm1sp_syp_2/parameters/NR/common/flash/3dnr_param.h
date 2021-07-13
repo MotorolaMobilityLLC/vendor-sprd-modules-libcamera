@@ -336,7 +336,7 @@
 				0x80,0x9A,0x9A,0xB4/*0-3*/
 			},
 			/*nr_thr*/
-			0x05,
+			0x09,
 			/*nr_wgt*/
 			0xFF,
 			/*reserved*/
@@ -359,7 +359,7 @@
 				0x80,0x9A,0xB4,0xB4/*0-3*/
 			},
 			/*nr_thr*/
-			0x03,
+			0x07,
 			/*nr_wgt*/
 			0xFF,
 			/*reserved*/
@@ -382,7 +382,7 @@
 				0x80,0x9A,0xB4,0xB4/*0-3*/
 			},
 			/*nr_thr*/
-			0x03,
+			0x07,
 			/*nr_wgt*/
 			0xFF,
 			/*reserved*/
@@ -403,7 +403,7 @@
 	{
 		/*r_circle_cap*/
 		{
-			0x02BC,0x0320,0x0384/*0-2*/
+			0x02AB,0x030D,0x036E/*0-2*/
 		},
 		/*r_circle_cap_factor*/
 		{
