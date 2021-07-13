@@ -809,6 +809,12 @@ const int32_t front_kavailable_request_keys[] = {
     ANDROID_COLOR_CORRECTION_TRANSFORM, ANDROID_SHADING_MODE, ANDROID_EDGE_MODE,
     ANDROID_NOISE_REDUCTION_MODE, ANDROID_SPRD_APP_MODE_ID};
 
+const std::vector<uint32_t> kremove_request_keys = {
+    ANDROID_COLOR_CORRECTION_MODE,
+    ANDROID_COLOR_CORRECTION_TRANSFORM,
+    ANDROID_COLOR_CORRECTION_GAINS,
+};
+
 const int32_t kavailable_result_keys[] = {
     ANDROID_COLOR_CORRECTION_ABERRATION_MODE,
     ANDROID_CONTROL_AE_ANTIBANDING_MODE,
@@ -831,6 +837,14 @@ const int32_t kavailable_result_keys[] = {
     //ANDROID_SENSOR_SENSITIVITY,
     //ANDROID_BLACK_LEVEL_LOCK,
     ANDROID_EDGE_MODE, ANDROID_NOISE_REDUCTION_MODE};
+
+const std::vector<uint32_t> kremove_result_keys = {
+    ANDROID_SENSOR_GREEN_SPLIT,
+    ANDROID_SENSOR_NEUTRAL_COLOR_POINT,
+    ANDROID_COLOR_CORRECTION_MODE,
+    ANDROID_COLOR_CORRECTION_TRANSFORM,
+    ANDROID_COLOR_CORRECTION_GAINS,
+};
 
 const int32_t kavailable_manual_result_keys[] = {
     ANDROID_LENS_APERTURE, ANDROID_LENS_FILTER_DENSITY,
@@ -1765,6 +1779,13 @@ int SprdCamera3Setting::initStaticParametersforSensorInfo(int32_t cameraId) {
     // colorFilterArrangement
     ptr_sns_inf_tag->color_filter_arrangement =
         default_info->common.color_arrangement;
+    struct phySensorInfo *phyPtr = NULL;
+    phyPtr = sensorGetPhysicalSnsInfo(cameraId);
+    if (phyPtr->mono_sensor == 1) {
+        HAL_LOGD("add mono sensor report");
+        ptr_sns_inf_tag->color_filter_arrangement =
+            ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_MONO;
+    }
     // whiteLevel
     ptr_sns_inf_tag->white_level = default_info->common.white_level;
     for (size_t i = 0; i < 4; i++)
@@ -3380,6 +3401,16 @@ int SprdCamera3Setting::initStaticMetadata(
                   ANDROID_REQUEST_AVAILABLE_RESULT_KEYS)
     FILL_CAM_INFO(s_setting[cameraId].requestInfo.available_capabilites, 1, 6,
                   ANDROID_REQUEST_AVAILABLE_CAPABILITIES)
+
+    if (phyPtr->mono_sensor == 1) {
+        HAL_LOGD("start to remove");
+        removeAvailableKeys(staticInfo, kremove_request_keys,
+            ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS);
+        removeAvailableKeys(staticInfo, kremove_result_keys,
+            ANDROID_REQUEST_AVAILABLE_RESULT_KEYS);
+        HAL_LOGD("end to remove");
+    }
+
     staticInfo.update(ANDROID_REQUEST_PARTIAL_RESULT_COUNT,
                       &(s_setting[cameraId].requestInfo.partial_result_count),
                       1);
@@ -8144,6 +8175,24 @@ void SprdCamera3Setting::notifyNextCapture(uint8_t nextCap) {
 
 uint8_t SprdCamera3Setting::getNextCapture() {
     return s_setting[mCameraId].notify_next_cap;
+}
+
+void SprdCamera3Setting::removeAvailableKeys(
+        CameraMetadata& c, const std::vector<uint32_t>& keys, uint32_t keyTag) {
+    bool ret = false;
+
+    camera_metadata_entry keysEntry = c.find(keyTag);
+    if (keysEntry.count == 0) {
+        HAL_LOGE("fail to find tag %d", keyTag);
+    }
+    std::vector<int32_t> vKeys;
+    vKeys.reserve(keysEntry.count);
+    for (size_t i = 0; i < keysEntry.count; i++) {
+        if (find(keys.begin(), keys.end(), keysEntry.data.i32[i]) == keys.end()) {
+            vKeys.push_back(keysEntry.data.i32[i]);
+        }
+    }
+    ret = c.update(keyTag, vKeys.data(), vKeys.size());
 }
 
 } // namespace sprdcamera
