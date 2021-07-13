@@ -1440,7 +1440,7 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x004B,
+						0x0050,
 						/*addback0*/
 						0x0058,
 						/*addback1*/
@@ -1530,7 +1530,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x5A,
+						0x50,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -1606,7 +1606,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x64,
+						0x5A,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
