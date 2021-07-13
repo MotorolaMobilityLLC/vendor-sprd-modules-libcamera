@@ -1437,6 +1437,10 @@ int SprdCamera3Setting::getNumberOfCameras() {
 exit:
     num = mPhysicalSensorNum;
 
+    if (num > 2) {
+        num = 2;
+    }
+
     LOGI("getNumberOfCameras:%d", num);
 
     return num;
