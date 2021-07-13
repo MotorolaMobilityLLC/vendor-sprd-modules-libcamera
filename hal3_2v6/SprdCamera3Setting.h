@@ -33,6 +33,7 @@
 #include <pthread.h>
 #include <utils/Mutex.h>
 #include <utils/List.h>
+#include <vector>
 #include <utils/KeyedVector.h>
 #include <hardware/camera3.h>
 #include <CameraMetadata.h>
@@ -909,6 +910,7 @@ class SprdCamera3Setting {
     static cmr_u32 getMinFocusDistance(uint8_t cameraId);
     static int64_t getStartOffsetTime(uint8_t cameraId);
     static int getMaxDigitalZoom(uint32_t cameraId);
+    static void removeAvailableKeys(CameraMetadata& c, const std::vector<uint32_t>& keys, uint32_t keyTag);
 };
 
 }; // namespace sprdcamera
