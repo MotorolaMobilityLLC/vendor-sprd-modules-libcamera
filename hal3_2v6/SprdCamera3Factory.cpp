@@ -237,6 +237,10 @@ int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info) {
         return -EINVAL;
     }
 
+    if ((camera_id > 1 && camera_id <= SPRD_MULTI_CAMERA_BASE_ID) ||
+        camera_id > SPRD_MULTI_CAMERA_MAX_ID)
+        return -EINVAL;
+
     int id = overrideCameraIdIfNeeded(camera_id);
     HAL_LOGD("get_camera_info: %d", id);
 
