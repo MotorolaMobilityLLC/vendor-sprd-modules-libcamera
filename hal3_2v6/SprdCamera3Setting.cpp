@@ -6636,16 +6636,33 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        &(s_setting[mCameraId].lensInfo.focal_length), 1);
     camMetadata.update(ANDROID_LENS_APERTURE,
                        &(s_setting[mCameraId].lensInfo.aperture), 1);
-    camMetadata.update(ANDROID_COLOR_CORRECTION_GAINS,
-                       s_setting[mCameraId].colorInfo.gains,
-                       ARRAY_SIZE(s_setting[mCameraId].colorInfo.gains));
-    camMetadata.update(ANDROID_COLOR_CORRECTION_MODE,
-                       &(s_setting[mCameraId].colorInfo.correction_mode), 1);
+    if (camMetadata.exists(ANDROID_REQUEST_AVAILABLE_RESULT_KEYS)) {
+        size_t count = camMetadata.find(ANDROID_REQUEST_AVAILABLE_RESULT_KEYS).count;
+        for (int i = 0; i < count; i++) {
+            if (camMetadata.find(ANDROID_REQUEST_AVAILABLE_RESULT_KEYS)
+                    .data.i32[i] == ANDROID_COLOR_CORRECTION_MODE) {
+                camMetadata.update(ANDROID_COLOR_CORRECTION_MODE,
+                                   &(s_setting[mCameraId].colorInfo.correction_mode), 1);
+                break;
+            }
+            if (camMetadata.find(ANDROID_REQUEST_AVAILABLE_RESULT_KEYS)
+                    .data.i32[i] == ANDROID_COLOR_CORRECTION_TRANSFORM) {
+                camMetadata.update(ANDROID_COLOR_CORRECTION_TRANSFORM,
+                                   s_setting[mCameraId].colorInfo.transform,
+                                   ARRAY_SIZE(s_setting[mCameraId].colorInfo.transform));
+                break;
+            }
+            if (camMetadata.find(ANDROID_REQUEST_AVAILABLE_RESULT_KEYS)
+                    .data.i32[i] == ANDROID_COLOR_CORRECTION_GAINS) {
+                camMetadata.update(ANDROID_COLOR_CORRECTION_GAINS,
+                                   s_setting[mCameraId].colorInfo.gains,
+                                   ARRAY_SIZE(s_setting[mCameraId].colorInfo.gains));
+                break;
+            }
+        }
+    }
     camMetadata.update(ANDROID_COLOR_CORRECTION_ABERRATION_MODE,
                        &(s_setting[mCameraId].colorInfo.aberration_mode), 1);
-    camMetadata.update(ANDROID_COLOR_CORRECTION_TRANSFORM,
-                       s_setting[mCameraId].colorInfo.transform,
-                       ARRAY_SIZE(s_setting[mCameraId].colorInfo.transform));
     camMetadata.update(ANDROID_TONEMAP_MODE,
                        &(s_setting[mCameraId].toneInfo.mode), 1);
     camMetadata.update(ANDROID_BLACK_LEVEL_LOCK,
