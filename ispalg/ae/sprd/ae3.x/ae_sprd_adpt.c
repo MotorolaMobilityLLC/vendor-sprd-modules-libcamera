@@ -4284,6 +4284,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		//src_exp.cur_lum = cxt->last_exp_param.cur_lum;
 		cxt->cur_status.adv_param.face_flag = cxt->last_exp_param.face_flag;
 		cxt->cur_status.adv_param.cur_lum = cxt->last_exp_param.cur_lum;
+		memcpy(&dst_exp ,&src_exp,sizeof(struct ae_exposure_param));
 
 		if((cxt->app_mode < 64) && (!work_info->is_snapshot)){
 			cmr_u32 last_app_mode = cxt->last_cam_mode & 0xff;
