@@ -395,7 +395,7 @@ cmr_int cmr_jpeg_deinit(cmr_handle jpeg_handle) {
 }
 
 
-cmr_int cmr_fmt_transfer(cmr_int src_fmt) {
+cmr_u32 cmr_fmt_transfer(cmr_u32 src_fmt) {
     JPEGENC_FORMAT_E fmt = JPEGENC_YUV_420;
 
     switch (src_fmt) {
