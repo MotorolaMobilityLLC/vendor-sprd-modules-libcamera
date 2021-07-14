@@ -512,7 +512,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mIsFDRCapture(0), mIsCameraClearQBuf(0),
       mLatestFocusDoneTime(0), mFaceDetectStartedFlag(0),
       mIsJpegWithBigSizePreview(0), lightportrait_type(0),
-      mMultiCameraId(SPRD_MULTI_CAMERA_BASE_ID), mExposureTime(0), mNeed_share_buf(1)
+      mMultiCameraId(SPRD_MULTI_CAMERA_BASE_ID), mExposureTime(0), mNeed_share_buf(0)
 
 {
     ATRACE_CALL();
