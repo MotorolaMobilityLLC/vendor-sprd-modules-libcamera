@@ -468,9 +468,10 @@ int SprdBokehAlgo::capDepthRun(cap_depth_params_t *cap_depth_para) {
     mCapDepthRunParams.input_otpbuf = mCalData.otp_data;
     mCapDepthRunParams.output_otpbuf = cap_depth_para->otp_info->otp_data;
     mCapDepthRunParams.mChangeSensor = cap_depth_para->mChangeSensor;
-    mCapDepthRunParams.params.portrait_param = &mBokehPortraitParams;
-
-    mCapDepthRunParams.params.portrait_param = &mBokehPortraitParams;
+    portrait_mode_param capParams;
+    memset(&capParams,0,sizeof(portrait_mode_param));
+    memcpy(&capParams,&mBokehPortraitParams,sizeof(struct portrait_mode_param));
+    mCapDepthRunParams.params.portrait_param = &capParams;
 
     rc = sprd_depth_adpt_ctrl(mDepthCapHandle,SPRD_DEPTH_RUN_CMD,&mCapDepthRunParams);
     cap_depth_para->otp_info->otp_size = mCapDepthRunParams.output_otpsize;
