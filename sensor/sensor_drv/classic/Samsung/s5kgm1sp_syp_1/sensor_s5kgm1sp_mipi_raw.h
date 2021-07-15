@@ -1946,9 +1946,9 @@ static SENSOR_TRIM_T s_s5kgm1sp_Resolution_Trim_Tab[VENDOR_NUM] = {
                     .trim_start_y = 0,
                     .trim_width = 2000,
                     .trim_height = 1500,
-                    .line_time = 10446,//17640,
+                    .line_time = 7768,//10446 //17640,
                     .bps_per_lane = 1200,
-                    .frame_line = 0x0c78,
+                    .frame_line = 0x10C0,// 0x0c78
                     .scaler_trim = {.x = 0, .y = 0, .w = 2000, .h = 1500}},
 
                    {.trim_start_x = 0,
