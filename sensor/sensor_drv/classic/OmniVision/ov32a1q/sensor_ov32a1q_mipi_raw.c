@@ -137,7 +137,7 @@ static void ov32a1q_drv_write_shutter(cmr_handle handle,
  * please don't change this function if it's necessary
  *============================================================================*/
 static void ov32a1q_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
-                                      cmr_u32 dummy_line, cmr_u16 mode, cmr_u32 exp_time,
+                                      cmr_u32 dummy_line, cmr_u16 mode, cmr_u64 exp_time,
                                       struct sensor_aec_i2c_tag *aec_info) {
     cmr_u32 dest_fr_len = 0;
     cmr_u32 cur_fr_len = 0;

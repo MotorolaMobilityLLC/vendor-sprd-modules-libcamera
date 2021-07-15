@@ -26,7 +26,7 @@
 #define MIPI_RAW_INFO g_imx351_mipi_raw_info
 #define MODULE_INFO s_imx351_module_info_tab
 
-static const imx351_longExp_valid_frame_num = 3;
+static const cmr_u32 imx351_longExp_valid_frame_num = 3;
 
 /*==============================================================================
  * Description:
