@@ -710,6 +710,16 @@ class SprdCamera3OEMIf : public virtual RefBase {
     // total zsl buffer num
     int32_t mZslNum;
     Mutex mZslBufLock;
+    /* stop auto hdr/mfnr scene update if capturing*/
+    Mutex mAutoHdrMfnrSceneLock;
+    bool mIsAutoHdrMfnrPicturing;
+    int32_t mPendingMfnrType;
+    uint8_t mHdrSceneMode;
+    uint8_t mPendingHdrSceneMode;
+    bool mUpdateSceneMode;
+    int8_t mPendingDrvSceneMode;
+
+    void updateHdrMfnrSceneMode();
     // zsl end
     bool mFlagHdr;
 
