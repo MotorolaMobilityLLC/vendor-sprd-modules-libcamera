@@ -12309,6 +12309,46 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
         }
     }
 
+    if (mCameraId != 1){
+        mHalOem->ops->camera_get_last_preflash_time(mCameraHandle, &last_preflash_time);
+        now_time = systemTime(CLOCK_MONOTONIC);
+        HAL_LOGD("last_preflash_time = %" PRId64 ", now_time=%" PRId64,
+             last_preflash_time, now_time);
+        if (now_time > last_preflash_time) {
+            diff = (now_time - last_preflash_time) / 1000000000;
+            if (diff < PREFLASH_INTERVAL_TIME) {
+                HAL_LOGD("last preflash < 3s, no need do preflash again.");
+                been_preflash = 1;
+            }
+        }
+    }
+
+    if(mIsNeedFlashFired && sprddefInfo->af_support == 1 && sprddefInfo->sprd_appmode_id >= 0 &&
+        (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH ||
+        controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_ALWAYS_FLASH) &&
+        (!been_preflash) && (sprddefInfo->sprd_appmode_id != CAMERA_MODE_MANUAL)) {
+                controlInfo.af_trigger = ANDROID_CONTROL_AF_TRIGGER_START;
+                mSetting->setCONTROLTag(&controlInfo);
+                SetCameraParaTag(ANDROID_CONTROL_AF_TRIGGER);
+                mSetting->getCONTROLTag(&controlInfo);
+                HAL_LOGV("af_state =%d",controlInfo.af_state);
+                while(controlInfo.af_state != ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED) {
+                        if (count1 > 3500) {
+                                HAL_LOGD("wait for preflash timeout 3.5s");
+                                break;
+                        }
+                        if (mZslCaptureExitLoop == true){
+                                HAL_LOGD("close camera");
+                                break;
+                        }
+                        mSetting->getCONTROLTag(&controlInfo);
+                        usleep(1000); //1ms
+                        count1 ++;
+                }
+                clear_af_trigger = 1;
+    }
+    mClearAfTrigger = !!clear_af_trigger;
+
     char value2[PROPERTY_VALUE_MAX];
     if(controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR && mAf_start_time > 0 &&
         mMultiCameraMode != MODE_REFOCUS && mMultiCameraMode != MODE_BOKEH){
@@ -12401,46 +12441,6 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     if (!mZslIpsEnable && isCapturing()) {
         WaitForCaptureDone();
     }
-
-    if (mCameraId != 1){
-        mHalOem->ops->camera_get_last_preflash_time(mCameraHandle, &last_preflash_time);
-        now_time = systemTime(CLOCK_MONOTONIC);
-        HAL_LOGD("last_preflash_time = %" PRId64 ", now_time=%" PRId64,
-             last_preflash_time, now_time);
-        if (now_time > last_preflash_time) {
-            diff = (now_time - last_preflash_time) / 1000000000;
-            if (diff < PREFLASH_INTERVAL_TIME) {
-                HAL_LOGD("last preflash < 3s, no need do preflash again.");
-                been_preflash = 1;
-            }
-        }
-    }
-
-    if(mIsNeedFlashFired && sprddefInfo->af_support == 1 && sprddefInfo->sprd_appmode_id >= 0 &&
-        (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH ||
-        controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_ALWAYS_FLASH) &&
-        (!been_preflash) && (sprddefInfo->sprd_appmode_id != CAMERA_MODE_MANUAL)) {
-                controlInfo.af_trigger = ANDROID_CONTROL_AF_TRIGGER_START;
-                mSetting->setCONTROLTag(&controlInfo);
-                SetCameraParaTag(ANDROID_CONTROL_AF_TRIGGER);
-                mSetting->getCONTROLTag(&controlInfo);
-                HAL_LOGV("af_state =%d",controlInfo.af_state);
-                while(controlInfo.af_state != ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED) {
-                        if (count1 > 3500) {
-                                HAL_LOGD("wait for preflash timeout 3.5s");
-                                break;
-                        }
-                        if (mZslCaptureExitLoop == true){
-                                HAL_LOGD("close camera");
-                                break;
-                        }
-                        mSetting->getCONTROLTag(&controlInfo);
-                        usleep(1000); //1ms
-                        count1 ++;
-                }
-                clear_af_trigger = 1;
-    }
-    mClearAfTrigger = !!clear_af_trigger;
 
     if(mZslCaptureExitLoop == true) {
        HAL_LOGE("deinit capture");

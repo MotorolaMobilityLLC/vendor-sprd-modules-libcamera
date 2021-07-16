@@ -5346,7 +5346,7 @@ int SprdCamera3Setting::updateWorkParameters(
         valueU8 = frame_settings.find(ANDROID_SPRD_3DNR_ENABLED).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled,
                                      valueU8, ANDROID_SPRD_3DNR_ENABLED, 1)
-        HAL_LOGV("sprd 3dnr enabled is %d",
+        HAL_LOGV("sprd_3dnr_enabled is %d",
                  s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
         if (s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled == 1 &&
             is_raw_capture == 0 && is_isptool_mode == 0 &&
@@ -6162,9 +6162,9 @@ int SprdCamera3Setting::updateWorkParameters(
              s_setting[mCameraId].controlInfo.af_regions[3],
              s_setting[mCameraId].controlInfo.af_regions[4],
              s_setting[mCameraId].sprddefInfo.sprd_auto_3dnr_enable,
-             s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled,
              s_setting[mCameraId].controlInfo.enable_zsl,
-             s_setting[mCameraId].sprddefInfo.is_smile_capture);
+             s_setting[mCameraId].sprddefInfo.is_smile_capture,
+             s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
 
 #undef GET_VALUE_IF_DIF
     return rc;
@@ -6897,7 +6897,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        &(s_setting[mCameraId].sprddefInfo.sprd_is_hdr_scene),
                        1);
 
-    HAL_LOGV("auto 3dnr scene report %d mCameraId %d",
+    HAL_LOGV("auto_3dnr_scene report %d mCameraId %d",
              s_setting[mCameraId].sprddefInfo.sprd_is_3dnr_scene,mCameraId);
     camMetadata.update(ANDROID_SPRD_IS_3DNR_SCENE,
                        &(s_setting[mCameraId].sprddefInfo.sprd_is_3dnr_scene),

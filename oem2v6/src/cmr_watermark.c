@@ -330,6 +330,9 @@ static int sprd_fusion_yuv420_semiplanar(unsigned char *img,
                     proc_x = j;
                     proc_y = logoH - 1 - i;
                 }
+                /* vu as a whole word */
+                if (angle == 0 || angle == 180)
+                    proc_x &= (~0x1);
                 alpha = logoRotate[4 * (proc_y * logoW + proc_x) + 3];
                 imgY[i * imgW + j] = ((255 - alpha) * imgY[i * imgW + j] +
                                       alpha * logoY[proc_y * logoW + proc_x]) /
@@ -465,6 +468,9 @@ static int fusion_yuv420_yuv420(cmr_u8 *img, cmr_u8 *logo, sizeParam_t *param) {
                     proc_x = j;
                     proc_y = logoH - 1 - i;
                 }
+                /* vu as a whole word */
+                if (angle == 0 || angle == 180)
+                    proc_x &= (~0x1);
                 /* if (logoY[proc_y * logoW + proc_x] != 0) {
                  * As above
                  */
