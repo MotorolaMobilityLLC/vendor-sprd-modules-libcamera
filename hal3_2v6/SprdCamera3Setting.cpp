@@ -4671,6 +4671,10 @@ int SprdCamera3Setting::updateAppMode(
     uint8_t valueU8 = 0;
     char value[PROPERTY_VALUE_MAX];
     int32_t sprd_app_id = 0;
+    struct camera_info cameraInfo;
+    memset(&cameraInfo, 0, sizeof(cameraInfo));
+    getCameraInfo(mCameraId, &cameraInfo);
+
 #define GET_VALUE_IF_DIF(x, y, tag, count)                                     \
         is_push = false;                                                           \
         for (size_t i = 0; i < count; i++) {                                       \
@@ -4709,6 +4713,20 @@ int SprdCamera3Setting::updateAppMode(
         valueU8 = frame_settings.find(ANDROID_CONTROL_SCENE_MODE).data.u8[0];
         if(s_setting[mCameraId].controlInfo.scene_mode != valueU8)
             pushAndroidParaTag(ANDROID_CONTROL_SCENE_MODE);
+    }
+
+    if (frame_settings.exists(ANDROID_SPRD_FLASH_LCD_MODE)) {
+        if (s_setting[mCameraId].flash_InfoInfo.available == 0 &&
+            !strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") &&
+            cameraInfo.facing == CAMERA_FACING_FRONT) {
+            int32_t sprd_flash_lcd_mode =
+                frame_settings.find(ANDROID_SPRD_FLASH_LCD_MODE).data.u8[0];
+            GET_VALUE_IF_DIF(
+                s_setting[mCameraId].sprddefInfo.sprd_flash_lcd_mode,
+                sprd_flash_lcd_mode, ANDROID_SPRD_FLASH_LCD_MODE, 1)
+            HAL_LOGV("flash lcd mode %d,available =%d", sprd_flash_lcd_mode,
+                     s_setting[mCameraId].flash_InfoInfo.available);
+        }
     }
 
     if (frame_settings.exists(ANDROID_SPRD_AUTO_3DNR_ENABLED)) {
@@ -5092,6 +5110,20 @@ int SprdCamera3Setting::updateWorkParameters(
                          valueU8, ANDROID_SPRD_FIXED_FPS_ENABLED, 1)
         HAL_LOGD("sprd pipviv enabled is %d",
                  s_setting[mCameraId].sprddefInfo.sprd_pipviv_enabled);
+    }
+
+    if (frame_settings.exists(ANDROID_SPRD_FLASH_LCD_MODE)) {
+        if (s_setting[mCameraId].flash_InfoInfo.available == 0 &&
+            !strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") &&
+            cameraInfo.facing == CAMERA_FACING_FRONT) {
+            int32_t sprd_flash_lcd_mode =
+                frame_settings.find(ANDROID_SPRD_FLASH_LCD_MODE).data.u8[0];
+            GET_VALUE_IF_DIF(
+                s_setting[mCameraId].sprddefInfo.sprd_flash_lcd_mode,
+                sprd_flash_lcd_mode, ANDROID_SPRD_FLASH_LCD_MODE, 1)
+            HAL_LOGV("flash lcd mode %d,available =%d", sprd_flash_lcd_mode,
+                     s_setting[mCameraId].flash_InfoInfo.available);
+        }
     }
 
     if (frame_settings.exists(ANDROID_SPRD_3DNR_ENABLED)) {
@@ -5774,20 +5806,6 @@ int SprdCamera3Setting::updateWorkParameters(
         s_setting[mCameraId].autotrackingInfo.at_start_info[0] = 0;
         s_setting[mCameraId].autotrackingInfo.at_start_info[1] = 0;
         s_setting[mCameraId].autotrackingInfo.at_start_info[2] = 0;
-    }
-
-    if (frame_settings.exists(ANDROID_SPRD_FLASH_LCD_MODE)) {
-        if (s_setting[mCameraId].flash_InfoInfo.available == 0 &&
-            !strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") &&
-            cameraInfo.facing == CAMERA_FACING_FRONT) {
-            int32_t sprd_flash_lcd_mode =
-                frame_settings.find(ANDROID_SPRD_FLASH_LCD_MODE).data.u8[0];
-            GET_VALUE_IF_DIF(
-                s_setting[mCameraId].sprddefInfo.sprd_flash_lcd_mode,
-                sprd_flash_lcd_mode, ANDROID_SPRD_FLASH_LCD_MODE, 1)
-            HAL_LOGV("flash lcd mode %d,available =%d", sprd_flash_lcd_mode,
-                     s_setting[mCameraId].flash_InfoInfo.available);
-        }
     }
 
     if (frame_settings.exists(ANDROID_SPRD_AUTO_3DNR_ENABLED)) {
