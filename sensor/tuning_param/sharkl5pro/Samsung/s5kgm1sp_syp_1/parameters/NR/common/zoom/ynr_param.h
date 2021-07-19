@@ -3880,7 +3880,7 @@
 	/*reserved*/
 	0x0000,
 	/*bypass*/
-	0x0000,
+	0x0001,
 }
 ,
 /*param11.&BasePoint=1&*/
@@ -4233,7 +4233,7 @@
 	/*reserved*/
 	0x0000,
 	/*bypass*/
-	0x0000,
+	0x0001,
 }
 ,
 /*param12.&BasePoint=1&*/

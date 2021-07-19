@@ -646,7 +646,7 @@
 		/*direction_mode_bypass*/
 		0x00,
 		/*dist_mode*/
-		0x02,
+		0x00,
 		/*w_shift*/
 		{
 			0x02,0x02,0x03/*0-2*/
@@ -1344,7 +1344,7 @@
 		/*direction_mode_bypass*/
 		0x00,
 		/*dist_mode*/
-		0x02,
+		0x00,
 		/*w_shift*/
 		{
 			0x03,0x03,0x03/*0-2*/
@@ -2042,7 +2042,7 @@
 		/*direction_mode_bypass*/
 		0x00,
 		/*dist_mode*/
-		0x02,
+		0x00,
 		/*w_shift*/
 		{
 			0x02,0x03,0x03/*0-2*/
@@ -2116,7 +2116,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x46,
+						0x78,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -2152,7 +2152,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x50,
+						0x96,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -2192,7 +2192,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x50,
+						0x7D,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -2228,7 +2228,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x5A,
+						0x9B,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -2268,7 +2268,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x5A,
+						0x82,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -2304,7 +2304,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x64,
+						0xA0,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -2740,7 +2740,7 @@
 		/*direction_mode_bypass*/
 		0x00,
 		/*dist_mode*/
-		0x02,
+		0x00,
 		/*w_shift*/
 		{
 			0x02,0x03,0x03/*0-2*/
@@ -2814,7 +2814,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x3C,
+						0x6E,
 						/*flat_match_cnt*/
 						0x0F,
 						/*flat_thresh*/
@@ -2850,7 +2850,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x58,
+						0x80,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -2890,7 +2890,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x41,
+						0x73,
 						/*flat_match_cnt*/
 						0x0F,
 						/*flat_thresh*/
@@ -2926,7 +2926,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x5A,
+						0x82,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -2966,7 +2966,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x46,
+						0x78,
 						/*flat_match_cnt*/
 						0x0F,
 						/*flat_thresh*/
@@ -3002,7 +3002,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x5C,
+						0x84,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -3438,7 +3438,7 @@
 		/*direction_mode_bypass*/
 		0x00,
 		/*dist_mode*/
-		0x02,
+		0x00,
 		/*w_shift*/
 		{
 			0x02,0x03,0x03/*0-2*/

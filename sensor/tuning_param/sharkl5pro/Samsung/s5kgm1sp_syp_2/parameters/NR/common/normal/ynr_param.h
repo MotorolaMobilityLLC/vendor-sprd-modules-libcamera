@@ -1418,7 +1418,7 @@
 	/*ynr_sal_str*/
 	{
 		/*sal_enable*/
-		0x00000001,
+		0x00000000,
 		/*lum_thresh*/
 		{
 			0x3C,0x50/*0-1*/
@@ -1530,7 +1530,7 @@
 				/*wv_thresh2_n*/
 				0x04,
 				/*wv_ratio1*/
-				0xC3,
+				0xD2,
 				/*wv_ratio2*/
 				0xFF,
 				/*wv_thresh_d1*/
@@ -1538,7 +1538,7 @@
 				/*wv_thresh_d2_n*/
 				0x04,
 				/*wv_ratio_d1*/
-				0xC8,
+				0xD2,
 				/*wv_ratio_d2*/
 				0xFF,
 				/*soft_offset*/
@@ -1607,7 +1607,7 @@
 				/*wv_thresh2_n*/
 				0x04,
 				/*wv_ratio1*/
-				0xC3,
+				0xD2,
 				/*wv_ratio2*/
 				0xFF,
 				/*wv_thresh_d1*/
@@ -1615,7 +1615,7 @@
 				/*wv_thresh_d2_n*/
 				0x04,
 				/*wv_ratio_d1*/
-				0xC8,
+				0xD2,
 				/*wv_ratio_d2*/
 				0xFF,
 				/*soft_offset*/
@@ -3297,7 +3297,7 @@
 				/*wv_ratio1*/
 				0xBE,
 				/*wv_ratio2*/
-				0xDC,
+				0xE6,
 				/*wv_thresh_d1*/
 				0x0C,
 				/*wv_thresh_d2_n*/
@@ -3305,7 +3305,7 @@
 				/*wv_ratio_d1*/
 				0xBE,
 				/*wv_ratio_d2*/
-				0xDC,
+				0xE6,
 				/*soft_offset*/
 				0x0000,
 				/*soft_offsetd*/
@@ -3374,7 +3374,7 @@
 				/*wv_ratio1*/
 				0xBE,
 				/*wv_ratio2*/
-				0xDC,
+				0xEB,
 				/*wv_thresh_d1*/
 				0x0C,
 				/*wv_thresh_d2_n*/
@@ -3382,7 +3382,7 @@
 				/*wv_ratio_d1*/
 				0xBE,
 				/*wv_ratio_d2*/
-				0xDC,
+				0xEB,
 				/*soft_offset*/
 				0x0000,
 				/*soft_offsetd*/

@@ -3464,14 +3464,14 @@
 		/*imgCenterY*/
 		0x05DC,
 		/*range_index*/
-		0x04,
+		0x01,
 		/*range_s*/
 		{
-			0x01,0x02,0x02,0x03/*0-3*/
+			0x00,0x01,0x02,0x03/*0-3*/
 		},
 		/*dist_weight*/
 		{
-			0x0F,0x09,0x02/*0-2*/
+			0x0F,0x05,0x02/*0-2*/
 		},
 		/*ynr_blf_enable*/
 		0x00000000,
@@ -3571,9 +3571,9 @@
 				/*wv_thresh2_n*/
 				0x04,
 				/*wv_ratio1*/
-				0xBE,
+				0xD2,
 				/*wv_ratio2*/
-				0xDC,
+				0xF0,
 				/*wv_thresh_d1*/
 				0x0C,
 				/*wv_thresh_d2_n*/
@@ -3595,9 +3595,9 @@
 				/*wv_thresh2_n*/
 				0x04,
 				/*wv_ratio1*/
-				0xBE,
+				0xD2,
 				/*wv_ratio2*/
-				0xDC,
+				0xF0,
 				/*wv_thresh_d1*/
 				0x0C,
 				/*wv_thresh_d2_n*/
@@ -3619,9 +3619,9 @@
 				/*wv_thresh2_n*/
 				0x04,
 				/*wv_ratio1*/
-				0xBE,
+				0xD2,
 				/*wv_ratio2*/
-				0xDC,
+				0xF0,
 				/*wv_thresh_d1*/
 				0x0C,
 				/*wv_thresh_d2_n*/
@@ -3648,17 +3648,17 @@
 				/*wv_thresh2_n*/
 				0x06,
 				/*wv_ratio1*/
-				0xBE,
+				0xDC,
 				/*wv_ratio2*/
-				0xFA,
+				0xFF,
 				/*wv_thresh_d1*/
 				0x05,
 				/*wv_thresh_d2_n*/
 				0x06,
 				/*wv_ratio_d1*/
-				0xBE,
+				0xDC,
 				/*wv_ratio_d2*/
-				0xFA,
+				0xFF,
 				/*soft_offset*/
 				0x0000,
 				/*soft_offsetd*/
@@ -3672,17 +3672,17 @@
 				/*wv_thresh2_n*/
 				0x06,
 				/*wv_ratio1*/
-				0xC3,
+				0xDC,
 				/*wv_ratio2*/
-				0xFA,
+				0xFF,
 				/*wv_thresh_d1*/
 				0x05,
 				/*wv_thresh_d2_n*/
 				0x06,
 				/*wv_ratio_d1*/
-				0xC3,
+				0xDC,
 				/*wv_ratio_d2*/
-				0xFA,
+				0xFF,
 				/*soft_offset*/
 				0x0000,
 				/*soft_offsetd*/
@@ -3696,7 +3696,7 @@
 				/*wv_thresh2_n*/
 				0x06,
 				/*wv_ratio1*/
-				0xC8,
+				0xDC,
 				/*wv_ratio2*/
 				0xFF,
 				/*wv_thresh_d1*/
@@ -3704,7 +3704,7 @@
 				/*wv_thresh_d2_n*/
 				0x06,
 				/*wv_ratio_d1*/
-				0xC8,
+				0xDC,
 				/*wv_ratio_d2*/
 				0xFF,
 				/*soft_offset*/
@@ -3725,17 +3725,17 @@
 				/*wv_thresh2_n*/
 				0x06,
 				/*wv_ratio1*/
-				0xBE,
+				0xDC,
 				/*wv_ratio2*/
-				0xFA,
+				0xFF,
 				/*wv_thresh_d1*/
 				0x05,
 				/*wv_thresh_d2_n*/
 				0x06,
 				/*wv_ratio_d1*/
-				0xBE,
+				0xDC,
 				/*wv_ratio_d2*/
-				0xFA,
+				0xFF,
 				/*soft_offset*/
 				0x0000,
 				/*soft_offsetd*/
@@ -3749,17 +3749,17 @@
 				/*wv_thresh2_n*/
 				0x06,
 				/*wv_ratio1*/
-				0xC3,
+				0xDC,
 				/*wv_ratio2*/
-				0xFA,
+				0xFF,
 				/*wv_thresh_d1*/
 				0x05,
 				/*wv_thresh_d2_n*/
 				0x06,
 				/*wv_ratio_d1*/
-				0xC3,
+				0xDC,
 				/*wv_ratio_d2*/
-				0xFA,
+				0xFF,
 				/*soft_offset*/
 				0x0000,
 				/*soft_offsetd*/
@@ -3773,7 +3773,7 @@
 				/*wv_thresh2_n*/
 				0x06,
 				/*wv_ratio1*/
-				0xC8,
+				0xDC,
 				/*wv_ratio2*/
 				0xFF,
 				/*wv_thresh_d1*/
@@ -3781,7 +3781,7 @@
 				/*wv_thresh_d2_n*/
 				0x06,
 				/*wv_ratio_d1*/
-				0xC8,
+				0xDC,
 				/*wv_ratio_d2*/
 				0xFF,
 				/*soft_offset*/
@@ -3817,14 +3817,14 @@
 		/*imgCenterY*/
 		0x05DC,
 		/*range_index*/
-		0x03,
+		0x01,
 		/*range_s*/
 		{
-			0x00,0x01,0x02,0x03/*0-3*/
+			0x00,0x01,0x01,0x03/*0-3*/
 		},
 		/*dist_weight*/
 		{
-			0x0F,0x06,0x01/*0-2*/
+			0x0F,0x03,0x01/*0-2*/
 		},
 		/*ynr_blf_enable*/
 		0x00000001,
