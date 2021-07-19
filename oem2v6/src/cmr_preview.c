@@ -16271,6 +16271,8 @@ cmr_int prev_fd_close(struct prev_handle *handle, cmr_u32 camera_id) {
     if (prev_cxt->fd_handle) {
         ret = handle->ops.isp_ioctl(
             handle->oem_handle, COM_ISP_SET_AI_SET_FD_ON_OFF, &isp_cmd_parm);
+        ret = handle->ops.isp_ioctl(
+            handle->oem_handle, COM_ISP_SET_AE_SET_FD_ON_OFF, &isp_cmd_parm);
         ret = cmr_ipm_close(prev_cxt->fd_handle);
         prev_cxt->fd_handle = 0;
     }
