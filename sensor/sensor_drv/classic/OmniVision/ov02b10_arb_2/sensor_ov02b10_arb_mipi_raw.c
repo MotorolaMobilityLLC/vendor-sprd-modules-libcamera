@@ -439,7 +439,7 @@ static cmr_int ov02b10_arb_drv_save_snspid(cmr_handle handle) {
     SENSOR_LOGI("E");
 
     for (int i = 0; i < 32; i++) {
-        snspid[i] = 8;
+        snspid[i] = 0;
     }
     if (sns_drv_cxt->ops_cb.set_snspid) {
         sns_drv_cxt->ops_cb.set_snspid(

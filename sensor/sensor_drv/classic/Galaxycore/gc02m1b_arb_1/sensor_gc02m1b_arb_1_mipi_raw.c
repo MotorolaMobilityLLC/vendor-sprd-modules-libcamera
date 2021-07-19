@@ -444,6 +444,27 @@ static cmr_int gc02m1b_arb_1_read_module_id(cmr_handle handle)
     return module_id;
 }
 
+static cmr_u8 gc02m1b_arb_1_snspid_is_init = 0;
+
+static cmr_int gc02m1b_arb_1_drv_save_snspid(cmr_handle handle) {
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    cmr_u8 snspid_size = 32;
+    cmr_u8 snspid[32] = {0};
+
+    SENSOR_LOGI("E");
+
+    for (int i = 0; i < 32; i++) {
+        snspid[i] = 0;
+    }
+    if (sns_drv_cxt->ops_cb.set_snspid) {
+        sns_drv_cxt->ops_cb.set_snspid(
+            sns_drv_cxt->caller_handle, sns_drv_cxt->sensor_id, snspid, snspid_size);
+    }
+
+    gc02m1b_arb_1_snspid_is_init = 1;
+    return SENSOR_SUCCESS;
+}
 
 
 /*==============================================================================
@@ -457,20 +478,23 @@ static cmr_int gc02m1b_arb_1_drv_identify(cmr_handle handle, cmr_uint param)
 	cmr_u16 ver_value = 0x00;
 	cmr_u16 mid_value = 0x00;
 	cmr_int ret_value = SENSOR_FAIL;
-	
+
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-  
+
 	SENSOR_LOGI("mipi raw identify");
 
 	pid_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, GC02M1B_ARB_1_PID_ADDR);
-    
+
 	if (GC02M1B_ARB_1_PID_VALUE == pid_value) {
 		ver_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, GC02M1B_ARB_1_VER_ADDR);
 		mid_value = gc02m1b_arb_1_read_module_id(handle);
 
 		SENSOR_LOGI("Identify: pid_value = %x, ver_value = %x, mid_value = %x", pid_value, ver_value, mid_value);
 		if ((GC02M1B_ARB_1_VER_VALUE == ver_value) && (0x5357 == mid_value)) {
+			 if (!gc02m1b_arb_1_snspid_is_init) {
+			 	gc02m1b_arb_1_drv_save_snspid(handle);
+			 }
 			SENSOR_LOGI("this is gc02m1b_arb_1 sensor");
 			sensor_rid_save_sensor_name(SENSOR_HWINFOR_BACKAUX_CAM_NAME, "2_gc02m1b_arb_3");
 			ret_value = SENSOR_SUCCESS;
