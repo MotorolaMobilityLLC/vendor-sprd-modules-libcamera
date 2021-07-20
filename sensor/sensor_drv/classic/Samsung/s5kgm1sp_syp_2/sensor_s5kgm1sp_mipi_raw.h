@@ -1986,7 +1986,7 @@ static SENSOR_VIDEO_INFO_T s_s5kgm1sp_video_info[] = {
 
 static SENSOR_STATIC_INFO_T s_s5kgm1sp_static_info[VENDOR_NUM] = {
     {.module_id = MODULE_OPTICSZOOM_WIDE_BACK,
-     .static_info = {.f_num = 200,
+     .static_info = {.f_num = 179,
                      .focal_length = 357,
                      .max_fps = 0,
                      .max_adgain = 16,
