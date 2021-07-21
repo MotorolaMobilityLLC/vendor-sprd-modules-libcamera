@@ -88,10 +88,13 @@ static void ov08d10_syp_drv_write_gain(cmr_handle handle,
 static void ov08d10_syp_drv_write_frame_length(cmr_handle handle,
                                           struct sensor_aec_i2c_tag *aec_info,
                                           cmr_u32 frame_len) {
+    return;
+#if 0
     SENSOR_IC_CHECK_PTR_VOID(aec_info);
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    frame_len = frame_len - 1252;
+
+    frame_len = frame_len - 2400;
     if (frame_len < 0)
         frame_len = 0;
     if (aec_info->frame_length->size) {
@@ -100,6 +103,7 @@ static void ov08d10_syp_drv_write_frame_length(cmr_handle handle,
         aec_info->frame_length->settings[1].reg_value = frame_len & 0xff;
         /*END*/
     }
+#endif
 }
 
 /*==============================================================================
@@ -115,14 +119,14 @@ static void ov08d10_syp_drv_write_shutter(cmr_handle handle,
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
+    SENSOR_LOGI("shutter=%d",shutter);
     if (aec_info->shutter->size) {
         /*TODO*/
-        aec_info->shutter->settings[0].reg_value = (shutter >> 0x16) & 0xff;
-        aec_info->shutter->settings[1].reg_value = (shutter >> 0x08) & 0xff;
-        aec_info->shutter->settings[2].reg_value = (shutter ) & 0x0f;
+        aec_info->shutter->settings[0].reg_value = (shutter >> 15) & 0x7f;
+        aec_info->shutter->settings[1].reg_value = (shutter >> 7) & 0xff;
+        aec_info->shutter->settings[2].reg_value = (shutter << 1) & 0xff;
         /*END*/
     }
-
 }
 
 /*==============================================================================
@@ -223,7 +227,7 @@ static cmr_int ov08d10_syp_drv_power_on(cmr_handle handle, cmr_uint power_on) {
 
     if (SENSOR_TRUE == power_on) {
         SENSOR_LOGI("on.");
-        hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
+        //hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
@@ -235,14 +239,14 @@ static cmr_int ov08d10_syp_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, avdd_val);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, dvdd_val);
 
-        usleep(5 * 1000);
-        hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
+        usleep(10 * 1000);
+        //hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
-        usleep(5 * 1000);
+        usleep(500);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
         usleep(500);
 
-        hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 0);
+        //hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 0);
 
         sns_drv_cxt->current_state_machine = SENSOR_STATE_POWER_ON;
     } else {
@@ -253,7 +257,7 @@ static cmr_int ov08d10_syp_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
         usleep(500);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
-        hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
+        //hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
 
         usleep(200);
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
@@ -519,7 +523,7 @@ static cmr_int ov08d10_syp_drv_before_snapshot(cmr_handle handle, cmr_uint param
     ov08d10_syp_drv_write_gain(handle, &ov08d10_syp_aec_info, cap_gain);
     ov08d10_syp_drv_write_reg2sensor(handle, ov08d10_syp_aec_info.again);
     ov08d10_syp_drv_write_reg2sensor(handle, ov08d10_syp_aec_info.dgain);
-    hw_sensor_write_reg(handle, 0x01, 0x01);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x01, 0x01);
 
 snapshot_info:
     if (sns_drv_cxt->ops_cb.set_exif_info) {
@@ -557,7 +561,7 @@ static cmr_int ov08d10_syp_drv_write_exposure(cmr_handle handle, cmr_uint param)
 
     ov08d10_syp_drv_write_reg2sensor(handle, ov08d10_syp_aec_info.frame_length);
     ov08d10_syp_drv_write_reg2sensor(handle, ov08d10_syp_aec_info.shutter);
-    hw_sensor_write_reg(handle, 0x01, 0x01);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x01, 0x01);
 
     return ret_value;
 }
@@ -576,7 +580,7 @@ static cmr_int ov08d10_syp_drv_write_gain_value(cmr_handle handle, cmr_uint para
     ov08d10_syp_drv_calc_gain(handle, param, &ov08d10_syp_aec_info);
     ov08d10_syp_drv_write_reg2sensor(handle, ov08d10_syp_aec_info.again);
     ov08d10_syp_drv_write_reg2sensor(handle, ov08d10_syp_aec_info.dgain);
-    hw_sensor_write_reg(handle, 0x01, 0x01);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x01, 0x01);
 
     return ret_value;
 }
@@ -638,7 +642,7 @@ static cmr_int ov08d10_syp_drv_stream_on(cmr_handle handle, cmr_uint param) {
     if (sns_drv_cxt->current_state_machine == SENSOR_STATE_STREAM_ON) {
         return 0;
     }
-#if 1
+#if 0
     char value1[PROPERTY_VALUE_MAX];
     property_get("debug.camera.test.mode", value1, "0");
     if (!strcmp(value1, "1")) {
@@ -648,21 +652,15 @@ static cmr_int ov08d10_syp_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
     SENSOR_LOGI("E");
 
-    char value2[PROPERTY_VALUE_MAX];
-    property_get("vendor.cam.hw.framesync.on", value2, "1");
-    if (!strcmp(value2, "1")) {
-#if 0 // defined(CONFIG_DUAL_MODULE)
-    ov08d10_syp_drv_set_master_FrameSync(handle, param);
-#endif
-    }
-
     /*TODO*/
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfd, 0x00);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xb6, 0x20);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x20, 0x0f);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe7, 0x03);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe7, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfd, 0x01);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x01, 0x03);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfd, 0x00);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xa0, 0x01);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfd, 0x01);
 
@@ -698,18 +696,15 @@ static cmr_int ov08d10_syp_drv_stream_off(cmr_handle handle, cmr_uint param) {
     if (sns_drv_cxt->current_state_machine == SENSOR_STATE_STREAM_ON) {
 
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfd, 0x00);
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xb6, 0x30);
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x20, 0x0b);
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe7, 0x03);
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xe7, 0x00);
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xa0, 0x00);
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfd, 0x01);
 
         SENSOR_LOGI("stream_off delay_ms %d", delay_ms);
-        usleep((delay_ms + 10) * 1000);
         sns_drv_cxt->current_state_machine = SENSOR_STATE_STREAM_OFF;
     }
 
+    usleep((delay_ms + 10) * 1000);
     sns_drv_cxt->is_sensor_close = 0;
     SENSOR_LOGV("X");
 
