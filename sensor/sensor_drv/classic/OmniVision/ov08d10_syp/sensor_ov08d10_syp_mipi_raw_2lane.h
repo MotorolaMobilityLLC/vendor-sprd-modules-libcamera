@@ -86,7 +86,7 @@
 #define SNAPSHOT_FRAME_LENGTH 2608
 
 /* please ref your spec */
-#define FRAME_OFFSET 16
+#define FRAME_OFFSET 20
 #define SENSOR_MAX_GAIN 0xf8 // x15.5 A gain
 #define SENSOR_BASE_GAIN 0x10
 #define SENSOR_MIN_SHUTTER 8
@@ -356,6 +356,7 @@ static const SENSOR_REG_T ov08d10_syp_preview_setting[] = {
 	{0x07, 0x99},
 	{0x0D, 0x03},
 	{0x0F, 0x03},
+	{0xfd, 0x01},
 #ifdef IMAGE_NORMAL_MIRROR
 
 #endif
@@ -446,6 +447,7 @@ static const SENSOR_REG_T ov08d10_syp_snapshot_setting[] = {
 	{0x07, 0x00},
 	{0x0D, 0x01},
 	{0x0F, 0x01},
+	{0xfd, 0x01},
 #ifdef IMAGE_NORMAL_MIRROR
 
 #endif
@@ -537,6 +539,7 @@ static const SENSOR_REG_T ov08d10_syp_video_setting[] = {
 	{0x07, 0x99},
 	{0x0D, 0x03},
 	{0x0F, 0x03},
+	{0xfd, 0x01},
 #ifdef IMAGE_NORMAL_MIRROR
 
 #endif
@@ -645,8 +648,8 @@ static struct sensor_i2c_reg_tab ov08d10_syp_dgain_tab = {
     .settings = ov08d10_syp_dgain_reg, .size = ARRAY_SIZE(ov08d10_syp_dgain_reg),
 };
 
-static SENSOR_REG_T ov08d10_syp_frame_length_reg[] = {// 
-    {0x05, 0x00}, {0x06, 0x00},
+static SENSOR_REG_T ov08d10_syp_frame_length_reg[] = {
+    //{0x05, 0x00}, {0x06, 0x00},
 };
 
 static struct sensor_i2c_reg_tab ov08d10_syp_frame_length_tab = {
@@ -727,7 +730,7 @@ static struct sensor_module_info s_ov08d10_syp_module_info_tab[VENDOR_NUM] = {
                              .type = SENSOR_INTERFACE_TYPE_CSI2,
                              .bus_width = LANE_NUM,
                              .pixel_width = RAW_BITS,
-                             .is_loose = 0,
+                             .is_loose = 2,
                          },
                      .change_setting_skip_num = 1,
                      .horizontal_view_angle = 65,
