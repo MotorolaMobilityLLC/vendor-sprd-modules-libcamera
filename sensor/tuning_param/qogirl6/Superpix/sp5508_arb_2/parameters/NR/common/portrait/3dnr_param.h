@@ -1,159 +1,4 @@
-/*versionid=0x000C000F*/
-/*maxGain=0.00*/
-/*param0.&BasePoint=1&*/
-/*sharkl5_sensor_3dnr_level*/
-{
-	/*bypass*/
-	0x00,
-	/*fusion_mode*/
-	0x00,
-	/*filter_swt_en*/
-	0x01,
-	/*reserved*/
-	{
-		0x00,0x00,0x00/*0-2*/
-	},
-	/*radius_base*/
-	0x0400,
-	/*yuv_cfg*/
-	{
-		/*grad_wgt_polyline_cap*/
-		{
-			0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F/*0-10*/
-		},
-		/*reserved*/
-		0x00,
-		/*y_cfg*/
-		{
-			/*src_wgt*/
-			{
-				0x80,0x9A,0x9A,0xB4/*0-3*/
-			},
-			/*nr_thr*/
-			0x05,
-			/*nr_wgt*/
-			0xFF,
-			/*reserved*/
-			{
-				0x00,0x00/*0-1*/
-			},
-			/*thr_polyline_cap*/
-			{
-				0x000F,0x000F,0x000F,0x000F,0x000F,0x000F,0x000F,0x000F,0x000F/*0-8*/
-			},
-			/*gain_polyline_cap*/
-			{
-				0x003F,0x003F,0x003F,0x003F,0x003F,0x003F,0x003F,0x003F,0x003F/*0-8*/
-			}
-		},
-		/*u_cfg*/
-		{
-			/*src_wgt*/
-			{
-				0x80,0x9A,0xB4,0xB4/*0-3*/
-			},
-			/*nr_thr*/
-			0x03,
-			/*nr_wgt*/
-			0xFF,
-			/*reserved*/
-			{
-				0x00,0x00/*0-1*/
-			},
-			/*thr_polyline_cap*/
-			{
-				0x000A,0x000A,0x000A,0x000A,0x000A,0x000A,0x000A,0x000A,0x000A/*0-8*/
-			},
-			/*gain_polyline_cap*/
-			{
-				0x003F,0x003F,0x003F,0x003F,0x003F,0x003F,0x003F,0x003F,0x003F/*0-8*/
-			}
-		},
-		/*v_cfg*/
-		{
-			/*src_wgt*/
-			{
-				0x80,0x9A,0xB4,0xB4/*0-3*/
-			},
-			/*nr_thr*/
-			0x03,
-			/*nr_wgt*/
-			0xFF,
-			/*reserved*/
-			{
-				0x00,0x00/*0-1*/
-			},
-			/*thr_polyline_cap*/
-			{
-				0x000A,0x000A,0x000A,0x000A,0x000A,0x000A,0x000A,0x000A,0x000A/*0-8*/
-			},
-			/*gain_polyline_cap*/
-			{
-				0x003F,0x003F,0x003F,0x003F,0x003F,0x003F,0x003F,0x003F,0x003F/*0-8*/
-			}
-		}
-	},
-	/*sensor_3dnr_cor*/
-	{
-		/*r_circle_cap*/
-		{
-			0x01BA,0x01FA,0x0239/*0-2*/
-		},
-		/*r_circle_cap_factor*/
-		{
-			0x015E,0x0190,0x01C2/*0-2*/
-		},
-		/*u_range*/
-		{
-			/*min_cap*/
-			0x0000,
-			/*max_cap*/
-			0x00FF,
-
-		},
-		/*v_range*/
-		{
-			/*min_cap*/
-			0x0000,
-			/*max_cap*/
-			0x00FF,
-
-		},
-		/*uv_factor*/
-		{
-			/*u_thr*/
-			{
-				0x3F,0x3F,0x3F,0x3F/*0-3*/
-			},
-			/*v_thr*/
-			{
-				0x3F,0x3F,0x3F,0x3F/*0-3*/
-			},
-			/*u_div*/
-			{
-				0x01,0x01,0x01,0x01/*0-3*/
-			},
-			/*v_div*/
-			{
-				0x01,0x01,0x01,0x01/*0-3*/
-			}
-		}
-	},
-	/*fast_me*/
-	{
-		/*bypass*/
-		0x00,
-		/*sub_me_bypass*/
-		0x01,
-		/*project_mode*/
-		0x00,
-		/*channel_sel*/
-		0x00,
-
-	}
-}
-,
-/*param1.&BasePoint=1&*/
+/*param0.*/
 /*sharkl5_sensor_3dnr_level*/
 {
 	/*bypass*/
@@ -306,7 +151,7 @@
 	}
 }
 ,
-/*param2.&BasePoint=1&*/
+/*param1.*/
 /*sharkl5_sensor_3dnr_level*/
 {
 	/*bypass*/
@@ -459,7 +304,7 @@
 	}
 }
 ,
-/*param3.&BasePoint=1&*/
+/*param2.*/
 /*sharkl5_sensor_3dnr_level*/
 {
 	/*bypass*/
@@ -612,7 +457,7 @@
 	}
 }
 ,
-/*param4.&BasePoint=1&*/
+/*param3.*/
 /*sharkl5_sensor_3dnr_level*/
 {
 	/*bypass*/
@@ -765,7 +610,7 @@
 	}
 }
 ,
-/*param5.&BasePoint=1&*/
+/*param4.*/
 /*sharkl5_sensor_3dnr_level*/
 {
 	/*bypass*/
@@ -918,7 +763,7 @@
 	}
 }
 ,
-/*param6.&BasePoint=1&*/
+/*param5.*/
 /*sharkl5_sensor_3dnr_level*/
 {
 	/*bypass*/
@@ -1071,7 +916,7 @@
 	}
 }
 ,
-/*param7.&BasePoint=1&*/
+/*param6.*/
 /*sharkl5_sensor_3dnr_level*/
 {
 	/*bypass*/
@@ -1224,7 +1069,7 @@
 	}
 }
 ,
-/*param8.&BasePoint=1&*/
+/*param7.*/
 /*sharkl5_sensor_3dnr_level*/
 {
 	/*bypass*/
@@ -1377,7 +1222,7 @@
 	}
 }
 ,
-/*param9.&BasePoint=1&*/
+/*param8.*/
 /*sharkl5_sensor_3dnr_level*/
 {
 	/*bypass*/
@@ -1530,7 +1375,7 @@
 	}
 }
 ,
-/*param10.&BasePoint=1&*/
+/*param9.*/
 /*sharkl5_sensor_3dnr_level*/
 {
 	/*bypass*/
@@ -1683,7 +1528,7 @@
 	}
 }
 ,
-/*param11.&BasePoint=1&*/
+/*param10.*/
 /*sharkl5_sensor_3dnr_level*/
 {
 	/*bypass*/
@@ -1836,7 +1681,7 @@
 	}
 }
 ,
-/*param12.&BasePoint=1&*/
+/*param11.*/
 /*sharkl5_sensor_3dnr_level*/
 {
 	/*bypass*/
@@ -1989,7 +1834,7 @@
 	}
 }
 ,
-/*param13.&BasePoint=1&*/
+/*param12.*/
 /*sharkl5_sensor_3dnr_level*/
 {
 	/*bypass*/
@@ -2142,7 +1987,7 @@
 	}
 }
 ,
-/*param14.&BasePoint=1&*/
+/*param13.*/
 /*sharkl5_sensor_3dnr_level*/
 {
 	/*bypass*/
@@ -2295,7 +2140,7 @@
 	}
 }
 ,
-/*param15.&BasePoint=1&*/
+/*param14.*/
 /*sharkl5_sensor_3dnr_level*/
 {
 	/*bypass*/
@@ -2448,7 +2293,7 @@
 	}
 }
 ,
-/*param16.&BasePoint=1&*/
+/*param15.*/
 /*sharkl5_sensor_3dnr_level*/
 {
 	/*bypass*/
@@ -2601,7 +2446,7 @@
 	}
 }
 ,
-/*param17.&BasePoint=1&*/
+/*param16.*/
 /*sharkl5_sensor_3dnr_level*/
 {
 	/*bypass*/
@@ -2754,7 +2599,7 @@
 	}
 }
 ,
-/*param18.&BasePoint=1&*/
+/*param17.*/
 /*sharkl5_sensor_3dnr_level*/
 {
 	/*bypass*/
@@ -2907,7 +2752,7 @@
 	}
 }
 ,
-/*param19.&BasePoint=1&*/
+/*param18.*/
 /*sharkl5_sensor_3dnr_level*/
 {
 	/*bypass*/
@@ -3060,7 +2905,7 @@
 	}
 }
 ,
-/*param20.&BasePoint=1&*/
+/*param19.*/
 /*sharkl5_sensor_3dnr_level*/
 {
 	/*bypass*/
@@ -3213,7 +3058,7 @@
 	}
 }
 ,
-/*param21.&BasePoint=1&*/
+/*param20.*/
 /*sharkl5_sensor_3dnr_level*/
 {
 	/*bypass*/
@@ -3366,7 +3211,7 @@
 	}
 }
 ,
-/*param22.&BasePoint=1&*/
+/*param21.*/
 /*sharkl5_sensor_3dnr_level*/
 {
 	/*bypass*/
@@ -3519,7 +3364,7 @@
 	}
 }
 ,
-/*param23.&BasePoint=1&*/
+/*param22.*/
 /*sharkl5_sensor_3dnr_level*/
 {
 	/*bypass*/
@@ -3672,7 +3517,160 @@
 	}
 }
 ,
-/*param24.&BasePoint=1&*/
+/*param23.*/
+/*sharkl5_sensor_3dnr_level*/
+{
+	/*bypass*/
+	0x00,
+	/*fusion_mode*/
+	0x00,
+	/*filter_swt_en*/
+	0x01,
+	/*reserved*/
+	{
+		0x00,0x00,0x00/*0-2*/
+	},
+	/*radius_base*/
+	0x0400,
+	/*yuv_cfg*/
+	{
+		/*grad_wgt_polyline_cap*/
+		{
+			0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F/*0-10*/
+		},
+		/*reserved*/
+		0x00,
+		/*y_cfg*/
+		{
+			/*src_wgt*/
+			{
+				0x80,0x9A,0x9A,0xB4/*0-3*/
+			},
+			/*nr_thr*/
+			0x05,
+			/*nr_wgt*/
+			0xFF,
+			/*reserved*/
+			{
+				0x00,0x00/*0-1*/
+			},
+			/*thr_polyline_cap*/
+			{
+				0x001E,0x001E,0x001E,0x001E,0x001E,0x001E,0x001E,0x001E,0x001E/*0-8*/
+			},
+			/*gain_polyline_cap*/
+			{
+				0x003F,0x003F,0x003F,0x003F,0x003F,0x003F,0x003F,0x003F,0x003F/*0-8*/
+			}
+		},
+		/*u_cfg*/
+		{
+			/*src_wgt*/
+			{
+				0x80,0x9A,0xB4,0xB4/*0-3*/
+			},
+			/*nr_thr*/
+			0x03,
+			/*nr_wgt*/
+			0xFF,
+			/*reserved*/
+			{
+				0x00,0x00/*0-1*/
+			},
+			/*thr_polyline_cap*/
+			{
+				0x0014,0x0014,0x0014,0x0014,0x0014,0x0014,0x0014,0x0014,0x0014/*0-8*/
+			},
+			/*gain_polyline_cap*/
+			{
+				0x003F,0x003F,0x003F,0x003F,0x003F,0x003F,0x003F,0x003F,0x003F/*0-8*/
+			}
+		},
+		/*v_cfg*/
+		{
+			/*src_wgt*/
+			{
+				0x80,0x9A,0xB4,0xB4/*0-3*/
+			},
+			/*nr_thr*/
+			0x03,
+			/*nr_wgt*/
+			0xFF,
+			/*reserved*/
+			{
+				0x00,0x00/*0-1*/
+			},
+			/*thr_polyline_cap*/
+			{
+				0x0014,0x0014,0x0014,0x0014,0x0014,0x0014,0x0014,0x0014,0x0014/*0-8*/
+			},
+			/*gain_polyline_cap*/
+			{
+				0x003F,0x003F,0x003F,0x003F,0x003F,0x003F,0x003F,0x003F,0x003F/*0-8*/
+			}
+		}
+	},
+	/*sensor_3dnr_cor*/
+	{
+		/*r_circle_cap*/
+		{
+			0x02BC,0x0320,0x0384/*0-2*/
+		},
+		/*r_circle_cap_factor*/
+		{
+			0x015E,0x0190,0x01C2/*0-2*/
+		},
+		/*u_range*/
+		{
+			/*min_cap*/
+			0x0000,
+			/*max_cap*/
+			0x00FF,
+
+		},
+		/*v_range*/
+		{
+			/*min_cap*/
+			0x0000,
+			/*max_cap*/
+			0x00FF,
+
+		},
+		/*uv_factor*/
+		{
+			/*u_thr*/
+			{
+				0x3F,0x3F,0x3F,0x3F/*0-3*/
+			},
+			/*v_thr*/
+			{
+				0x3F,0x3F,0x3F,0x3F/*0-3*/
+			},
+			/*u_div*/
+			{
+				0x01,0x01,0x01,0x01/*0-3*/
+			},
+			/*v_div*/
+			{
+				0x01,0x01,0x01,0x01/*0-3*/
+			}
+		}
+	},
+	/*fast_me*/
+	{
+		/*bypass*/
+		0x00,
+		/*sub_me_bypass*/
+		0x01,
+		/*project_mode*/
+		0x00,
+		/*channel_sel*/
+		0x00,
+
+	}
+}
+,
+/*param24.*/
 /*sharkl5_sensor_3dnr_level*/
 {
 	/*bypass*/
