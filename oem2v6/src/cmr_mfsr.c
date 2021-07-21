@@ -153,7 +153,7 @@ static cmr_int mfsr_open(cmr_handle ipm_handle,
 	mfsr_param.max_width = in->frame_size.width;
 	mfsr_param.max_height = in->frame_size.height;
 	mfsr_param.tuning_param = in->otp_data.otp_ptr;
-	mfsr_param.tuning_param_size = (int) in->otp_data.otp_size;
+	mfsr_param.tuning_param_size = (int)in->otp_data.otp_size;
 	mfsr_param.sr_mode = 0;
 	cmd_param.ctx = &cxt->mfsr_handle;
 	cmd_param.param = &mfsr_param;
@@ -401,7 +401,7 @@ static cmr_int mfsr_post_open(cmr_handle ipm_handle,
 	mfsr_param.max_width = in->frame_size.width;
 	mfsr_param.max_height = in->frame_size.height;
 	mfsr_param.tuning_param = in->otp_data.otp_ptr;
-	mfsr_param.tuning_param_size = in->otp_data.otp_size;
+	mfsr_param.tuning_param_size = (int)in->otp_data.otp_size;
 	mfsr_param.sr_mode = 0;
 	open_param.ctx = &cxt->sharp_handle;
 	open_param.param = &mfsr_param;
