@@ -11701,7 +11701,7 @@ int SprdCamera3OEMIf::SnapshotZsl3dnr(SprdCamera3OEMIf *obj,
     cmr_u32 buf_id = 0;
     SPRD_DEF_Tag *sprddefInfo;
 
-    HAL_LOGI("E mSprd3dnrType %d mCameraId %d",mSprd3dnrType,mCameraId);
+    HAL_LOGI("E mSprd3dnrType %d mCameraId %d", mSprdPic3dnrType, mCameraId);
     // for 3dnr sw 2.0
     buf_id = getZslBufferIDForFd(zsl_frame->fd);
     if (buf_id == 0xFFFFFFFF)
@@ -11710,7 +11710,7 @@ int SprdCamera3OEMIf::SnapshotZsl3dnr(SprdCamera3OEMIf *obj,
     if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
         src_alg_buf->reserved =
             (void *)m3DNRGraphicPathArray[buf_id].bufferhandle.get();
-    } else if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {
+    } else if (mSprdPic3dnrType == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {
         if(mIsUltraWideMode) {
             src_alg_buf->reserved = (void *)mZslMfnrGraphicsHandle[buf_id].graphicBuffer_handle;
         } else {
@@ -12200,8 +12200,8 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             mZslSnapshotTime, zsl_frame.monoboottime);
         /* for auto3dnr skip frame*/
         if (mZslSnapshotTime > zsl_frame.monoboottime &&
-            (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
-            mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW)) {
+            (mSprdPic3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
+             mSprdPic3dnrType == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW)) {
             diff_ms = (mZslSnapshotTime - zsl_frame.monoboottime) / 1000000;
             HAL_LOGI("diff_ms=%lld", diff_ms);
             // make single capture frame time > mZslSnapshotTime
@@ -12214,9 +12214,9 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             }
         }
         // for 3dnr sw 2.0
-        if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
-            mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
-             mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {
+         if (mSprdPic3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
+             mSprdPic3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
+             mSprdPic3dnrType == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {
             ret = SnapshotZsl3dnr(obj, &zsl_frame,
                        &src_alg_buf, &dst_alg_buf, buf_cnt);
             if (ret)
@@ -12257,6 +12257,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     int64_t mfnr_ms = 20*1000000;
     uint32_t hdr_count = 800, mfnr_count = 800;
     uint32_t lock_af = 0;
+    mSprdPic3dnrType = 0;
 
     char hdr_version[PROPERTY_VALUE_MAX];
     property_get("persist.vendor.cam.hdr.version", hdr_version, "2");
@@ -12560,6 +12561,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     }
     setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
     HAL_LOGD("mZslIpsEnable = %d", mZslIpsEnable);
+    mSprdPic3dnrType = mSprd3dnrType;
     if (mZslIpsEnable) {
         struct snap_input_data req;
         req.request_id = mVideoSnapshotFrameNum;  /*current capture frame number*/
