@@ -6,7 +6,7 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x00,
+		0x01,
 		/*hv_mode*/
 		0x00,
 		/*rd_mode*/
@@ -242,7 +242,7 @@
 	/*bpc_comm*/
 	{
 		/*bpc_mode*/
-		0x00,
+		0x01,
 		/*hv_mode*/
 		0x02,
 		/*rd_mode*/
