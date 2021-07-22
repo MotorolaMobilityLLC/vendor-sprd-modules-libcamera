@@ -23,7 +23,7 @@
 #include "cmr_common.h"
 #include "cmr_sensor.h"
 #include "cmr_oem.h"
-#include "BSTYUVNightDNS.h"
+#include "B01YUVNightDNS.h"
 #include <cutils/properties.h>
 #include "isp_mw.h"
 #include <string.h>
