@@ -484,7 +484,11 @@ int SprdPortraitAlgo::capDepthRun(cap_depth_params_t *cap_depth_para) {
     mCapDepthRunParams.params.sel_y = mCapbokehParam.sel_y;
     mCapDepthRunParams.params.VCM_cur_value = cap_depth_para->vcmCurValue;
 
-    mCapDepthRunParams.params.portrait_param = &mBokehPortraitParams;
+    portrait_mode_param capParams;
+    memset(&capParams,0,sizeof(portrait_mode_param));
+    memcpy(&capParams,&mBokehPortraitParams,sizeof(struct portrait_mode_param));
+    mCapDepthRunParams.params.portrait_param = &capParams;
+    HAL_LOGD("cap_depth_mRotation %d",mBokehPortraitParams.mRotation);
     rc = sprd_depth_adpt_ctrl(mDepthCapHandle,SPRD_DEPTH_RUN_CMD,&mCapDepthRunParams);
 exit:
     return rc;
