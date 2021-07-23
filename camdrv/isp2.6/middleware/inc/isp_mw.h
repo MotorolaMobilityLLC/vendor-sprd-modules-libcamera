@@ -906,7 +906,7 @@ struct isp_fdr_param {
 };
 
   struct isp_ae_adjust_param {
-	cmr_u32 exp_time;
+	cmr_u64 exp_time;
 	cmr_u32 total_gain;
 	cmr_u32 iso;
 	cmr_u32 isp_gain;
