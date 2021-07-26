@@ -557,7 +557,7 @@ static struct sensor_module_info s_gc02m1b_arb_2_module_info_tab[VENDOR_NUM] = {
               .type = SENSOR_INTERFACE_TYPE_CSI2,
               .bus_width = LANE_NUM,
               .pixel_width = RAW_BITS,
-              .is_loose = 0,
+              .is_loose = 2,
           },
          .change_setting_skip_num = 1,
          .horizontal_view_angle = 65,
