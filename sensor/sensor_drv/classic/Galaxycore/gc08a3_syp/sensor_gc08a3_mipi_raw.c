@@ -19,10 +19,13 @@
  *
  */
 
-#define LOG_TAG "gc08a3_sharkl2"  
+#define LOG_TAG "gc08a3_sharkl2"
 
 #include "sensor_gc08a3_mipi_raw.h"
 pthread_mutex_t gc08a3_sensor_mutex;
+
+static char front_cam_efuse_id[64] = "0";
+static bool identify_success = false;
 
 /*==============================================================================
  * Description:
@@ -423,6 +426,41 @@ static cmr_int gc08a3_drv_access_val(cmr_handle handle, cmr_uint param)
     return ret;
 }
 
+static void get_front_cam_efuse_id(cmr_handle handle)
+{
+    cmr_u16 i = 0, j = 0;
+    cmr_u16 startadd = 0;
+    cmr_u16 efuse_id;
+    SENSOR_IC_CHECK_HANDLE_VOID(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, I2C_SLAVE_ADDR>>1, 0x031C, 0x60, BITS_ADDR16_REG8);
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, I2C_SLAVE_ADDR>>1, 0x0315, 0x80, BITS_ADDR16_REG8);
+
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, I2C_SLAVE_ADDR>>1, 0x0324, 0x44, BITS_ADDR16_REG8);
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, I2C_SLAVE_ADDR>>1, 0x0316, 0x09, BITS_ADDR16_REG8);
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, I2C_SLAVE_ADDR>>1, 0x0A67, 0x80, BITS_ADDR16_REG8);
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, I2C_SLAVE_ADDR>>1, 0x0313, 0x00, BITS_ADDR16_REG8);
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, I2C_SLAVE_ADDR>>1, 0x0A53, 0x0E, BITS_ADDR16_REG8);
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, I2C_SLAVE_ADDR>>1, 0x0A65, 0x17, BITS_ADDR16_REG8);
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, I2C_SLAVE_ADDR>>1, 0x0A68, 0xA1, BITS_ADDR16_REG8);
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, I2C_SLAVE_ADDR>>1, 0x0A47, 0x00, BITS_ADDR16_REG8);
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, I2C_SLAVE_ADDR>>1, 0x0A58, 0x00, BITS_ADDR16_REG8);
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, I2C_SLAVE_ADDR>>1, 0x0ACE, 0x0C, BITS_ADDR16_REG8);
+
+    usleep(11*1000);
+
+    for(i = 0;i < 12;i++)
+    {
+        hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, I2C_SLAVE_ADDR>>1, 0x0A69, ((0x0020+8*i)>>8)&0xFF, BITS_ADDR16_REG8);
+        hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, I2C_SLAVE_ADDR>>1, 0x0A6A, (0x0020+8*i)&0xFF, BITS_ADDR16_REG8);
+        hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, I2C_SLAVE_ADDR>>1, 0x0313, 0xF0, BITS_ADDR16_REG8);
+        efuse_id = hw_sensor_grc_read_i2c(sns_drv_cxt->hw_handle, I2C_SLAVE_ADDR>>1, 0x0A6C, BITS_ADDR16_REG8);
+        SENSOR_LOGI("get_front_cam_efuse_id[%d] = %02x", i, efuse_id);
+
+        sprintf(front_cam_efuse_id+2*i,"%02x",efuse_id);
+    }
+}
 
 /*==============================================================================
  * Description:
@@ -434,10 +472,10 @@ static cmr_int gc08a3_drv_identify(cmr_handle handle, cmr_uint param)
 	cmr_u16 pid_value = 0x00;
 	cmr_u16 ver_value = 0x00;
 	cmr_int ret_value = SENSOR_FAIL;
-	
-    SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-	
+
+	SENSOR_IC_CHECK_HANDLE(handle);
+	struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
 	SENSOR_LOGI("mipi raw identify");
 
 	pid_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, GC08A3_PID_ADDR);
@@ -446,10 +484,14 @@ static cmr_int gc08a3_drv_identify(cmr_handle handle, cmr_uint param)
 		ver_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, GC08A3_VER_ADDR);
 		SENSOR_LOGI("Identify: pid_value = %x, ver_value = %x", pid_value, ver_value);
 		if (GC08A3_VER_VALUE == ver_value) {
-			SENSOR_LOGI("this is gc08a3 sensor");
-			sensor_rid_save_sensor_name(SENSOR_HWINFOR_FRONT_CAM_NAME, "1_gc08a3_syp");
+			if(!identify_success){
+				sensor_rid_save_sensor_name(SENSOR_HWINFOR_FRONT_CAM_NAME, "1_gc08a3_syp");
+				get_front_cam_efuse_id(handle);
+				sensor_rid_save_sensor_name(SENSOR_HWINFOR_FRONT_CAM_EFUSE, front_cam_efuse_id);
+				identify_success = true;
+			}
 			ret_value = SENSOR_SUCCESS;
-            
+			SENSOR_LOGI("this is gc08a3 sensor");
 		} else {
 			SENSOR_LOGE("sensor identify fail, pid_value = %x, ver_value = %x", pid_value, ver_value);
 		}
