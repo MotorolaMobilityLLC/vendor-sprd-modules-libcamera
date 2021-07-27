@@ -5722,6 +5722,8 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
                                                 IS_CAP_END);
     }
 #endif
+
+    updateHdrMfnrSceneMode();
 exit:
     HAL_LOGV("X");
 }
@@ -6103,7 +6105,6 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
                     (cmr_uint)mZslHeapArray[buf_id]->data,
                     mZslHeapArray[buf_id]->fd);
             }
-            updateHdrMfnrSceneMode();
         }
         break;
     }
@@ -6125,7 +6126,6 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
                 }
             }
         }
-        updateHdrMfnrSceneMode();
         break;
     }
     default: {
@@ -6223,7 +6223,6 @@ void SprdCamera3OEMIf::HandleEncode(enum camera_cb_type cb, void *parm4) {
                }
             }
         }
-        updateHdrMfnrSceneMode();
         break;
 
     default:
