@@ -4720,7 +4720,7 @@ int SprdCamera3Setting::updateAppMode(
         if (s_setting[mCameraId].flash_InfoInfo.available == 0 &&
             !strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") &&
             cameraInfo.facing == CAMERA_FACING_FRONT) {
-            int32_t sprd_flash_lcd_mode =
+            uint8_t sprd_flash_lcd_mode =
                 frame_settings.find(ANDROID_SPRD_FLASH_LCD_MODE).data.u8[0];
             GET_VALUE_IF_DIF(
                 s_setting[mCameraId].sprddefInfo.sprd_flash_lcd_mode,
@@ -5117,7 +5117,7 @@ int SprdCamera3Setting::updateWorkParameters(
         if (s_setting[mCameraId].flash_InfoInfo.available == 0 &&
             !strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") &&
             cameraInfo.facing == CAMERA_FACING_FRONT) {
-            int32_t sprd_flash_lcd_mode =
+            uint8_t sprd_flash_lcd_mode =
                 frame_settings.find(ANDROID_SPRD_FLASH_LCD_MODE).data.u8[0];
             GET_VALUE_IF_DIF(
                 s_setting[mCameraId].sprddefInfo.sprd_flash_lcd_mode,
