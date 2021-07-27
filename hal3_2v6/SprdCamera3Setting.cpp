@@ -4716,6 +4716,38 @@ int SprdCamera3Setting::updateAppMode(
             pushAndroidParaTag(ANDROID_CONTROL_SCENE_MODE);
     }
 
+    if (frame_settings.exists(ANDROID_FLASH_MODE)) {
+        int flash_sprd_level = 0;
+        if (frame_settings.exists(ANDROID_SPRD_ADJUST_FLASH_LEVEL)) {
+            flash_sprd_level =
+                frame_settings.find(ANDROID_SPRD_ADJUST_FLASH_LEVEL).data.u8[0];
+        }
+        if(flash_sprd_level == 0) {
+            valueU8 = frame_settings.find(ANDROID_FLASH_MODE).data.u8[0];
+            HAL_LOGD("flashInfo.mode=%d,value=%d",s_setting[mCameraId].flashInfo.mode, valueU8);
+            GET_VALUE_IF_DIF(s_setting[mCameraId].flashInfo.mode, valueU8,
+                    ANDROID_FLASH_MODE, 1)
+        } else{
+            HAL_LOGD("sprd_flash_level is uesd, flash_level %d",flash_sprd_level);
+        }
+    }
+
+#ifndef CAMERA_MANULE_SNEOSR
+    if (frame_settings.exists(ANDROID_CONTROL_AE_MODE))
+#else
+    if (frame_settings.exists(ANDROID_CONTROL_AE_MODE) && mMultiCameraMode)
+#endif
+    {
+        valueU8 = frame_settings.find(ANDROID_CONTROL_AE_MODE).data.u8[0];
+        HAL_LOGV("ae mode %d", s_setting[mCameraId].controlInfo.ae_mode);
+        if (s_setting[mCameraId].flash_InfoInfo.available == 0 &&
+            valueU8 > ANDROID_CONTROL_AE_MODE_ON) {
+                valueU8 = ANDROID_CONTROL_AE_MODE_ON;
+        }
+        GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.ae_mode, valueU8,
+                            ANDROID_CONTROL_AE_MODE, 1)
+    }
+
     if (frame_settings.exists(ANDROID_SPRD_FLASH_LCD_MODE)) {
         if (s_setting[mCameraId].flash_InfoInfo.available == 0 &&
             !strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") &&
