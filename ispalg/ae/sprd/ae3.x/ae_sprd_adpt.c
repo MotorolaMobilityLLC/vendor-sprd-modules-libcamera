@@ -6166,7 +6166,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	cxt->cur_status.cam_id = cxt->camera_id;
 	
 	/*get ae sync data for ISP_ALG_TRIBLE_W_T_UW mode*/
-	if (cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW) {
+	if ((cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW) || (cxt->is_multi_mode == ISP_ALG_SINGLE)) {
 
 		/*get zoom roi info*/
 		if (CAM_SENSOR_MASTER == cxt->sensor_role) {
