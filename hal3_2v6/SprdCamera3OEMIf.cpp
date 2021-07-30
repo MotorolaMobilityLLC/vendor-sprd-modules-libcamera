@@ -2387,6 +2387,22 @@ void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
             controlInfo.ae_target_fps_range[0],
             controlInfo.ae_target_fps_range[1]);
 
+#if 1
+        bool changeFPS = false;
+        if ((mSprdAppmodeId != -1) && (mSprdAppmodeId != CAMERA_MODE_TIMELAPSE)&&(mSprdAppmodeId ==CAMERA_MODE_AUTO_VIDEO)) {
+            /*dream camera2*/
+            changeFPS = true;
+        }
+
+        if (changeFPS && (controlInfo.ae_mode != ANDROID_CONTROL_AE_MODE_OFF)) {
+            /* change the min fps as you want.*/
+            fps_param.min_fps = 20;
+            /* use the max fps from APP.*/
+            fps_param.max_fps = MAX(fps_param.max_fps,fps_param.min_fps);
+        }
+        HAL_LOGD("changeFPS=%d,min:%d,max:%d",changeFPS,fps_param.min_fps,fps_param.max_fps);
+
+#endif
         // to set recording fps by setprop
         char prop[PROPERTY_VALUE_MAX];
         int val_max = 0;
