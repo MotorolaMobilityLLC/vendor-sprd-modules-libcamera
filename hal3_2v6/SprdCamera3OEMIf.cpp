@@ -7600,6 +7600,18 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
     mZoomInfo.zoom_info.crop_region = cropRegion;
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ZOOM, (cmr_uint)&mZoomInfo);
 
+    if (getMultiCameraMode() == MODE_SINGLE_CAMERA) {
+        mHalOem->ops->camera_ioctrl(mCameraHandle,
+                                    CAMERA_IOCTRL_SET_GLOBAL_ZOOM_RATIO,
+                                    &zoomRatio);
+        struct visible_region_info info;
+        info.max_size = mZoomInfo.zoom_info.pixel_size;
+        info.region = cropRegion;
+        mHalOem->ops->camera_ioctrl(mCameraHandle,
+                                    CAMERA_IOCTRL_SET_VISIBLE_REGION,
+                                    &info);
+    }
+
     return ret;
 }
 
