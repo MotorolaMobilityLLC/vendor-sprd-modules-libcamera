@@ -1606,6 +1606,101 @@ static cmr_s32 ae_get_iso(struct ae_ctrl_cxt *cxt, cmr_u32 * real_iso)
 	return rtn;
 }
 
+static cmr_s32 ae_get_cur_iso(struct ae_ctrl_cxt *cxt, cmr_u32 * real_iso)
+{
+	cmr_s32 rtn = AE_SUCCESS;
+	cmr_s32 iso = 0;
+	cmr_s32 calc_iso = 0;
+	float real_gain = 0;
+	float tmp_iso = 0;
+
+	if (NULL == cxt || NULL == real_iso) {
+		ISP_LOGE("fail to get iso, cxt %p real_iso %p", cxt, real_iso);
+		return AE_ERROR;
+	}
+
+	iso = cxt->cur_status.adv_param.iso;
+	real_gain = cxt->cb_parma.total_gain;
+
+	if (AE_ISO_AUTO == iso) {
+		tmp_iso = real_gain * 5000 / 128;
+		calc_iso = 0;
+		if (tmp_iso < 1122) {
+			calc_iso = 10;
+		} else if (tmp_iso < 1414) {
+			calc_iso = 12;
+		} else if (tmp_iso < 1782) {
+			calc_iso = 16;
+		} else if (tmp_iso < 2245) {
+			calc_iso = 20;
+		} else if (tmp_iso < 2828) {
+			calc_iso = 25;
+		} else if (tmp_iso < 3564) {
+			calc_iso = 32;
+		} else if (tmp_iso < 4490) {
+			calc_iso = 40;
+		} else if (tmp_iso < 5657) {
+			calc_iso = 50;
+		} else if (tmp_iso < 7127) {
+			calc_iso = 64;
+		} else if (tmp_iso < 8909) {
+			calc_iso = 80;
+		} else if (tmp_iso < 11220) {
+			calc_iso = 100;
+		} else if (tmp_iso < 14140) {
+			calc_iso = 125;
+		} else if (tmp_iso < 17820) {
+			calc_iso = 160;
+		} else if (tmp_iso < 22450) {
+			calc_iso = 200;
+		} else if (tmp_iso < 28280) {
+			calc_iso = 250;
+		} else if (tmp_iso < 35640) {
+			calc_iso = 320;
+		} else if (tmp_iso < 44900) {
+			calc_iso = 400;
+		} else if (tmp_iso < 56570) {
+			calc_iso = 500;
+		} else if (tmp_iso < 71270) {
+			calc_iso = 640;
+		} else if (tmp_iso < 89090) {
+			calc_iso = 800;
+		} else if (tmp_iso < 112200) {
+			calc_iso = 1000;
+		} else if (tmp_iso < 141400) {
+			calc_iso = 1250;
+		} else if (tmp_iso < 178200) {
+			calc_iso = 1600;
+		} else if (tmp_iso < 224500) {
+			calc_iso = 2000;
+		} else if (tmp_iso < 282800) {
+			calc_iso = 2500;
+		} else if (tmp_iso < 356400) {
+			calc_iso = 3200;
+		} else if (tmp_iso < 449000) {
+			calc_iso = 4000;
+		} else if (tmp_iso < 565700) {
+			calc_iso = 5000;
+		} else if (tmp_iso < 712700) {
+			calc_iso = 6400;
+		} else if (tmp_iso < 890900) {
+			calc_iso = 8000;
+		} else if (tmp_iso < 1122000) {
+			calc_iso = 10000;
+		} else if (tmp_iso < 1414000) {
+			calc_iso = 12500;
+		} else if (tmp_iso < 1782000) {
+			calc_iso = 16000;
+		}
+	} else {
+		calc_iso = (1 << (iso - 1)) * 100;
+	}
+
+	*real_iso = calc_iso;
+	return rtn;
+}
+
+
 static cmr_s32 ae_get_bv_by_lum_new(struct ae_ctrl_cxt *cxt, cmr_s32 * bv)
 {
 	cmr_s32 rtn = AE_SUCCESS;
@@ -3317,7 +3412,7 @@ static cmr_s32 ae_make_ae_result_cb(struct ae_ctrl_cxt *cxt,  struct ae_callback
 	result->cur_effect_fps = cxt->cur_result.cur_effect_fps;
 	result->cur_effect_exp_time = cxt->cur_status.adv_param.cur_ev_setting.exp_time;
 	result->frame_number =  cxt->frame_number;
-	ISP_LOGD("ae_stable %d flash_fired:%d sensitivity: %d cur_effect_fps: %f exp_time:%"PRIu64" frame_number:%d",result->ae_stable,result->flash_fired,result->cur_effect_sensitivity,result->cur_effect_fps,cxt->cur_status.adv_param.cur_ev_setting.exp_time,cxt->frame_number);
+	ISP_LOGD("ae_stable %d flash_fired:%d sensitivity: %d cur_effect_fps: %f exp_time:%d frame_number:%d",result->ae_stable,result->flash_fired,result->cur_effect_sensitivity,result->cur_effect_fps,cxt->cur_status.adv_param.cur_ev_setting.exp_time,cxt->frame_number);
 	ISP_LOGV("gain: %d sensor_gain:%d isp_gain: %d exp_line: %d",result->total_gain,result->sensor_gain,result->isp_gain,result->exp_line);
 	return rtn;
 }
@@ -3725,7 +3820,7 @@ static void ae_set_ev_adjust_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *pa
 
 		cxt->cb_parma.exp_time = (cmr_u64 )(1.0 * exp_line*cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
 		cxt->cb_parma.total_gain = gain;
-		ae_get_iso(cxt, &cur_iso);
+		ae_get_cur_iso(cxt, &cur_iso);
 		cxt->cb_parma.iso = cur_iso;
 		cxt->cb_parma.isp_gain = cxt->exp_data.lib_data.isp_gain; // isp gain
 		cxt->cb_parma.ev = EV_offset;
@@ -4284,7 +4379,6 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		//src_exp.cur_lum = cxt->last_exp_param.cur_lum;
 		cxt->cur_status.adv_param.face_flag = cxt->last_exp_param.face_flag;
 		cxt->cur_status.adv_param.cur_lum = cxt->last_exp_param.cur_lum;
-		memcpy(&dst_exp ,&src_exp,sizeof(struct ae_exposure_param));
 
 		if((cxt->app_mode < 64) && (!work_info->is_snapshot)){
 			cmr_u32 last_app_mode = cxt->last_cam_mode & 0xff;
@@ -4811,7 +4905,7 @@ static cmr_s32 ae_get_fdr_param(struct ae_ctrl_cxt *cxt, void *result)
 
 		fdr_param->ev = cxt->fdr_down_ev;
 		fdr_param->cur_bv_underexp =  cxt->cur_result.cur_bv;
-		fdr_param->exp_line_underexp = (cmr_u32)(cxt->cur_status.adv_param.mode_param.value.exp_gain[0] / cxt->cur_status.adv_param.cur_ev_setting.line_time);
+		fdr_param->exp_line_underexp = cxt->cur_status.adv_param.mode_param.value.exp_gain[0] / cxt->cur_status.adv_param.cur_ev_setting.line_time;
 		fdr_param->exp_time_underexp = (cmr_u32)cxt->cur_status.adv_param.mode_param.value.exp_gain[0];
 		fdr_param->total_gain_underexp = (cmr_u32)cxt->cur_status.adv_param.mode_param.value.exp_gain[1];
 		fdr_param->sensor_gain_underexp = (int)(fdr_param->total_gain_underexp > cxt->sensor_max_gain) ? cxt->sensor_max_gain : fdr_param->total_gain_underexp;
