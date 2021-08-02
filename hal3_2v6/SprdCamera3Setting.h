@@ -49,7 +49,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <unordered_map>
 #include <unordered_set>
 
 using namespace ::android::hardware::camera::common::V1_0::helper;
@@ -784,6 +783,7 @@ class SprdCamera3Setting {
     int getSENSORTag(SENSOR_Tag *sensorInfo);
 
     int setExposureTimeTag(int64_t exposureTime);
+    int setSensitivityTag(int32_t sensitivity);
 
     int setSHADINGTag(SHADING_Tag shadingInfo);
     int getSHADINGTag(SHADING_Tag *shadingInfo);
@@ -853,7 +853,6 @@ class SprdCamera3Setting {
     static int mPhysicalSensorNum;
     static int mLogicalSensorNum;
     static uint8_t camera_identify_state[CAMERA_ID_COUNT];
-    std::unordered_map<int64_t, SENSOR_Tag> mFrameNumMap;
     bool first_set;
     static cmr_u32 save_iso_value;
 
