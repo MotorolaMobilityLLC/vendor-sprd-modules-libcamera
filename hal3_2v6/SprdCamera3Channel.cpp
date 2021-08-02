@@ -1105,6 +1105,8 @@ int SprdCamera3MetadataChannel::channelCbRoutine(
                             }
                             mAeCallBackQue.push_back(tmp_ae_params);
                     } else if (mRequestInfoList[0].ae_cts_params.ae_precap_triger) {
+                        //add mutex to protect ae queue erase
+                        Mutex::Autolock lr(mLock);
                         //this trigger frame need to callback request params
                         for (auto it = mAeCallBackQue.begin(); it != mAeCallBackQue.end(); ) {
                             //clear the af list to make sure the trigger frame callback report immediately
@@ -1196,6 +1198,8 @@ int SprdCamera3MetadataChannel::channelCbRoutine(
                         HAL_LOGV("AF control push %d",FrameVec.front());
                         mAfCallBackQue.push_back(tmp_af_params);
                     } else if (mRequestInfoList[0].af_cts_params.af_triger == 1) {
+                        //add mutex to protect af queue erase
+                        Mutex::Autolock lr(mLock);
                         //this trigger frame need to callback request params
                         for (auto it = mAfCallBackQue.begin(); it != mAfCallBackQue.end(); ) {
                             //clear the af list to make sure the trigger frame callback report immediately
