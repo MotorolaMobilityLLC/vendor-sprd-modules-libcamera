@@ -8122,6 +8122,8 @@ static cmr_s32 ae_if_cts_params(struct ae_ctrl_cxt *cxt)
 				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO_ISO_PRI;
 				ae_set_force_pause(cxt, 0, 5);
 				cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = (cmr_u64)cxt->ae_q_pars[temp_index].ae_up_params.sensitivity * 128 / 50;
+				cxt->cur_status.adv_param.iso = cxt->ae_q_pars[temp_index].ae_up_params.sensitivity;
+				cxt->cur_status.adv_param.iso_data_type = 1;
 			} else if ((0 == cxt->ae_q_pars[temp_index].ae_up_params.sensitivity) && cxt->ae_q_pars[temp_index].ae_up_params.exp_time) {
 				cxt->manual_exp_time = cxt->ae_q_pars[temp_index].ae_up_params.exp_time;
 				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO_SHUTTER_PRI;
