@@ -17894,8 +17894,10 @@ cmr_int camera_local_image_sw_algorithm_processing(
                                   &ipm_in_param.src_frame);
 
     if (sw_algorithm_type == SPRD_CAM_IMAGE_SW_ALGORITHM_3DNR) {
+        sem_wait(&cxt->threednr_flag_sm);
         ret = ipm_transfer_frame(ipm_cxt->threednr_handle, &ipm_in_param,
                                  &imp_out_param);
+        sem_post(&cxt->threednr_flag_sm);
     } else if (sw_algorithm_type == SPRD_CAM_IMAGE_SW_ALGORITHM_HDR) {
         if (cxt->ipm_cxt.hdr_version.major != 1) {
             memcpy(&ipm_in_param.ev[0], &cxt->snp_cxt.hdr_ev[0],
