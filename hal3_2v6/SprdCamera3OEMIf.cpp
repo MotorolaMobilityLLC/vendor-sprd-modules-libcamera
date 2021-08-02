@@ -4661,7 +4661,6 @@ int SprdCamera3OEMIf::PreviewFramePreviewStream(struct camera_frame_type *frame,
     cmr_uint callback_vir = 0;
     SENSOR_Tag sensorInfo;
 
-    cmr_u32 ae_iso;
     SPRD_DEF_Tag *sprddefInfo = mSetting->getSPRDDEFTagPTR();
 
     mHalOem->ops->camera_get_sensor_vcm_step(mCameraHandle, mCameraId,
@@ -4685,14 +4684,12 @@ int SprdCamera3OEMIf::PreviewFramePreviewStream(struct camera_frame_type *frame,
         ret = 0;
         goto bypass_pre;
     }
-    ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_ISO, &ae_iso);
-    mSetting->mFrameNumMap[frame_num].sensitivity = ae_iso;
 
     ATRACE_BEGIN("preview_frame");
     HAL_LOGD("mCameraId=%d, prev:fd=0x%x, vir=0x%lx, num=%d, width=%d, "
-             "height=%d, time=0x%llx, iso_value:%d",
+             "height=%d, time=0x%llx",
              mCameraId, (cmr_u32)frame->fd, buff_vir, frame_num, frame->width,
-             frame->height, buffer_timestamp, ae_iso);
+             frame->height, buffer_timestamp);
 
     if (mIsMlogMode) {
         MLOG_Tag *mlogInfo;
@@ -5008,6 +5005,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     int ret = NO_ERROR;
     SPRD_DEF_Tag *sprddefInfo;
     int64_t buffer_timestamp;
+    cmr_u32 ae_iso;
 
     HAL_LOGV("E");
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops ||
@@ -5058,6 +5056,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         goto exit;
     }
     mSetting->setExposureTimeTag(frame->ae_time);//shutter value
+    ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_ISO, &ae_iso);
+    mSetting->setSensitivityTag((int32_t)ae_iso);
 
     // face beauty
 #ifdef CONFIG_FACE_BEAUTY
