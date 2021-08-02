@@ -15,11 +15,12 @@ struct atm_init_in {
 };
 
 struct atmctrl_cxt {
-    void    *handle_algo;
-    uint16_t  uOrigGamma[1025];
-    uint16_t  uATMGamma[1025];
+    uint32_t start_id;
+    void *handle_algo;
+    uint16_t uOrigGamma[1025];
+    uint16_t uATMGamma[1025];
+    uint32_t end_id;
 };
-
 
 struct atm_init_param
 {
