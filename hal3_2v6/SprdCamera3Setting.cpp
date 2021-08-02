@@ -6342,7 +6342,6 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     int32_t maxRegionsAe = 0;
     int32_t maxRegionsAwb = 0;
     int32_t maxRegionsAf = 0;
-    int32_t sensitivityValue = 0;
 #ifdef CAMERA_MANULE_SNEOSR
     float minimum_focus_distance = 0.0f;
     float focus_distance = 0.0f;
@@ -6814,17 +6813,13 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     HAL_LOGV("exposure_time: %lld", s_setting[mCameraId].sensorInfo.exposure_time);
     camMetadata.update(ANDROID_SENSOR_EXPOSURE_TIME,
                        &(s_setting[mCameraId].sensorInfo.exposure_time), 1);
-     sensitivityValue = mFrameNumMap[s_setting[mCameraId].syncInfo.frame_number].sensitivity;
-     if (!sensitivityValue && s_setting[mCameraId].syncInfo.frame_number) {
-            sensitivityValue = mFrameNumMap[s_setting[mCameraId].syncInfo.frame_number -1].sensitivity;
-     } else if (sensitivityValue < s_setting[mCameraId].sensor_InfoInfo.sensitivity_range[0])
-            sensitivityValue = s_setting[mCameraId].sensor_InfoInfo.sensitivity_range[0];
-     else if (sensitivityValue > s_setting[mCameraId].sensor_InfoInfo.sensitivity_range[1])
-            sensitivityValue = s_setting[mCameraId].sensor_InfoInfo.sensitivity_range[1];
-    mFrameNumMap[s_setting[mCameraId].syncInfo.frame_number].sensitivity = sensitivityValue;
-    HAL_LOGV("mFrameNumMap sensitivity is %d", mFrameNumMap[s_setting[mCameraId].syncInfo.frame_number].sensitivity);
-    camMetadata.update(ANDROID_SENSOR_SENSITIVITY,
-                       &(mFrameNumMap[s_setting[mCameraId].syncInfo.frame_number].sensitivity), 1);
+    if (s_setting[mCameraId].sensorInfo.result_sensitivity)
+        camMetadata.update(ANDROID_SENSOR_SENSITIVITY,
+                       &(s_setting[mCameraId].sensorInfo.result_sensitivity), 1);
+    else
+        camMetadata.update(ANDROID_SENSOR_SENSITIVITY,
+                       &(ksensitivity_range[0]), 1);
+    HAL_LOGV("result sensitivity is %d", s_setting[mCameraId].sensorInfo.result_sensitivity);
 #endif
     camMetadata.update(ANDROID_STATISTICS_LENS_SHADING_CORRECTION_MAP,
                        &(s_setting[mCameraId].shadingInfo.factor_count), 1);
@@ -7912,6 +7907,12 @@ int SprdCamera3Setting::setExposureTimeTag(int64_t exposureTime) {
 
 void SprdCamera3Setting::getSyncInfo(uint32_t frame_number) {
     s_setting[mCameraId].syncInfo.frame_number = frame_number;
+}
+
+int SprdCamera3Setting::setSensitivityTag(int32_t sensitivity) {
+    Mutex::Autolock l(mLock);
+    s_setting[mCameraId].sensorInfo.result_sensitivity = sensitivity;
+    return 0;
 }
 
 int SprdCamera3Setting::getSENSORTag(SENSOR_Tag *sensorInfo) {
