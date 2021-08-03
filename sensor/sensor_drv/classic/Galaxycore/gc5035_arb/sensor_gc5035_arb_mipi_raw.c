@@ -22,7 +22,7 @@
 #define LOG_TAG "gc5035_arb_qogirl6"  
 
 #include "sensor_gc5035_arb_mipi_raw.h"
-pthread_mutex_t gc5035_sensor_mutex;
+//pthread_mutex_t gc5035_sensor_mutex;
 
 
 /*==============================================================================
@@ -886,14 +886,14 @@ static cmr_int gc5035_arb_drv_write_gain_value(cmr_handle handle, cmr_uint param
 {
 	cmr_int ret_value = SENSOR_SUCCESS;
 	
-	pthread_mutex_lock(&gc5035_sensor_mutex);
+	//pthread_mutex_lock(&gc5035_sensor_mutex);
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
 	gc5035_arb_drv_calc_gain(handle,param, &gc5035_arb_aec_info);
 	gc5035_arb_drv_write_reg2sensor(handle, gc5035_arb_aec_info.again);
 	gc5035_arb_drv_write_reg2sensor(handle, gc5035_arb_aec_info.dgain);
-	pthread_mutex_unlock(&gc5035_sensor_mutex);
+	//pthread_mutex_unlock(&gc5035_sensor_mutex);
 
 	return ret_value;
 }
@@ -955,7 +955,7 @@ static cmr_int gc5035_arb_drv_stream_on(cmr_handle handle, cmr_uint param)
     if (sns_drv_cxt->current_state_machine == SENSOR_STATE_STREAM_ON) {
         return 0;
     }	
-	pthread_mutex_lock(&gc5035_sensor_mutex);
+	//pthread_mutex_lock(&gc5035_sensor_mutex);
 	SENSOR_LOGI("E");
 	
 #if defined(CONFIG_DUAL_MODULE)
@@ -968,7 +968,7 @@ static cmr_int gc5035_arb_drv_stream_on(cmr_handle handle, cmr_uint param)
 	/*END*/
 	
 	/*delay*/
-	pthread_mutex_unlock(&gc5035_sensor_mutex);
+	//pthread_mutex_unlock(&gc5035_sensor_mutex);
 	sns_drv_cxt->current_state_machine = SENSOR_STATE_STREAM_ON;
 	return SENSOR_SUCCESS;
 }
@@ -980,7 +980,7 @@ static cmr_int gc5035_arb_drv_stream_on(cmr_handle handle, cmr_uint param)
  *============================================================================*/
 static cmr_int gc5035_arb_drv_stream_off(cmr_handle handle, cmr_uint param)
 {
-	pthread_mutex_lock(&gc5035_sensor_mutex);
+	//pthread_mutex_lock(&gc5035_sensor_mutex);
 	SENSOR_LOGI("E");
 	
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -1002,7 +1002,7 @@ static cmr_int gc5035_arb_drv_stream_off(cmr_handle handle, cmr_uint param)
     }
     sns_drv_cxt->is_sensor_close = 0;
     SENSOR_LOGI("X");
-	pthread_mutex_unlock(&gc5035_sensor_mutex);
+	//pthread_mutex_unlock(&gc5035_sensor_mutex);
     return SENSOR_SUCCESS;
 }
 
@@ -1035,7 +1035,7 @@ static cmr_int gc5035_arb_drv_handle_create(struct sensor_ic_drv_init_para *init
     /*init exif info,this will be deleted in the future*/
     gc5035_arb_drv_init_fps_info(sns_drv_cxt);
 	gc5035_arb_drv_init_exif_info(sns_drv_cxt);
-    pthread_mutex_init(&gc5035_sensor_mutex, NULL);
+    //pthread_mutex_init(&gc5035_sensor_mutex, NULL);
 
     /*add private here*/
     return ret;
@@ -1048,7 +1048,7 @@ static cmr_int gc5035_arb_drv_handle_delete(cmr_handle handle, void *param)
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    pthread_mutex_destroy(&gc5035_sensor_mutex);
+    //pthread_mutex_destroy(&gc5035_sensor_mutex);
 	sns_drv_cxt->current_state_machine = SENSOR_STATE_IDLE;
     ret = sensor_ic_drv_delete(handle,param);
     return ret;
