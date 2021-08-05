@@ -594,15 +594,15 @@ static cmr_int s5kgm1sp_drv_init_exif_info(cmr_handle handle,
     /*aperture = numerator/denominator */
     /*fnumber = numerator/denominator */
     exif_ptr->valid.FNumber = 1;
-    exif_ptr->FNumber.numerator = 14;
-    exif_ptr->FNumber.denominator = 5;
+    exif_ptr->FNumber.numerator = 179;
+    exif_ptr->FNumber.denominator = 100;
 
     exif_ptr->valid.ApertureValue = 1;
-    exif_ptr->ApertureValue.numerator = 14;
-    exif_ptr->ApertureValue.denominator = 5;
+    exif_ptr->ApertureValue.numerator = 179;
+    exif_ptr->ApertureValue.denominator = 100;
     exif_ptr->valid.MaxApertureValue = 1;
-    exif_ptr->MaxApertureValue.numerator = 14;
-    exif_ptr->MaxApertureValue.denominator = 5;
+    exif_ptr->MaxApertureValue.numerator = 179;
+    exif_ptr->MaxApertureValue.denominator = 100;
     exif_ptr->valid.FocalLength = 1;
     exif_ptr->FocalLength.numerator = 289;
     exif_ptr->FocalLength.denominator = 100;
