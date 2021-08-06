@@ -8463,7 +8463,7 @@
 					/*addback_clip_max*/
 					0x0000,
 					/*addback_clip_min*/
-					0x0000,
+					0xFFFF,
 
 				}
 			},
