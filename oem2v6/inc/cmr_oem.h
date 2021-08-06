@@ -563,6 +563,7 @@ struct camera_context {
     cmr_uint long_expo_enable;
     cmr_u8 longexp_skipnum;
     double exp_time;
+    cmr_u32 image_orientation;
 };
 
 struct prev_ai_scene_info {
