@@ -23,7 +23,7 @@
 #include "cmr_common.h"
 #include "cmr_sensor.h"
 #include "cmr_oem.h"
-#include "BSTYUVNightDNS.h"
+#include "B01YUVNightDNS.h"
 #include <cutils/properties.h>
 #include "isp_mw.h"
 #include <string.h>
@@ -219,7 +219,8 @@ static cmr_int nightdns_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     CMR_LOGD("nRefFrameNum nExpNum %d %d", nRefFrameNum, nExpNum);
     config.cfg.pConfigFile = "/vendor/cfg/control_param_YUVProcFlow_yuvnight_4dns9_colorkill.cfg";
     config.nConfigType = BST_YUVNIGHTDNS_CONFIG_TYPE_FILE;
-    ret = bstYUVNIGHTDNSInit(config, nRefFrameNum, nExpNum);
+    const unsigned char AISegstr[] = "/vendor/cfg/BSTAI";
+    ret = bstYUVNIGHTDNSInit(config, AISegstr, nRefFrameNum, nExpNum);
     if(ret != 0){
         CMR_LOGE("failed to init nightdns. ret = %d",ret);
     }
@@ -352,14 +353,16 @@ static cmr_int nightdns_save_frame(cmr_handle class_handle,
 
         InImage.metaData.nExpo = cxt->ae_aux_info.param[frame_sn].exp_time / 1000000;//ms
         InImage.metaData.nISO = cxt->ae_aux_info.param[frame_sn].iso;
-        CMR_LOGD("%p frame_sn %d w h[%d %d] pPlanePtr[%d %d] nExpo %d nISO %d ev %f ",
+        InImage.metaData.nRotation = cxt->image_orientation;
+        CMR_LOGD("%p frame_sn %d w h[%d %d] pPlanePtr[%d %d] nExpo %d nISO %d ev %f nRotation %d",
             cxt, frame_sn,
             InImage.imgData.nWidth,
             InImage.imgData.nHeight,
             InImage.imgData.pPlanePtr[0],
             InImage.imgData.pPlanePtr[1],
             InImage.metaData.nExpo, InImage.metaData.nISO,
-            cxt->ae_aux_info.param[frame_sn].ev);
+            cxt->ae_aux_info.param[frame_sn].ev,
+            InImage.metaData.nRotation);
         ret =  bstYUVNIGHTDNSAddFrame(frame_sn, &InImage);
         if (ret != 0) {
             CMR_LOGE("nightdns addframe fails!!!\n");
@@ -402,12 +405,15 @@ static cmr_int nightdns_process_frame(cmr_handle class_handle,
     nightDNSImg.metaData.nExpo =
         cxt->ae_aux_info.param[0].exp_time /1000000;
     nightDNSImg.metaData.nISO = cxt->ae_aux_info.param[0].iso;
-    CMR_LOGD("process: w h[%d %d] pPlanePtr[%x %x] nExpo %d nISO %d",
+    nightDNSImg.metaData.nRotation = cxt->image_orientation;
+    CMR_LOGD("process: w h[%d %d] pPlanePtr[%x %x] nExpo %d nISO %d nRotation %d",
         nightDNSImg.imgData.nWidth,
         nightDNSImg.imgData.nHeight,
         nightDNSImg.imgData.pPlanePtr[0],
         nightDNSImg.imgData.pPlanePtr[1],
-        nightDNSImg.metaData.nExpo, nightDNSImg.metaData.nISO);
+        nightDNSImg.metaData.nExpo,
+        nightDNSImg.metaData.nISO,
+        nightDNSImg.metaData.nRotation);
     ret =  bstYUVNIGHTDNSRender(&nightDNSImg);
     if (ret != 0) {
         CMR_LOGE("Fail to call the nightdns_function, ret =%d",ret);

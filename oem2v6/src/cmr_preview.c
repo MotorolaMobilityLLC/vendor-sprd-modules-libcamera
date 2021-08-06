@@ -7670,12 +7670,27 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle, cmr_u32 camera_id,
     struct img_frm *frm_ptr = NULL;
     cmr_int zoom_post_proc = 0;
     cmr_u32 is_ultra_wide = 0;
+    cmr_u32 image_orientation = 0;
+    struct setting_cmd_parameter setting_param;
 
     if (!handle || !frame_type || !info) {
         CMR_LOGE("Invalid param! 0x%p, 0x%p, 0x%p", handle, frame_type, info);
         ret = CMR_CAMERA_FAIL;
         return ret;
     }
+
+    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
+    struct setting_context *setting_cxt = &cxt->setting_cxt;
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = camera_id;
+    cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                      SETTING_GET_ENCODE_ROTATION, &setting_param);
+    image_orientation = (cmr_u32)setting_param.cmd_type_value;
+    if (camera_id == 1) {
+        image_orientation = (360 - image_orientation) % 360;
+    }
+    cxt->image_orientation = image_orientation;
+    CMR_LOGD("image_orientation %d", cxt->image_orientation);
 
     prev_chn_id = handle->prev_cxt[camera_id].prev_channel_id;
     cap_chn_id = handle->prev_cxt[camera_id].cap_channel_id;
