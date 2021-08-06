@@ -610,7 +610,7 @@
 	/*imblance_sat_lumth*/
 	0x03E8,
 	/*imblance_bypass*/
-	0x0001,
+	0x0000,
 	/*radius_base*/
 	0x0400,
 }
@@ -815,7 +815,7 @@
 	/*imblance_sat_lumth*/
 	0x03E8,
 	/*imblance_bypass*/
-	0x0001,
+	0x0000,
 	/*radius_base*/
 	0x0400,
 }
@@ -1020,7 +1020,7 @@
 	/*imblance_sat_lumth*/
 	0x03E8,
 	/*imblance_bypass*/
-	0x0001,
+	0x0000,
 	/*radius_base*/
 	0x0400,
 }
@@ -1225,7 +1225,7 @@
 	/*imblance_sat_lumth*/
 	0x03E8,
 	/*imblance_bypass*/
-	0x0001,
+	0x0000,
 	/*radius_base*/
 	0x0400,
 }
