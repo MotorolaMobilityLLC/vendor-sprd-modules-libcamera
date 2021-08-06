@@ -1409,7 +1409,7 @@
 	/*reserved*/
 	0x0000,
 	/*bypass*/
-	0x0000,
+	0x0001,
 }
 ,
 /*param4.&BasePoint=1&*/
@@ -1762,7 +1762,7 @@
 	/*reserved*/
 	0x0000,
 	/*bypass*/
-	0x0000,
+	0x0001,
 }
 ,
 /*param5.&BasePoint=1&*/
@@ -2115,7 +2115,7 @@
 	/*reserved*/
 	0x0000,
 	/*bypass*/
-	0x0000,
+	0x0001,
 }
 ,
 /*param6.&BasePoint=1&*/
@@ -2468,7 +2468,7 @@
 	/*reserved*/
 	0x0000,
 	/*bypass*/
-	0x0000,
+	0x0001,
 }
 ,
 /*param7.&BasePoint=1&*/
@@ -2821,7 +2821,7 @@
 	/*reserved*/
 	0x0000,
 	/*bypass*/
-	0x0000,
+	0x0001,
 }
 ,
 /*param8.&BasePoint=1&*/
@@ -3174,7 +3174,7 @@
 	/*reserved*/
 	0x0000,
 	/*bypass*/
-	0x0000,
+	0x0001,
 }
 ,
 /*param9.&BasePoint=1&*/
@@ -3527,7 +3527,7 @@
 	/*reserved*/
 	0x0000,
 	/*bypass*/
-	0x0000,
+	0x0001,
 }
 ,
 /*param10.&BasePoint=1&*/
@@ -3820,7 +3820,7 @@
 		0x03,
 		/*range_s*/
 		{
-			0x01,0x01,0x02,0x03/*0-3*/
+			0x00,0x01,0x02,0x03/*0-3*/
 		},
 		/*dist_weight*/
 		{
@@ -3880,7 +3880,7 @@
 	/*reserved*/
 	0x0000,
 	/*bypass*/
-	0x0000,
+	0x0001,
 }
 ,
 /*param11.&BasePoint=1&*/
