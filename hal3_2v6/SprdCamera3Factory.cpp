@@ -318,6 +318,8 @@ int SprdCamera3Factory::getHighResolutionSize(int camera_id,
                                               struct camera_info *info) {
     camera_metadata_t *staticMetadata;
     int rc;
+    char value[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.back.single.auto_highres", value, "1");
 
     HAL_LOGD("E, camera_id = %d", camera_id);
 
@@ -350,21 +352,35 @@ int SprdCamera3Factory::getHighResolutionSize(int camera_id,
 
     SprdCamera3Setting::getHighResCapSize(camera_id, &stream_info);
 
-    for (size_t j = 0; j < scaler_formats_count; j++) {
-        for (size_t i = 0; stream_info; i++) {
-            /* last img_size must be {0, 0} */
-            if ((stream_info[i].width == 0) || (stream_info[i].height == 0))
-                break;
-            avail_stream_config[array_size++] = scaler_formats[j];
-            avail_stream_config[array_size++] = stream_info[i].width;
-            avail_stream_config[array_size++] = stream_info[i].height;
-            avail_stream_config[array_size++] =
-                ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT;
+    if (atoi(value) && camera_id == 0) {
+        camera_metadata_entry_t entry =
+            metadata.find(ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS);
+        size_t count = entry.count;
+        int32_t *key = new int32_t[count + 4];
+        memcpy(key, entry.data.i32, entry.count * sizeof(int32_t));
+        key[count++] = HAL_PIXEL_FORMAT_BLOB;
+        key[count++] = stream_info->width;
+        key[count++] = stream_info->height;
+        key[count++] = ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT;
+        metadata.update(ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS, key, count);
+        delete[] key;
+    } else {
+        for (size_t j = 0; j < scaler_formats_count; j++) {
+            for (size_t i = 0; stream_info; i++) {
+                /* last img_size must be {0, 0} */
+                if ((stream_info[i].width == 0) || (stream_info[i].height == 0))
+                    break;
+                avail_stream_config[array_size++] = scaler_formats[j];
+                avail_stream_config[array_size++] = stream_info[i].width;
+                avail_stream_config[array_size++] = stream_info[i].height;
+                avail_stream_config[array_size++] =
+                    ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT;
+            }
         }
-    }
 
-    metadata.update(ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
+        metadata.update(ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
                     avail_stream_config, array_size);
+    }
 
     staticMetadata = metadata.release();
     SprdCamera3Setting::getCameraInfo(camera_id, info);
@@ -498,8 +514,10 @@ int SprdCamera3Factory::open_(const struct hw_module_t *module, const char *id,
     int cameraId = overrideCameraIdIfNeeded(idInt);
     HAL_LOGI("open camera %d", cameraId);
 
+    char value[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.back.single.auto_highres", value, "1");
     if (SPRD_FRONT_HIGH_RES == cameraId ||
-        SPRD_BACK_HIGH_RESOLUTION_ID == cameraId) {
+        (SPRD_BACK_HIGH_RESOLUTION_ID == cameraId && !atoi(value))) {
         sensor_set_HD_mode(1);
     } else {
         sensor_set_HD_mode(0);
@@ -600,11 +618,13 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
     if (rc != 0) {
         delete hw;
     } else {
+        property_get("persist.vendor.cam.back.single.auto_highres", prop, "1");
         if (SPRD_FRONT_HIGH_RES == camera_id ||
-            SPRD_BACK_HIGH_RESOLUTION_ID == camera_id) {
+            (SPRD_BACK_HIGH_RESOLUTION_ID == camera_id && !atoi(prop))) {
             is_high_res_mode = 1;
             hw->camera_ioctrl(CAMERA_TOCTRL_SET_HIGH_RES_MODE,
                               &is_high_res_mode, NULL);
+            HAL_LOGD("set high res mode");
         }
 
         property_get("persist.vendor.cam.ultrawide.enable", prop, "1");
