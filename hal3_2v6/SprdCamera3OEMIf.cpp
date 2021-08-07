@@ -8633,6 +8633,10 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         SPRD_DEF_Tag *sprddefInfo;
         int8_t drvSceneMode = 0;
         sprddefInfo = mSetting->getSPRDDEFTagPTR();
+        if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO &&
+                (mCaptureWidth > MAX_WIDTH || mCaptureHeight > MAX_HEIGHT)) {
+            sprddefInfo->sprd_appmode_id = CAMERA_MODE_HIGH_RES_PHOTO;
+        }
         mSprdAppmodeId = sprddefInfo->sprd_appmode_id;
         HAL_LOGD("getCaptureState: %s,  mSprdAppmodeId:%d",
                  getCameraStateStr(getPreviewState()), mSprdAppmodeId);
@@ -8640,7 +8644,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             SPRD_PREVIEW_IN_PROGRESS == getPreviewState()) {
             if (mSprdAppmodeId == CAMERA_MODE_FDR && isFdrHasTuningParam()) {
                 drvSceneMode = CAMERA_SCENE_MODE_FDR;
-		  mIsFDRCapture = true;
+                mIsFDRCapture = true;
                 SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SCENE_MODE,
                          drvSceneMode);
             }
