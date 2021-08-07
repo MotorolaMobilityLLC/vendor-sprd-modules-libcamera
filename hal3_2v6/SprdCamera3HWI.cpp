@@ -1023,6 +1023,20 @@ int SprdCamera3HWI::configureStreams(
     }
 #endif
 
+    {
+        char prop[PROPERTY_VALUE_MAX];
+        property_get("persist.vendor.cam.back.single.auto_highres", prop, "1");
+        if (atoi(prop)) {
+            int is_high_res_mode = 0;
+            if ((capture_size.width > MAX_WIDTH || capture_size.height > MAX_HEIGHT)
+                && mCameraId == 0) {
+                is_high_res_mode = 1;
+            }
+            camera_ioctrl(CAMERA_TOCTRL_SET_HIGH_RES_MODE, &is_high_res_mode, NULL);
+            HAL_LOGD("set highres %d", is_high_res_mode);
+        }
+    }
+
     mOEMIf->setCamStreamInfo(preview_size, previewFormat, previewStreamType);
     mOEMIf->setCamStreamInfo(capture_size, captureFormat, captureStreamType);
     mOEMIf->setCamStreamInfo(video_size, videoFormat, videoStreamType);
