@@ -234,6 +234,9 @@ typedef struct {
 #define SBS_RAW_DATA_WIDTH 3200
 #define SBS_RAW_DATA_HEIGHT 1200
 
+#define MAX_WIDTH 4000
+#define MAX_HEIGHT 3000
+
 enum afTransitionCause {
     AF_MODE_CHANGE = 0,
     AF_INITIATES_NEW_SCAN,
