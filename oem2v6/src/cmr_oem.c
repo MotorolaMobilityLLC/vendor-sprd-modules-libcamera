@@ -12866,7 +12866,7 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
                  cxt->camera_id);
     } else if ((app_mode == CAMERA_MODE_AUTO_PHOTO ||
          app_mode == CAMERA_MODE_BACK_ULTRA_WIDE ||
-         app_mode == CAMERA_MODE_3DNR_PHOTO) &&
+         app_mode == CAMERA_MODE_3DNR_PHOTO || app_mode == CAMERA_MODE_HIGH_RES_PHOTO) &&
          !cxt->snp_cxt.is_mfsr && !cxt->snp_cxt.is_fdr && !cxt->snp_cxt.is_hdr){
         // dre available
         out_ptr->dre_flag = 1;
@@ -12877,8 +12877,8 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
 
 #ifdef CONFIG_CAMERA_DRE_PRO
     if (app_mode == CAMERA_MODE_NIGHT_PHOTO ||
-        (app_mode == CAMERA_MODE_AUTO_PHOTO && !cxt->snp_cxt.is_hdr &&
-         !cxt->snp_cxt.is_mfsr && !cxt->snp_cxt.is_fdr)) {
+        ((app_mode == CAMERA_MODE_AUTO_PHOTO || app_mode == CAMERA_MODE_HIGH_RES_PHOTO)
+            && !cxt->snp_cxt.is_hdr && !cxt->snp_cxt.is_mfsr && !cxt->snp_cxt.is_fdr)) {
         out_ptr->dre_flag = 1;
         cxt->dre_flag = 1;
     }
