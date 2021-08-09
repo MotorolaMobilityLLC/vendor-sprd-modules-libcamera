@@ -14097,7 +14097,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
 
     cxt->snp_cxt.snap_cnt = 0;
     if (cxt->snp_cxt.is_mfsr) {
-        cmr_u32 isp_scene = ISP_SPORT;
+        cmr_u32 isp_scene = ISP_ZOOM;
         snp_param.total_num = 5;
         cxt->snp_cxt.total_num = 5;
         ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_SCENE_MODE, &isp_scene);
