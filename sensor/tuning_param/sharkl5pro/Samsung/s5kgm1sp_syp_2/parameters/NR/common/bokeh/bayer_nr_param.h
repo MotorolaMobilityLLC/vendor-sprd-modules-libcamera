@@ -40,15 +40,15 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x3C,
+						0x37,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0069,
+						0x006E,
 						/*addback0*/
-						0x0058,
+						0x0042,
 						/*addback1*/
-						0x0058,
+						0x0042,
 						/*addback_clip_max*/
 						0x0008,
 						/*addback_clip_min*/
@@ -58,7 +58,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x64,
+						0x41,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -77,7 +77,7 @@
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0xA5,
+					0xA4,
 					/*addback30*/
 					0x58,
 					/*addback31*/
@@ -98,7 +98,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x41,
+						0x37,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -116,15 +116,15 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x41,
+						0x3C,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0073,
+						0x0078,
 						/*addback0*/
-						0x0058,
+						0x0042,
 						/*addback1*/
-						0x0058,
+						0x0042,
 						/*addback_clip_max*/
 						0x0008,
 						/*addback_clip_min*/
@@ -134,7 +134,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x6E,
+						0x46,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -153,7 +153,7 @@
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0xAA,
+					0xA8,
 					/*addback30*/
 					0x58,
 					/*addback31*/
@@ -196,11 +196,11 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x007D,
+						0x0082,
 						/*addback0*/
-						0x0058,
+						0x0042,
 						/*addback1*/
-						0x0058,
+						0x0042,
 						/*addback_clip_max*/
 						0x0008,
 						/*addback_clip_min*/
@@ -210,7 +210,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x78,
+						0x50,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -229,7 +229,7 @@
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0xAF,
+					0xAC,
 					/*addback30*/
 					0x58,
 					/*addback31*/
