@@ -375,15 +375,15 @@
 		/*chroma_ratio*/
 		0x40,
 		/*luma_ratio*/
-		0x40,
+		0x30,
 		/*ratio_0*/
 		0x30,
 		/*ratio_1*/
-		0x38,
+		0x30,
 		/*ratio_uv_min*/
 		0x30,
 		/*ratio_y_min0*/
-		0x40,
+		0x30,
 		/*ratio_y_min1*/
 		0x00,
 		/*reserved*/
