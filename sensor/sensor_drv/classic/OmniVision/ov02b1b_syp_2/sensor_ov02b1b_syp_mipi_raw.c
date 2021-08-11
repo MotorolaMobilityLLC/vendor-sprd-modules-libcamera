@@ -659,6 +659,7 @@ static cmr_int ov02b1b_syp_drv_stream_on(cmr_handle handle, cmr_uint param)
 
     SENSOR_LOGI("E");
 
+    usleep(20 * 1000);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfd, 0x03);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xc2, 0x01);
 
