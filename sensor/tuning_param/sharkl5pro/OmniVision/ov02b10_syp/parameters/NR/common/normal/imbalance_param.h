@@ -37,9 +37,9 @@
 			/*nlm_imblance_lum_flag_0_rs*/
 			0x0400,
 			/*nlm_imblance_lum_flag_0_r*/
-			0x0384,
+			0x07D0,
 			/*nlm_imblance_lum_flag_1_r*/
-			0x01F4,
+			0x07D0,
 			/*nlm_imblance_lum_flag_2_r*/
 			0x012C,
 			/*nlm_imblance_lum_flag_3_r*/
@@ -53,9 +53,9 @@
 			/*nlm_imblance_lum_flag_0_rs*/
 			0x0400,
 			/*nlm_imblance_lum_flag_0_r*/
-			0x0384,
+			0x07D0,
 			/*nlm_imblance_lum_flag_1_r*/
-			0x012C,
+			0x07D0,
 			/*nlm_imblance_lum_flag_2_r*/
 			0x0064,
 			/*nlm_imblance_lum_flag_3_r*/
@@ -69,9 +69,9 @@
 			/*nlm_imblance_lum_flag_0_rs*/
 			0x0400,
 			/*nlm_imblance_lum_flag_0_r*/
-			0x0320,
+			0x07D0,
 			/*nlm_imblance_lum_flag_1_r*/
-			0x00C8,
+			0x07D0,
 			/*nlm_imblance_lum_flag_2_r*/
 			0x0000,
 			/*nlm_imblance_lum_flag_3_r*/
@@ -447,7 +447,7 @@
 			/*nlm_imblance_lum_flag_0_rs*/
 			0x0400,
 			/*nlm_imblance_lum_flag_0_r*/
-			0x0384,
+			0x07D0,
 			/*nlm_imblance_lum_flag_1_r*/
 			0x01F4,
 			/*nlm_imblance_lum_flag_2_r*/
@@ -463,7 +463,7 @@
 			/*nlm_imblance_lum_flag_0_rs*/
 			0x0400,
 			/*nlm_imblance_lum_flag_0_r*/
-			0x0384,
+			0x07D0,
 			/*nlm_imblance_lum_flag_1_r*/
 			0x012C,
 			/*nlm_imblance_lum_flag_2_r*/
@@ -479,7 +479,7 @@
 			/*nlm_imblance_lum_flag_0_rs*/
 			0x0400,
 			/*nlm_imblance_lum_flag_0_r*/
-			0x0320,
+			0x07D0,
 			/*nlm_imblance_lum_flag_1_r*/
 			0x00C8,
 			/*nlm_imblance_lum_flag_2_r*/
