@@ -4354,7 +4354,7 @@
 				/*wv_thresh2_n*/
 				0x04,
 				/*wv_ratio1*/
-				0xA0,
+				0xB4,
 				/*wv_ratio2*/
 				0xD2,
 				/*wv_thresh_d1*/
@@ -4402,7 +4402,7 @@
 				/*wv_thresh2_n*/
 				0x04,
 				/*wv_ratio1*/
-				0xA5,
+				0xB4,
 				/*wv_ratio2*/
 				0xD2,
 				/*wv_thresh_d1*/
@@ -4431,7 +4431,7 @@
 				/*wv_thresh2_n*/
 				0x04,
 				/*wv_ratio1*/
-				0xA0,
+				0xB4,
 				/*wv_ratio2*/
 				0xD2,
 				/*wv_thresh_d1*/
@@ -4479,7 +4479,7 @@
 				/*wv_thresh2_n*/
 				0x04,
 				/*wv_ratio1*/
-				0xA5,
+				0xB4,
 				/*wv_ratio2*/
 				0xD2,
 				/*wv_thresh_d1*/
@@ -4622,7 +4622,7 @@
 		/*[0x0]*/
 		{
 			/*wv_nr_enable*/
-			0x00000001,
+			0x00000000,
 			/*low*/
 			{
 				/*wv_thresh1*/
