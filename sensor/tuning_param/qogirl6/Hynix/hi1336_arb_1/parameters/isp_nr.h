@@ -10,7 +10,7 @@ static struct sensor_nr_level_map_param s_hi1336_arb_1_default_nr_level_map_para
 }};
 
 static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
-	0x000061E1,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000001,0x00000000,0x00000000,0x00000001,0x00000000,0x00000000,
+	0x000061E1,0x00000001,0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000001,0x00000000,0x00000000,0x00000001,0x00000000,0x00000000,
 	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000
 }};
 #endif
@@ -23,6 +23,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/bayer_nr_param.h"
 #include "NR/common/flash/bayer_nr_param.h"
 #include "NR/common/zoom/bayer_nr_param.h"
+#include "NR/prv_0/normal/bayer_nr_param.h"
+#include "NR/prv_1/normal/bayer_nr_param.h"
 #include "NR/video_1/normal/bayer_nr_param.h"
 #include "NR/fdr_cap0/normal/bayer_nr_param.h"
 #endif
@@ -35,6 +37,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/vst_param.h"
 #include "NR/common/flash/vst_param.h"
 #include "NR/common/zoom/vst_param.h"
+#include "NR/prv_0/normal/vst_param.h"
+#include "NR/prv_1/normal/vst_param.h"
 #include "NR/video_1/normal/vst_param.h"
 #include "NR/fdr_cap0/normal/vst_param.h"
 #endif
@@ -47,6 +51,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/ivst_param.h"
 #include "NR/common/flash/ivst_param.h"
 #include "NR/common/zoom/ivst_param.h"
+#include "NR/prv_0/normal/ivst_param.h"
+#include "NR/prv_1/normal/ivst_param.h"
 #include "NR/video_1/normal/ivst_param.h"
 #include "NR/fdr_cap0/normal/ivst_param.h"
 #endif
@@ -59,6 +65,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/rgb_dither_param.h"
 #include "NR/common/flash/rgb_dither_param.h"
 #include "NR/common/zoom/rgb_dither_param.h"
+#include "NR/prv_0/normal/rgb_dither_param.h"
+#include "NR/prv_1/normal/rgb_dither_param.h"
 #include "NR/video_1/normal/rgb_dither_param.h"
 #include "NR/fdr_cap0/normal/rgb_dither_param.h"
 #endif
@@ -71,6 +79,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/bpc_param.h"
 #include "NR/common/flash/bpc_param.h"
 #include "NR/common/zoom/bpc_param.h"
+#include "NR/prv_0/normal/bpc_param.h"
+#include "NR/prv_1/normal/bpc_param.h"
 #include "NR/video_1/normal/bpc_param.h"
 #include "NR/fdr_cap0/normal/bpc_param.h"
 #endif
@@ -83,6 +93,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/cfai_param.h"
 #include "NR/common/flash/cfai_param.h"
 #include "NR/common/zoom/cfai_param.h"
+#include "NR/prv_0/normal/cfai_param.h"
+#include "NR/prv_1/normal/cfai_param.h"
 #include "NR/video_1/normal/cfai_param.h"
 #include "NR/fdr_cap0/normal/cfai_param.h"
 #endif
@@ -95,6 +107,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/cce_uvdiv_param.h"
 #include "NR/common/flash/cce_uvdiv_param.h"
 #include "NR/common/zoom/cce_uvdiv_param.h"
+#include "NR/prv_0/normal/cce_uvdiv_param.h"
+#include "NR/prv_1/normal/cce_uvdiv_param.h"
 #include "NR/video_1/normal/cce_uvdiv_param.h"
 #include "NR/fdr_cap0/normal/cce_uvdiv_param.h"
 #endif
@@ -107,6 +121,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/ynr_param.h"
 #include "NR/common/flash/ynr_param.h"
 #include "NR/common/zoom/ynr_param.h"
+#include "NR/prv_0/normal/ynr_param.h"
+#include "NR/prv_1/normal/ynr_param.h"
 #include "NR/video_1/normal/ynr_param.h"
 #include "NR/fdr_cap0/normal/ynr_param.h"
 #endif
@@ -119,6 +135,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/ee_param.h"
 #include "NR/common/flash/ee_param.h"
 #include "NR/common/zoom/ee_param.h"
+#include "NR/prv_0/normal/ee_param.h"
+#include "NR/prv_1/normal/ee_param.h"
 #include "NR/video_1/normal/ee_param.h"
 #include "NR/fdr_cap0/normal/ee_param.h"
 #endif
@@ -131,6 +149,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/3dnr_param.h"
 #include "NR/common/flash/3dnr_param.h"
 #include "NR/common/zoom/3dnr_param.h"
+#include "NR/prv_0/normal/3dnr_param.h"
+#include "NR/prv_1/normal/3dnr_param.h"
 #include "NR/video_1/normal/3dnr_param.h"
 #include "NR/fdr_cap0/normal/3dnr_param.h"
 #endif
@@ -143,6 +163,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/ppe_param.h"
 #include "NR/common/flash/ppe_param.h"
 #include "NR/common/zoom/ppe_param.h"
+#include "NR/prv_0/normal/ppe_param.h"
+#include "NR/prv_1/normal/ppe_param.h"
 #include "NR/video_1/normal/ppe_param.h"
 #include "NR/fdr_cap0/normal/ppe_param.h"
 #endif
@@ -155,6 +177,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/yuv_noisefilter_param.h"
 #include "NR/common/flash/yuv_noisefilter_param.h"
 #include "NR/common/zoom/yuv_noisefilter_param.h"
+#include "NR/prv_0/normal/yuv_noisefilter_param.h"
+#include "NR/prv_1/normal/yuv_noisefilter_param.h"
 #include "NR/video_1/normal/yuv_noisefilter_param.h"
 #include "NR/fdr_cap0/normal/yuv_noisefilter_param.h"
 #endif
@@ -167,6 +191,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/rgb_afm_param.h"
 #include "NR/common/flash/rgb_afm_param.h"
 #include "NR/common/zoom/rgb_afm_param.h"
+#include "NR/prv_0/normal/rgb_afm_param.h"
+#include "NR/prv_1/normal/rgb_afm_param.h"
 #include "NR/video_1/normal/rgb_afm_param.h"
 #include "NR/fdr_cap0/normal/rgb_afm_param.h"
 #endif
@@ -179,6 +205,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/iircnr_param.h"
 #include "NR/common/flash/iircnr_param.h"
 #include "NR/common/zoom/iircnr_param.h"
+#include "NR/prv_0/normal/iircnr_param.h"
+#include "NR/prv_1/normal/iircnr_param.h"
 #include "NR/video_1/normal/iircnr_param.h"
 #include "NR/fdr_cap0/normal/iircnr_param.h"
 #endif
@@ -191,6 +219,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/yuv_precdn_param.h"
 #include "NR/common/flash/yuv_precdn_param.h"
 #include "NR/common/zoom/yuv_precdn_param.h"
+#include "NR/prv_0/normal/yuv_precdn_param.h"
+#include "NR/prv_1/normal/yuv_precdn_param.h"
 #include "NR/video_1/normal/yuv_precdn_param.h"
 #include "NR/fdr_cap0/normal/yuv_precdn_param.h"
 #endif
@@ -203,6 +233,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/uv_cdn_param.h"
 #include "NR/common/flash/uv_cdn_param.h"
 #include "NR/common/zoom/uv_cdn_param.h"
+#include "NR/prv_0/normal/uv_cdn_param.h"
+#include "NR/prv_1/normal/uv_cdn_param.h"
 #include "NR/video_1/normal/uv_cdn_param.h"
 #include "NR/fdr_cap0/normal/uv_cdn_param.h"
 #endif
@@ -215,6 +247,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/uv_postcdn_param.h"
 #include "NR/common/flash/uv_postcdn_param.h"
 #include "NR/common/zoom/uv_postcdn_param.h"
+#include "NR/prv_0/normal/uv_postcdn_param.h"
+#include "NR/prv_1/normal/uv_postcdn_param.h"
 #include "NR/video_1/normal/uv_postcdn_param.h"
 #include "NR/fdr_cap0/normal/uv_postcdn_param.h"
 #endif
@@ -227,6 +261,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/cnr_param.h"
 #include "NR/common/flash/cnr_param.h"
 #include "NR/common/zoom/cnr_param.h"
+#include "NR/prv_0/normal/cnr_param.h"
+#include "NR/prv_1/normal/cnr_param.h"
 #include "NR/video_1/normal/cnr_param.h"
 #include "NR/fdr_cap0/normal/cnr_param.h"
 #endif
@@ -239,6 +275,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/imbalance_param.h"
 #include "NR/common/flash/imbalance_param.h"
 #include "NR/common/zoom/imbalance_param.h"
+#include "NR/prv_0/normal/imbalance_param.h"
+#include "NR/prv_1/normal/imbalance_param.h"
 #include "NR/video_1/normal/imbalance_param.h"
 #include "NR/fdr_cap0/normal/imbalance_param.h"
 #endif
@@ -251,6 +289,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/sw3dnr_param.h"
 #include "NR/common/flash/sw3dnr_param.h"
 #include "NR/common/zoom/sw3dnr_param.h"
+#include "NR/prv_0/normal/sw3dnr_param.h"
+#include "NR/prv_1/normal/sw3dnr_param.h"
 #include "NR/video_1/normal/sw3dnr_param.h"
 #include "NR/fdr_cap0/normal/sw3dnr_param.h"
 #endif
@@ -263,6 +303,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/bwud_param.h"
 #include "NR/common/flash/bwud_param.h"
 #include "NR/common/zoom/bwud_param.h"
+#include "NR/prv_0/normal/bwud_param.h"
+#include "NR/prv_1/normal/bwud_param.h"
 #include "NR/video_1/normal/bwud_param.h"
 #include "NR/fdr_cap0/normal/bwud_param.h"
 #endif
@@ -275,6 +317,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/ynrs_param.h"
 #include "NR/common/flash/ynrs_param.h"
 #include "NR/common/zoom/ynrs_param.h"
+#include "NR/prv_0/normal/ynrs_param.h"
+#include "NR/prv_1/normal/ynrs_param.h"
 #include "NR/video_1/normal/ynrs_param.h"
 #include "NR/fdr_cap0/normal/ynrs_param.h"
 #endif
@@ -287,6 +331,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/cnr3_param.h"
 #include "NR/common/flash/cnr3_param.h"
 #include "NR/common/zoom/cnr3_param.h"
+#include "NR/prv_0/normal/cnr3_param.h"
+#include "NR/prv_1/normal/cnr3_param.h"
 #include "NR/video_1/normal/cnr3_param.h"
 #include "NR/fdr_cap0/normal/cnr3_param.h"
 #endif
@@ -299,6 +345,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/mfnr_param.h"
 #include "NR/common/flash/mfnr_param.h"
 #include "NR/common/zoom/mfnr_param.h"
+#include "NR/prv_0/normal/mfnr_param.h"
+#include "NR/prv_1/normal/mfnr_param.h"
 #include "NR/video_1/normal/mfnr_param.h"
 #include "NR/fdr_cap0/normal/mfnr_param.h"
 #endif
@@ -311,6 +359,8 @@ static struct sensor_nr_scene_map_param s_hi1336_arb_1_nr_scene_map_param = {{
 #include "NR/common/profession/post_ee_param.h"
 #include "NR/common/flash/post_ee_param.h"
 #include "NR/common/zoom/post_ee_param.h"
+#include "NR/prv_0/normal/post_ee_param.h"
+#include "NR/prv_1/normal/post_ee_param.h"
 #include "NR/video_1/normal/post_ee_param.h"
 #include "NR/fdr_cap0/normal/post_ee_param.h"
 #endif
