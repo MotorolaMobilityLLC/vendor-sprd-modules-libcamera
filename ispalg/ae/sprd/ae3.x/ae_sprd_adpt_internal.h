@@ -82,6 +82,7 @@ extern "C" {
 		cmr_u32 tarlum;
 		cmr_u32 sensitivity;
 		cmr_s8 ev_index;
+		cmr_s32 bv;
 	};
 	struct ae_exposure_param_switch_m {
 		cmr_u32 target_offset;
