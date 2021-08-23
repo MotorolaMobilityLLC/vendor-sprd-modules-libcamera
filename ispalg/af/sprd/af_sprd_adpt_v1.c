@@ -2474,8 +2474,20 @@ static cmr_u32 EnQueue(cmr_handle handle, void *param0)
 
 	struct cts_af_params *af_params = (struct cts_af_params *)param0;
 
+
+	ISP_LOGI("1af->queue.rear %d  af->queue.size %d",af->queue.rear,af->queue.size);
+
 	af->queue.rear = (af->queue.rear + 1) % af->queue.size;
+
+	ISP_LOGI("2af->queue.rear %d  af->queue.size %d",af->queue.rear,af->queue.size);
+
+
+	ISP_LOGI("3af_params->focus_distance %d",af_params->focus_distance);
+
 	af->queue.af_params[af->queue.rear].focus_distance = af_params->focus_distance;
+
+	ISP_LOGI("4focus_distance : %f,",af->queue.af_params[af->queue.rear].focus_distance );
+
 	af->queue.af_params[af->queue.rear].frame_num = af_params->frame_num;
 	af->queue.af_params[af->queue.rear].set_cts_params_flag = 1;
 
