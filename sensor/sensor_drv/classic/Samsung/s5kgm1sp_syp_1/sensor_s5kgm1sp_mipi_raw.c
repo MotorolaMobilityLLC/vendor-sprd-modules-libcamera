@@ -829,17 +829,27 @@ static cmr_int s5kgm1sp_drv_stream_off(cmr_handle handle, cmr_int param) {
     UNUSED(param);
     cmr_s32 ret = SENSOR_SUCCESS;
     uint16_t value;
+	cmr_u16 sleep_time = 0;
 
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     SENSOR_LOGI("StreamOff:E");
 
     value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100);
-    ret = hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0000);
-    if (value == 0x0100)
-        usleep(50 * 1000);
-		SENSOR_LOGI("X");
-    return ret;
+    if (value != 0x00){
+		hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
+		if (!sns_drv_cxt->is_sensor_close){
+			sleep_time = (sns_drv_cxt->sensor_ev_info.preview_framelength *
+			sns_drv_cxt->line_time_def / 1000000) + 10;
+			usleep(sleep_time * 1000);
+			SENSOR_LOGI("stream_off delay_ms %d", sleep_time);
+		}
+	}else{
+		hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
+	}
+    sns_drv_cxt->is_sensor_close = 0;
+	SENSOR_LOGI("X");
+    return SENSOR_SUCCESS;
 }
 
 static cmr_int s5kgm1sp_drv_power_on(cmr_handle handle, cmr_int power_on) {
