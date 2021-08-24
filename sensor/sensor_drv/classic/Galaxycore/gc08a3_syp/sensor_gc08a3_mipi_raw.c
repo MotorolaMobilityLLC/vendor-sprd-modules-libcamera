@@ -677,12 +677,12 @@ static cmr_int gc08a3_drv_stream_on(cmr_handle handle, cmr_uint param)
 	//gc08a3_drv_set_master_FrameSync(handle,param);
 #endif   
 	/*TODO*/
-	usleep(100*1000);
+	//usleep(100*1000);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);	
     /*END*/
 	
 	/*delay*/
-	usleep(20*1000);
+	//usleep(20*1000);
 	pthread_mutex_unlock(&gc08a3_sensor_mutex);
 	
 	return SENSOR_SUCCESS;
@@ -697,6 +697,8 @@ static cmr_int gc08a3_drv_stream_off(cmr_handle handle, cmr_uint param)
 {
 	pthread_mutex_lock(&gc08a3_sensor_mutex);
 	SENSOR_LOGI("E");
+	unsigned char value = 0;
+    cmr_u16 sleep_time = 0;
 	
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -706,13 +708,21 @@ static cmr_int gc08a3_drv_stream_off(cmr_handle handle, cmr_uint param)
     }
    	/*TODO*/
    
-	usleep(20*1000);
-	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
-	/*END*/
-	
-	/*delay*/
-	usleep(100*1000);
-    sns_drv_cxt->is_sensor_close = 0;
+	//usleep(30*1000);
+	value = hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
+	if (value != 0x00){
+		hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
+		if (!sns_drv_cxt->is_sensor_close){
+			sleep_time = (sns_drv_cxt->sensor_ev_info.preview_framelength *
+			 sns_drv_cxt->line_time_def / 1000000) + 10;
+			usleep(sleep_time * 1000);
+			SENSOR_LOGI("stream_off delay_ms %d", sleep_time);
+		}
+	}else{
+		hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
+	}
+	sns_drv_cxt->is_sensor_close = 0;
+
     SENSOR_LOGI("X");
 	pthread_mutex_unlock(&gc08a3_sensor_mutex);
     return SENSOR_SUCCESS;
