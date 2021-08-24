@@ -4501,7 +4501,8 @@ void SprdCamera3OEMIf::adjustPreviewPerformance(uint32_t frame_num,
                 if (getMultiCameraMode() == MODE_BLUR ||
                     getMultiCameraMode() == MODE_BOKEH ||
                     getAppSceneLevel(mSprdAppmodeId) == CAM_PERFORMANCE_LEVEL_4 ||
-                    (mRecordingMode && !mVideoWidth && !mVideoHeight)) {
+                    (mRecordingMode && !mVideoWidth && !mVideoHeight) ||
+                    sprddefInfo->sprd_eis_enabled) {
                     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
                 } else if (getAppSceneLevel(mSprdAppmodeId) == CAM_PERFORMANCE_LEVEL_5) {
                     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_5);
@@ -4509,9 +4510,6 @@ void SprdCamera3OEMIf::adjustPreviewPerformance(uint32_t frame_num,
                            sprddefInfo->slowmotion > 1) {
                     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
                 } else if (mRecordingMode == true) {
-                    if (sprddefInfo->sprd_eis_enabled && getMultiCameraMode() == MODE_MULTI_CAMERA)
-                        setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
-                    else
                         setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_3);
                 } else if (getMultiCameraMode() != MODE_SINGLE_FACEID_UNLOCK) {
                     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
