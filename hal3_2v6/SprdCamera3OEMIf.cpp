@@ -213,7 +213,7 @@ namespace sprdcamera {
 #define DEFAULT_ZSL_BUFFER_NUM 5
 
 // kernel skip dcamraw buffer
-#define DEFAULT_ZSL_SKIP_NUM 1
+#define DEFAULT_ZSL_SKIP_NUM 2
 // for mlog
 #define MLOG_DUMP_PATH "/data/mlog/"
 #define MLOG_AE_PATH "/data/mlog/ae.txt"
