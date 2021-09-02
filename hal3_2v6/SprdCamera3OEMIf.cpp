@@ -213,7 +213,7 @@ namespace sprdcamera {
 #define DEFAULT_ZSL_BUFFER_NUM 5
 
 // kernel skip dcamraw buffer
-#define DEFAULT_ZSL_SKIP_NUM 2
+#define DEFAULT_ZSL_SKIP_NUM 3
 // for mlog
 #define MLOG_DUMP_PATH "/data/mlog/"
 #define MLOG_AE_PATH "/data/mlog/ae.txt"
@@ -12098,7 +12098,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     mSetting->getCONTROLTag(&controlInfo);
     cmr_uint been_preflash = 0;
     cmr_s64 last_preflash_time = 0, now_time = 0, diff = 0;
-    int64_t diff_ms = 380*1000000;  //380ms
+    int64_t diff_ms = 400*1000000;  //400ms
     int64_t mfnr_ms = 20*1000000;
     uint32_t hdr_count = 800, mfnr_count = 800;
     uint32_t lock_af = 0;
