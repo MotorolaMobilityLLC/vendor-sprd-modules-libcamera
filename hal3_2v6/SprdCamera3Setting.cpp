@@ -599,7 +599,11 @@ const cam_stream_info_t subSensor_stream_info[] = {
     {{320, 240}, 33331760L, 33331760L}};
 
 const float kavailable_lens_info_aperture[] = {1.79, 1.8, 2.0, 2.2, 2.4,
-                                               2.6, 2.8, 3.0};
+2.6, 2.8, 3.0};
+
+const cam_stream_info_t default_sensor_stream_info = {
+    {640, 480}, 33331760L, 33331760L,
+};
 
 const int64_t kavailable_min_durations[1] = {
     33331760L,
@@ -2129,6 +2133,34 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
                 }
             }
         }
+    }
+
+    if ((largest_sensor_w == 0) || (largest_sensor_h == 0)) {
+        HAL_LOGD("init default scaler parameters");
+        available_stream_configs.add(HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED);
+        available_stream_configs.add(
+            default_sensor_stream_info.stream_sizes_tbl.width);
+        available_stream_configs.add(
+            default_sensor_stream_info.stream_sizes_tbl.height);
+        available_stream_configs.add(
+            ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT);
+
+        // availableMinFrameDurations
+        available_min_durations.add(HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED);
+        available_min_durations.add(
+            default_sensor_stream_info.stream_sizes_tbl.width);
+        available_min_durations.add(
+            default_sensor_stream_info.stream_sizes_tbl.height);
+        available_min_durations.add(
+            default_sensor_stream_info.stream_min_duration);
+
+        available_stall_durations.add(HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED);
+        available_stall_durations.add(
+            default_sensor_stream_info.stream_sizes_tbl.width);
+        available_stall_durations.add(
+            default_sensor_stream_info.stream_sizes_tbl.height);
+        available_stall_durations.add(
+            default_sensor_stream_info.stream_stall_duration);
     }
 
     // This lists the input/output stream configurations for each scaler formats
