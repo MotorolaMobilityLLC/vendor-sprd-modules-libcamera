@@ -2949,8 +2949,8 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
           cmr_int oem_cb = 0xffff;
           unsigned short  af = 0;
           camera_get_af_support(oem_handle,&af);
-          CMR_LOGD("af sup %d", af);
-          if (!af) {
+          CMR_LOGD("af sup %d, af_bypass:%d", af, cxt->isp_cxt.is_af_bypass);
+          if (!af || cxt->isp_cxt.is_af_bypass) {
               struct af_callback_params tmp_af_callback;
               memset (&tmp_af_callback, 0, sizeof(struct af_callback_params));
               tmp_af_callback.frame_number = -1;
@@ -16870,6 +16870,7 @@ cmr_int cmr_set_af_bypass(cmr_handle oem_handle, cmr_u32 value) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
     CMR_LOGI("af_bypass =%d", value);
+    cxt->isp_cxt.is_af_bypass = value;
     ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_SET_AF_BYPASS,
                     (void *)&value);
     return ret;
