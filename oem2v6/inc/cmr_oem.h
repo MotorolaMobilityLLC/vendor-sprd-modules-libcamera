@@ -104,6 +104,7 @@ struct isp_context {
     cmr_u32 is_work;
     cmr_u32 is_snapshot;
     cmr_u32 is_real_bokeh;
+    cmr_u32 is_af_bypass;
 };
 
 struct jpeg_context {
