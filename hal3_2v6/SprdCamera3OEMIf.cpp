@@ -881,6 +881,8 @@ void SprdCamera3OEMIf::initialize() {
     mIsNeedFlashFired = 0;
     mSprdZslEnabled = 0;
     mSprd3dnrType = 0;
+    SprdCamera3Setting::s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled = 0;
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DNR_TYPE, 0);
     mVideoSnapshotType = 0;
     mTopAppId = TOP_APP_NONE;
     mChannel2FaceBeautyFlag = 0;
