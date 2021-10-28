@@ -33,7 +33,7 @@
 
 /* I2C slave address setting */
 #define OTP_I2C_ADDR (0x7e >> 1)
-#define SENSOR_I2C_ADDR (0x7e >> 1)
+#define SENSOR_I2C_ADDR (otp_cxt->eeprom_i2c_addr>>1)
 
 /* OTP space setting */
 #define OTP_START_ADDR 0x1f10

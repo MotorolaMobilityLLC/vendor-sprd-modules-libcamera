@@ -19,7 +19,7 @@
  *
  */
 
-#define LOG_TAG "gc5035_arb_qogirl6"  
+#define LOG_TAG "gc5035_arb_3"  
 
 #include "sensor_gc5035_arb_mipi_raw.h"
 //pthread_mutex_t gc5035_sensor_mutex;
@@ -836,9 +836,9 @@ static cmr_int gc5035_arb_drv_identify(cmr_handle handle, cmr_uint param)
 		ver_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, GC5035_ARB_VER_ADDR);
 		mid_value = gc5035_arb_read_mid(handle);
 		SENSOR_LOGI("Identify: pid_value = %x, ver_value = %x, mid_value = %x", pid_value, ver_value, mid_value);
-		if ((GC5035_ARB_VER_VALUE == ver_value) && (0x13 == mid_value)){
-			SENSOR_LOGI("this is gc5035_arb sensor uni");
-			sensor_rid_save_sensor_name(SENSOR_HWINFOR_FRONT_CAM_NAME, "1_gc5035_arb");
+		if ((GC5035_ARB_VER_VALUE == ver_value) && (0x03 == mid_value)){
+			SENSOR_LOGI("this is gc5035_arb sensor sunrise");
+			sensor_rid_save_sensor_name(SENSOR_HWINFOR_FRONT_CAM_NAME, "1_gc5035_arb_3");
 			gc5035_arb_gcore_load_data(handle);
 
 			ret_value = SENSOR_SUCCESS;
