@@ -396,6 +396,7 @@ struct camera_context {
     camera_cb_of_type camera_cb;
     void *client_data;
     cmr_u32 inited;
+    cmr_u32 app_mode;
     cmr_u32 camera_mode;
     cmr_u32 mfsr_force_off;
     cmr_uint is_discard_frm;

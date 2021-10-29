@@ -9953,10 +9953,6 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     cmr_u32 sn_mode = 0;
     cmr_u32 sprd_3dnr_type = 0;
     SENSOR_MODE_FPS_T fps_info;
-    char prop[PROPERTY_VALUE_MAX] = {
-        0,
-    };
-    property_get("persist.vendor.cam.dual.preview", prop, "0");
 
     if (!oem_handle || !caller_handle || !param_ptr || !channel_id || !endian) {
         CMR_LOGE("in parm error 0x%lx 0x%lx 0x%lx 0x%lx 0x%lx",
@@ -9965,6 +9961,11 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
+
+    if (cxt->app_mode == CAMERA_MODE_FDR && cxt->camera_id == 0)
+        param_ptr->cap_inf_cfg.cfg.need_fdr = 1;
+    else
+        param_ptr->cap_inf_cfg.cfg.need_fdr = 0;
 
     cmr_bzero(&sensor_cfg, sizeof(struct sn_cfg));
     param_ptr->cap_inf_cfg.buffer_cfg_isp = 0;
@@ -10216,6 +10217,11 @@ cmr_int camera_channel_cap_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
+
+    if (cxt->app_mode == CAMERA_MODE_FDR && cxt->camera_id == 0)
+        cap_cfg->cfg.need_fdr = 1;
+    else
+        cap_cfg->cfg.need_fdr = 0;
 
     cap_cfg->buffer_cfg_isp = 0;
     cap_cfg->sensor_id = camera_id;
@@ -13685,6 +13691,7 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     CMR_LOGI("cam%d app_mode = %d, takepic mode %d, multi mode %d\n",
         cxt->camera_id, app_mode, mode, cxt->is_multi_mode);
 
+    cxt->app_mode = app_mode;
     cxt->nightscepro_flag = 0;
     if (app_mode != CAMERA_MODE_3DNR_PHOTO) {
         cxt->nightscepro_flag = 1;
