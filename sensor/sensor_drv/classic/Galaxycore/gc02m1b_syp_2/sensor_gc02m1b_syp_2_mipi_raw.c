@@ -432,10 +432,12 @@ static cmr_int gc02m1b_syp_2_read_module_id(cmr_handle handle)
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x02);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x17, 0x80);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xf3, 0x34);
+    usleep(1 * 1000);
     module_id_h = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x19);
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x17, 0x88);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xf3, 0x34);
+    usleep(1 * 1000);
     module_id_l = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x19);
 
     module_id = (module_id_l &0x00FF)|((module_id_h<<8) &0xFF00);
