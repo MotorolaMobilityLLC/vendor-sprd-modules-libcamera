@@ -422,6 +422,7 @@ static cmr_int gc02m1b_syp_2_read_module_id(cmr_handle handle)
 {
     cmr_u16 module_id_l = 0x00;
     cmr_u16 module_id_h = 0x00;
+    cmr_u16 block_flag = 0x00;
     cmr_u16 module_id = 0x00;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -430,15 +431,37 @@ static cmr_int gc02m1b_syp_2_read_module_id(cmr_handle handle)
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xf3, 0x30);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x02);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x17, 0x80);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xf3, 0x34);
-    usleep(1 * 1000);
-    module_id_h = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x19);
 
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x17, 0x88);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x17, 0x78);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xf3, 0x34);
     usleep(1 * 1000);
-    module_id_l = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x19);
+    block_flag = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x19);
+
+    SENSOR_LOGI("block_flag=0x%x!!!\n", block_flag);
+
+    if ((block_flag & 0xC0) == 0x40){
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x17, 0x80);
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xf3, 0x34);
+        usleep(1 * 1000);
+        module_id_h = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x19);
+
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x17, 0x88);
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xf3, 0x34);
+        usleep(1 * 1000);
+        module_id_l = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x19);
+    }else if ((block_flag & 0x30) == 0x10){
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x17, 0xC0);
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xf3, 0x34);
+        usleep(1 * 1000);
+        module_id_h = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x19);
+
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x17, 0xC8);
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xf3, 0x34);
+        usleep(1 * 1000);
+        module_id_l = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x19);
+    }else{
+        SENSOR_LOGE("All blocks are invalid block_flag=0x%x!!!\n", block_flag);
+    }
 
     module_id = (module_id_l &0x00FF)|((module_id_h<<8) &0xFF00);
 
