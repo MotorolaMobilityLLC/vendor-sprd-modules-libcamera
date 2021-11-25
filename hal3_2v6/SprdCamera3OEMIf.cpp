@@ -12416,7 +12416,8 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
         HAL_LOGI("mSprd3dnrType %d", mSprd3dnrType);
     }
 #endif
-    if (mHdrSceneMode == ANDROID_CONTROL_SCENE_MODE_HDR) {
+    //if (mHdrSceneMode == ANDROID_CONTROL_SCENE_MODE_HDR) {
+    if (controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR && !mFlashCaptureFlag) {
         mZslNum = 3;
         mZslMaxFrameNum = 3;
         (mIsFDRCapture)?(obj->mFlagHdr = false):(obj->mFlagHdr = true);
