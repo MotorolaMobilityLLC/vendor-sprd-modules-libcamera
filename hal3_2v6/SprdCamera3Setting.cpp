@@ -4684,9 +4684,13 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     uint8_t captureIntent = type;
     requestInfo.update(ANDROID_CONTROL_CAPTURE_INTENT, &captureIntent, 1);
 
-    int32_t cropRegion[4] = {0, 0, 0, 0};
-    requestInfo.update(ANDROID_SCALER_CROP_REGION, cropRegion,
+    if (!mMultiCameraMode) {//phy id update default crop region
+       int32_t cropRegion[4] = {0, 0,
+            s_setting[mCameraId].sensor_InfoInfo.active_array_size[2],
+            s_setting[mCameraId].sensor_InfoInfo.active_array_size[3]};
+        requestInfo.update(ANDROID_SCALER_CROP_REGION, cropRegion,
                        ARRAY_SIZE(cropRegion));
+    }
 
     // SPRD
     uint8_t burstCapCnt = 0;
