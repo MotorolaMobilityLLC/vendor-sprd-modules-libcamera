@@ -419,6 +419,8 @@ int SprdCamera3HWI::openCamera() {
         ispvideo_RegCameraFunc(4, ispVideoSetParam);
         ispvideo_RegCameraFunc(5, ispVideoSetJpegQuality);
     }
+    //init setting MultiMode value
+    mSetting->mMultiCameraMode = mMultiCameraMode;
 
     HAL_LOGI(":hal3: X");
     return NO_ERROR;
